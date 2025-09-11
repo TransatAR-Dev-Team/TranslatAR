@@ -6,20 +6,16 @@ import './App.css'
 function App() {
   const [message, setMessage] = useState('')
   useEffect(() => {
-    // The URL '/api/data' works because of the proxy you set up in vite.config.ts
-    fetch('http://127.0.0.1:8000/api/db-hello')
+    fetch('/api/db-hello')
       .then((response) => response.json())
       .then((data) => {
-        // 4. Update the state with the fetched message
         setMessage(data.message)
       })
       .catch((error) => {
         console.error("Error fetching data:", error)
         setMessage("Failed to load message from backend.")
       });
-  }, []) // The empty array [] means this effect runs only once after the initial render
-
-
+  }, [])
 
   const [count, setCount] = useState(0)
 

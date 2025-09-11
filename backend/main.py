@@ -18,7 +18,7 @@ def read_data():
     """Returns a simple JSON response."""
     return {"message": "Hello from the FastAPI backend!"}
 
-client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://db:27017")
+client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://mongodb:27017")
 database = client.helloworld_db
 message_collection = database.get_collection("messages")
 

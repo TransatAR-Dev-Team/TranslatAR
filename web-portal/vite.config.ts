@@ -10,5 +10,11 @@ export default defineConfig({
     watch: {
       usePolling: true, // Helps with file change detection in some Docker setups
     },
+    proxy: {
+      '/api': {
+        target: 'http://backend:8000', // "backend" is the service name from docker-compose.yml
+        changeOrigin: true,
+      },
+    },
   }
 })
