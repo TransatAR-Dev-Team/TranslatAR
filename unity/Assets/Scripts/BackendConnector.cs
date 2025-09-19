@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
+using TMPro; // for the subtitle component
 
 // A simple class to demonstrate connecting to backend
 [System.Serializable]
@@ -13,8 +14,15 @@ public class BackendConnector : MonoBehaviour
 {
     private const string backendUrl = "http://localhost:8000/api/db-hello";
 
+    public TextMeshProUGUI subtitleText;
+
     void Start()
     {
+            if (subtitleText != null)
+            {
+                subtitleText.text = "Connecting to backend...";
+            }
+
         StartCoroutine(GetDataFromBackend());
     }
 
@@ -30,6 +38,11 @@ public class BackendConnector : MonoBehaviour
                 case UnityWebRequest.Result.DataProcessingError:
                 case UnityWebRequest.Result.ProtocolError:
                     Debug.LogError("Error: " + webRequest.error);
+
+                    if (subtitleText != null)
+                    {
+                        subtitleText.text = "Error: Could not connect to backend.";
+                    }
                     break;
                 case UnityWebRequest.Result.Success:
                     string jsonResponse = webRequest.downloadHandler.text;
@@ -38,6 +51,12 @@ public class BackendConnector : MonoBehaviour
                     BackendMessage message = JsonUtility.FromJson<BackendMessage>(jsonResponse);
 
                     Debug.Log("Message from backend: " + message.message);
+
+                    // set subtitle text to the message received from backend
+                    if (subtitleText != null)
+                    {
+                        subtitleText.text = message.message;
+                    }
                     break;
             }
         }

@@ -27,7 +27,7 @@ The project should look like a blank 3D area.
 To demonstrate the connection between the containerized backend and the Unity frontend, first ensure all [Set Up](#set-up) steps are completed.
 
 1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene
-2. A pop up with the head set simulator should appear. There should be text on the simulator screen reading: "This is a subtitle." Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
+2. A pop up with the head set simulator should appear. There should be text on the simulator screen reading: "Hello from MongoDB!" Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 3. Open the Unity console by selecting `Window > General > Console`, or press `Ctrl` + `Shift` + `C`
 4. Observe the log. If everything has gone right, it will read:
 
@@ -41,7 +41,7 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. The Unity frontend sends a request to the backend API endpoint
 2. The backend retrieves data from the MongoDB database
 3. The backend responds to Unity with the data
-4. Unity receives the response and logs the message in the console
+4. Unity receives the response, logs the message in the console, and displays it in the UI.
 
 ### Demo clean up
 
