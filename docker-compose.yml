@@ -1,8 +1,8 @@
 services:
   frontend:
-    working_dir: /app
     build:
       context: ./web-portal
+    working_dir: /app
     ports:
       - "5173:5173"
     volumes:
@@ -22,6 +22,17 @@ services:
     environment:
       - DATABASE_URL=mongodb://mongodb:21017
 
+  stt:
+    build:
+      context: ./stt-service
+    ports:
+      - "9000:9000"
+    volumes:
+      - whisper-models:/root/.cache/huggingface
+    environment:
+      - STT_DEVICE=cpu 
+
+
   mongodb:
     image: mongo:latest
     ports:
@@ -31,6 +42,7 @@ services:
 
 volumes:
   mongo-data:
+  whisper-models:
 
 networks:
   default:
