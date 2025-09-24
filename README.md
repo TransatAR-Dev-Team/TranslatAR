@@ -12,7 +12,7 @@
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2023.3.62f1` installed (instructions in [Set Up](#set-up)).
+    - Unity version `2023.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity)).
 
 - For headset simulator, Windows or Apple silicon Mac machine.
     > The simulator cannot run on Linux machines or Intel Macs.
@@ -49,6 +49,7 @@
 
 Run `docker compose down` to shut it off.
 
+<a id="unity"></a>
 ### Unity frontend
 
 1. Install [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html)
