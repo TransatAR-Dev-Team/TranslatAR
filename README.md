@@ -13,8 +13,12 @@
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2023.2.20f1` installed
+    - Unity version `2023.3.62f1` installed (instructions in [Set Up](#set-up).
 
+- For headset simulator, Windows or Apple silicon Mac machine.
+    > The simulator cannot run on Linux machines or Intel Macs.
+
+    > A physical Meta Quest 3 will run the Unity app regardless of the development environment.
 
 - For GPU acceleration, a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
     > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
@@ -46,12 +50,15 @@ Run `docker compose down` to shut it off.
 ### Unity frontend
 
 1. Install [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html)
-2. Open *Projects* tab and click *New project*
-3. Locate this repository in your file system and select the `unity` directory
-4. Download reccomended version of Unity from pop up (this may take a while)
-5. Open the project
+2. Open *Projects* tab and click *Add ⌄*
+3. In the dropdown, select *Add project from disk*
+4. Locate this repository in your file system and select the `unity` directory
+5. Download Unity version `2023.3.62f1` from pop up. It should be the reccomended version. 
+6. In the pop up, select *Android build support" to be installed as well.
+7. Click *Install*. This may take a while to download.
+8. Open the project in Unity Hub from the "Projects" list.
 
-The project should look like a blank 3D area.
+The project should look like a blank 3D area with a floating text box.
 
 ## Demo
 
@@ -86,7 +93,7 @@ To demonstrate the connection between the containerized backend and the Unity fr
     The output should look like:
     ```log
     {"translated_text":"¡Hola, mundo!"}
-
+    ```
 
 
 ### Data flow demonstrated
