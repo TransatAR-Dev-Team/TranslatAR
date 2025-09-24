@@ -1,3 +1,5 @@
 fastapi
 uvicorn[standard]
 motor
+httpx
+python-multipart
