@@ -59,7 +59,7 @@ Run `docker compose down` to shut it off.
 
 4. Locate this repository in your file system and select the `unity` directory
 
-5. Download Unity version `2023.3.62f1` from pop up. It should be the reccomended version. 
+5. Download Unity version `2023.3.62f1` from the pop up. It should be the reccomended version. 
 
 6. In the pop up, select *Android build support" to be installed as well.
 
@@ -79,46 +79,31 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene
 
-2. A pop up with the head set simulator should appear. There should be text on the simulator screen reading: *"Hello from MongoDB!"* Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
+2. A pop up with the head set simulator should appear. There should be text on the simulator screen reading: *"Hola, esto es una prueba."*, which is the Spanish translation of "Hello, this is a test." Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
 3. Open the Unity console by selecting `Window > General > Console`, or press `Ctrl` + `Shift` + `C`
 
 4. Observe the log. If everything has gone right, it will read:
 
     ```log
-    Received from backend: {"message":"Hello from MongoDB!"}
-    Message from backend: Hello from MongoDB!
-    ```
-
-5. Run this to demonstrate transcription/translation:
-    ```sh
-    curl -X POST http://localhost:8000/api/process-audio -F "audio_file=@test.wav" -F "source_lang=en" -F "target_lang=es"
-    ```
-
-    The output should look like:
-    ```log
-    {"original_text":"Hello, this is a test.","translated_text":"Hola, esto es una prueba."}
+    Received from backend: {"original_text": "Hello, this is a test", "translated_text": "Hola, esto es una prueba."}
     ```
 
 ### Data flow demonstrated
 
-1. The Unity frontend sends a request to the backend API endpoint
+1. The Unity frontend sends an audio file which says "Hell, this is a test" as a bitstream to the backend
 
-2. The backend retrieves data from the MongoDB database
+2. The backend sends the audio file to the STT service
 
-3. The backend responds to Unity with the data
+3. The STT service processes audio using the Whisper model and return transcribed text to the backend
 
-4. Unity receives the response, logs the message in the console, and displays it in the UI
+4. The backend sends transcribed text to translation service
 
-5. The client sends an audio file to the backend server
+5. The translation service sends translated text to the backend 
 
-6. The STT service processes audio using the Whisper model and return transcribed text to the backend
+6. The backend returns the transcribed text and the translated text to Unity
 
-7. The backend sends transcribed text to translation service
-
-8. The translation service sends translated text to the backend 
-
-9. The backend returns translated text to the client
+7. Unity receives the response, logs the message in the console, and displays the translation in the UI
 
 ### Demo clean up
 
