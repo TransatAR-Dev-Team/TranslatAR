@@ -78,6 +78,17 @@ To demonstrate the connection between the containerized backend and the Unity fr
     {"transcription":"Hello, this is a test."}
     ```
 
+6. Run this to demonstrate translation:
+    ```sh
+    curl -X POST "http://localhost:9001/translate" -H "Content-Type: application/json" -d '{"text": "Hello, world!", "source_lang": "en", "target_lang": "es"}'
+    ```
+
+    The output should look like:
+    ```log
+    {"translated_text":"¡Hola, mundo!"}
+
+
+
 ### Data flow demonstrated
 
 1. The Unity frontend sends a request to the backend API endpoint
@@ -85,6 +96,7 @@ To demonstrate the connection between the containerized backend and the Unity fr
 3. The backend responds to Unity with the data
 4. Unity receives the response, logs the message in the console, and displays it in the UI.
 5. The STT service provides an accurate transcription.
+6. The Translation service provides an accurate translation
 
 ### Demo clean up
 
