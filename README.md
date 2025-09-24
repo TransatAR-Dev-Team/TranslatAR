@@ -12,7 +12,7 @@
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2023.3.62f1` installed (instructions in [Set Up](#set-up).
+    - Unity version `2023.3.62f1` installed (instructions in [Set Up](#set-up)).
 
 - For headset simulator, Windows or Apple silicon Mac machine.
     > The simulator cannot run on Linux machines or Intel Macs.
@@ -43,9 +43,9 @@
 
     > Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
 
-2. Go to <http://localhost:5173> to see the webpage.
+2. Go to <http://localhost:5173> to see the web portal.
 
-3. Go to <http://localhost:8000/api/data> or <http://localhost:8000/api/db-hello> to fetch data from backend.
+3. Go to <http://localhost:8000/api/db-hello> to fetch data from backend.
 
 Run `docker compose down` to shut it off.
 
@@ -89,9 +89,13 @@ To demonstrate the connection between the containerized backend and the Unity fr
     Received from backend: {"original_text": "Hello, this is a test", "translated_text": "Hola, esto es una prueba."}
     ```
 
+5. Go to <http://localhost:5173> to see the web portal. The translation log will be displayed.
+
+6. Run the scene again and refresh the web portal. Another log will be displayed on the web portal.
+
 ### Data flow demonstrated
 
-1. The Unity frontend sends an audio file which says "Hell, this is a test" as a bitstream to the backend
+1. The Unity frontend sends an audio file which says "Hello, this is a test" as a bitstream to the backend
 
 2. The backend sends the audio file to the STT service
 
@@ -101,9 +105,21 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 5. The translation service sends translated text to the backend 
 
-6. The backend returns the transcribed text and the translated text to Unity
+6. The backend saves the log to the database
 
-7. Unity receives the response, logs the message in the console, and displays the translation in the UI
+7. The backend returns the transcribed text and the translated text to Unity
+
+8. Unity receives the response, logs the message in the console, and displays the translation in the UI
+
+9. The web portal makes a request to view the translation history
+
+10. The backend fetches the conversation history from the database
+
+11. The backend returns the conversation history to the web portal
+
+12. The web portal displays the converation history
+
+13. Steps 1 through 12 repeated
 
 ### Demo clean up
 
