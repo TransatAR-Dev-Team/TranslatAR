@@ -36,12 +36,23 @@ To demonstrate the connection between the containerized backend and the Unity fr
     Message from backend: Hello from MongoDB!
     ```
 
+5. Run this to demonstrate translation:
+    ```sh
+    curl -X POST "http://localhost:9001/translate" -H "Content-Type: application/json" -d '{"text": "Hello, world!", "source_lang": "en", "target_lang": "es"}'
+    ```
+
+    The output should look like:
+    ```log
+    {"translated_text":"¡Hola, mundo!"}
+    ```
+
 ### Data flow demonstrated
 
 1. The Unity frontend sends a request to the backend API endpoint
 2. The backend retrieves data from the MongoDB database
 3. The backend responds to Unity with the data
 4. Unity receives the response, logs the message in the console, and displays it in the UI.
+5. The Translation service provides an accurate translation
 
 ### Demo clean up
 

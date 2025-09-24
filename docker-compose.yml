@@ -22,6 +22,25 @@ services:
     environment:
       - DATABASE_URL=mongodb://mongodb:21017
 
+  translation:
+      build:
+        context: ./translation-service
+      ports:
+        - "9001:9001"
+      environment:
+        # This tells our proxy where to find the real translation engine
+        - LIBRETRANSLATE_URL=http://libretranslate:5000
+      depends_on:
+        - libretranslate
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    ports:
+      - "5001:5000"
+    # Pre-load only a few common languages to save RAM and speed up startup.
+    # Add any other language codes you need (e.g., "ja", "zh", "ru").
+    command: ["--load-only", "en,es,fr,de"]
+
   mongodb:
     image: mongo:latest
     ports:
