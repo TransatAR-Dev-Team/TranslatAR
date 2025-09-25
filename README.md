@@ -62,7 +62,7 @@ Run `docker compose down` to shut it off.
 
 5. Download Unity version `2023.3.62f1` from the pop up. It should be the reccomended version. 
 
-6. In the pop up, select *Android build support" to be installed as well.
+6. In the pop up, select *Android build support* and all subitems to be installed as well.
 
 7. Click *Install*. This may take a while to download.
 
