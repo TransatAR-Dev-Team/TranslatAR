@@ -875,6 +875,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   subtitleText: {fileID: 150052533}
+  testAudioClip: {fileID: 8300000, guid: e5bfcc64027552644b04bb6e87f9d7e2, type: 3}
+  sourceLanguage: en
+  targetLanguage: es
 --- !u!4 &1595725571
 Transform:
   m_ObjectHideFlags: 0
