@@ -1,31 +1,46 @@
 # TranslatAR
 
-## Set Up
-
-### Prerequisites
+## Prerequisites
 
 - About 50 GB of free space. This is for:
     - Docker Desktop
     - Docker images
     - Unity Hub
     - Unity Editor
+
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2023.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity)).
+    - Unity version `2023.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
 
-- For headset simulator, Windows or Apple silicon Mac machine.
-    > The simulator cannot run on Linux machines or Intel Macs.
+- For Unity, Windows or Apple silicon Mac machine.
 
-    > A physical Meta Quest 3 will run the Unity app regardless of the development environment.
+    > The Unity project cannot run on Linux machines or Intel Macs.
+
+    > A physical Meta Quest 3 will run the Unity app regardless of your machine.
 
 <a id="gpu"></a>
-- For GPU acceleration, a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
-    > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
+- For GPU acceleration:
+  -  a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
+
+        > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
+  
+  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) is installed.  
+
+
+## Set Up
+
+### Initial set up
+
+1. Clone this repository and set working directory to project directory:
+    
+    ```sh
+    git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git ; cd TranslatAR
+    ```
 
 ### Docker containers
 
-1. Use `docker compose` to start everything. Initially donwloading the images may take a while. Use:
+1. Use `docker compose` to start everything. Initially downloading the images may take a while. Use:
 
     ```sh
     # This runs everything on your CPU
@@ -39,20 +54,19 @@
     docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
     ```
 
-    > ***Only*** use the GPU acceleration command if you have an CUDA-capable NVIDIA GPU. [Read more here](#gpu).
+    > ***Only*** use the GPU acceleration command if you have an CUDA-capable NVIDIA GPU and NVIDIA Conainer Toolkit installed. [Read more here](#gpu).
 
     > Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
 
-2. Go to <http://localhost:5173> to see the web portal.
+2. Go to <http://localhost:5173> and <http://localhost:8000/api/db-hello> to verify the containers are running.
 
-3. Go to <http://localhost:8000/api/db-hello> to fetch data from backend.
+> Run `docker compose down` to shut off all containers. See [Demo clean up](#demo-clean-up).
 
-Run `docker compose down` to shut it off.
-
-<a id="unity"></a>
 ### Unity frontend
 
 1. Install [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html)
+
+    > Unity Hub has a [CLI tool](https://docs.unity3d.com/hub/manual/HubCLI.html) that can do everything needed to set up the environment. This guide will continue without using the CLI tool.
 
 2. Open *Projects* tab and click *Add ⌄*
 
@@ -60,7 +74,7 @@ Run `docker compose down` to shut it off.
 
 4. Locate this repository in your file system and select the `unity` directory
 
-5. Download Unity version `2023.3.62f1` from the pop up. It should be the reccomended version. 
+5.  Download Unity version `2023.3.62f1` from the pop up. It should be the recommended version. 
 
 6. In the pop up, select *Android build support* and all subitems to be installed as well.
 
@@ -70,7 +84,7 @@ Run `docker compose down` to shut it off.
 
 9. In the Unity Editor's taskbar, check *Meta* > *Meta XR Simulator* > *Activate*
 
-    > Leaving *Meta XR Simulator* set to *Deactivate* only renders the subtitle box and saves resources.
+    > Leaving *Meta XR Simulator* set to *Deactivate* only renders the subtitle box in 2D and saves resources.
 
 ## Demo
 
@@ -80,11 +94,17 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene
 
-2. A pop up with the head set simulator should appear. There should be text on the simulator screen reading: *"Hola, esto es una prueba."*, which is the Spanish translation of "Hello, this is a test." Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
+2. A pop up with the head set simulator should appear.
+   
+   > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras. 
+
+   There should be text on the simulator screen reading: *"Hola, esto es una prueba."*, which is "Hello, this is a test" in Spanish.
+   
+   Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
 3. Open the Unity console by selecting `Window > General > Console`, or press `Ctrl` + `Shift` + `C`
 
-4. Observe the log. If everything has gone right, it will read:
+4. Observe the log. If everything has gone right, there will be an entry that reads:
 
     ```log
     Received from backend: {"original_text": "Hello, this is a test", "translated_text": "Hola, esto es una prueba."}
@@ -120,9 +140,10 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 12. The web portal displays the converation history
 
-13. Steps 1 through 12 repeated
+13. Steps **1** through **12** repeated
 
 ### Demo clean up
 
-Press the "Stop" button (`⏹`) next to the "Play" button to stop the scene.
-Run `docker compose down` to shut off Docker containers.
+1. Press the "Stop" button (`⏹`) next to the "Play" button to stop the scene.
+
+2. Run `docker compose down` to shut off Docker containers.
