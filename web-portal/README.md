@@ -53,6 +53,8 @@ The easiest and recommended way to add or update dependencies is as follows:
     git add package.json package-lock.json
     git commit
     ```
+
+    > `node_modules/` can be safely deleted after this step: `rm -rf node_modules`.
     
     VSCode's source control interface (and other GUI apps) may alse be used.
 

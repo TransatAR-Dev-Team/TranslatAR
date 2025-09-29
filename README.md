@@ -25,12 +25,14 @@
 
         > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   
-  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) is installed.  
+  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
 
 
 ## Set Up
 
 ### Initial set up
+
+First, ensure all [prerequisites](#prerequisites) are met.
 
 1. Clone this repository and set working directory to project directory:
     
