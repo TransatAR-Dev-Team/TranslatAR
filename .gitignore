@@ -1,6 +1,10 @@
 # MacOS garbage
 *.DS_Store
 
+# Python garbage
+*venv/
+__pycache__/
+
 # VSCode settings
 .vscode/
 
