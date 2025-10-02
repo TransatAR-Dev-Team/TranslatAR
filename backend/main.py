@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
+SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
 
 # --- FastAPI App & Router Setup ---
 app = FastAPI()
@@ -111,5 +112,28 @@ async def get_history():
         return {"history": history_list}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve history from database: {str(e)}")
+
+class SummarizationRequest(BaseModel):
+    text: str
+    
+class SummarizationResponse(BaseModel):
+    summary: str
+
+@router.post("/summarize", response_model=SummarizationResponse)
+async def get_summary(request: SummarizationRequest):
+    """
+    Receives text and forwards it to the summarization service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            payload = {"text": request.text}
+            response = await client.post(f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload)
+            response.raise_for_status()
+            summary_text = response.json().get("summary")
+            if summary_text is None:
+                raise HTTPException(status_code=500, detail="Summarization failed.")
+            return SummarizationResponse(summary=summary_text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error during summarization: {str(e)}")
 
 app.include_router(router, prefix="/api")

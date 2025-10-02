@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -15,8 +16,10 @@ services:
       - DATABASE_URL=mongodb://mongodb:21017
       - STT_URL=http://stt:9000
       - TRANSLATION_URL=http://translation:9001
+      - SUMMARIZATION_URL=http://summarization:9002
 
   web-portal:
+    container_name: web-portal
     build:
       context: ./web-portal
     working_dir: /app
@@ -27,6 +30,7 @@ services:
       - /app/node_modules 
       
   stt:
+    container_name: stt
     build:
       context: ./stt-service
     ports:
@@ -37,16 +41,18 @@ services:
       - STT_DEVICE=cpu 
 
   translation:
-      build:
-        context: ./translation-service
-      ports:
-        - "9001:9001"
-      environment:
-        - LIBRETRANSLATE_URL=http://libretranslate:5000
-      depends_on:
-        - libretranslate
+    container_name: translation
+    build:
+      context: ./translation-service
+    ports:
+      - "9001:9001"
+    environment:
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+    depends_on:
+      - libretranslate
 
   libretranslate:
+    container_name: libretranslate
     image: libretranslate/libretranslate:latest
     ports:
       - "5001:5000"
@@ -54,7 +60,28 @@ services:
     # Add any other language codes you need (e.g., "ja", "zh", "ru").
     command: ["--load-only", "en,es,fr,de"]
 
+  summarization:
+    container_name: summarization
+    build:
+      context: ./summarization-service
+    ports:
+      - "9002:9002"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=phi3:mini
+    depends_on:
+      - ollama
+
+  ollama:
+    container_name: ollama
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
   mongodb:
+    container_name: mongodb
     image: mongo:latest
     ports:
       - "27017:27017"
@@ -64,6 +91,7 @@ services:
 volumes:
   mongo-data:
   whisper-models:
+  ollama-data:
 
 networks:
   default:

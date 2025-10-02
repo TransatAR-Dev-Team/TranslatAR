@@ -1,8 +1,16 @@
 services:
   stt:
     environment:
-      # Override the device to be cuda
       - STT_DEVICE=cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama:
     deploy:
       resources:
         reservations:
