@@ -24,7 +24,6 @@ app.add_middleware(
 
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://mongodb:27017")
-# Use the correct database for all new features
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
 
@@ -32,6 +31,13 @@ translations_collection = db.get_collection("translations")
 class TranslationResponse(BaseModel):
     original_text: str
     translated_text: str
+
+class SummarizationRequest(BaseModel):
+    text: str
+    length: str = "medium"
+    
+class SummarizationResponse(BaseModel):
+    summary: str
 
 # --- Endpoints ---
 
@@ -113,20 +119,14 @@ async def get_history():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve history from database: {str(e)}")
 
-class SummarizationRequest(BaseModel):
-    text: str
-    
-class SummarizationResponse(BaseModel):
-    summary: str
-
 @router.post("/summarize", response_model=SummarizationResponse)
 async def get_summary(request: SummarizationRequest):
     """
-    Receives text and forwards it to the summarization service.
+    Receives text and a desired length, then forwards to the summarization service.
     """
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
-            payload = {"text": request.text}
+            payload = {"text": request.text, "length": request.length}
             response = await client.post(f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload)
             response.raise_for_status()
             summary_text = response.json().get("summary")
@@ -135,5 +135,6 @@ async def get_summary(request: SummarizationRequest):
             return SummarizationResponse(summary=summary_text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during summarization: {str(e)}")
+
 
 app.include_router(router, prefix="/api")

@@ -7,30 +7,36 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# The URL for the Ollama service, as defined in docker-compose
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
 MODEL_NAME = os.getenv("OLLAMA_MODEL", "phi3:mini")
 
 app = FastAPI()
 
+LENGTH_PROMPTS = {
+    "short": "Summarize the following text in one to two sentences.",
+    "medium": "Provide a concise summary of the following text, covering the main points.",
+    "long": "Provide a detailed summary of the following text, including key details and nuances."
+}
+
 class SummarizationRequest(BaseModel):
     text: str
+    length: str = "medium"
 
 class SummarizationResponse(BaseModel):
     summary: str
 
 @app.post("/summarize", response_model=SummarizationResponse)
 async def summarize(request: SummarizationRequest):
-    # This prompt can be customized to improve summary quality
-    prompt = f"Please provide a concise summary of the following text:\n\n{request.text}"
+    instruction = LENGTH_PROMPTS.get(request.length, LENGTH_PROMPTS["medium"])
+    prompt = f"{instruction}\n\n{request.text}"
     
     payload = {
         "model": MODEL_NAME,
         "prompt": prompt,
-        "stream": False  # We want the full response at once
+        "stream": False
     }
 
-    logger.info(f"Forwarding summarization request to Ollama with model '{MODEL_NAME}'...")
+    logger.info(f"Forwarding summarization request with length '{request.length}' to model '{MODEL_NAME}'...")
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -42,7 +48,7 @@ async def summarize(request: SummarizationRequest):
                 logger.error(f"Invalid response from Ollama: {data}")
                 raise HTTPException(status_code=500, detail="Invalid response from Ollama.")
             
-            return SummarizationResponse(summary=data["response"])
+            return SummarizationResponse(summary=data["response"].strip())
 
     except httpx.RequestError as e:
         logger.error(f"Could not connect to Ollama: {e}")

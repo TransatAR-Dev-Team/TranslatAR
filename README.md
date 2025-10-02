@@ -5,6 +5,7 @@
 - About 50 GB of free space. This is for:
     - Docker Desktop
     - Docker images
+    - Ollama LLM model
     - Unity Hub
     - Unity Editor
 
@@ -49,7 +50,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
     docker compose up --build -d
     ```
    
-    Or, to use GPU acceleration for STT service:
+    Or, to use GPU acceleration for STT and Ollama:
     
     ```sh
     # This layers the GPU config on top of the base config and enables GPU acceleration
@@ -61,6 +62,16 @@ First, ensure all [prerequisites](#prerequisites) are met.
     > Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
 
 2. Go to <http://localhost:5173> and <http://localhost:8000/api/db-hello> to verify the containers are running.
+
+3. If you haven't, download the LLM model for Ollama. Downloading the model may take a while. **Only run this command if you haven't before.**
+
+    ```sh
+    docker exec -it ollama ollama pull phi3:mini
+    ```
+
+    > You only have to run this command once. The model is saved to a Docker volume (`ollama-data`).
+
+    > `docker exec -it <container name> <command>` runs the command *inside* the container.
 
 > Run `docker compose down` to shut off all containers. See [Demo clean up](#demo-clean-up).
 
@@ -116,7 +127,11 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 6. Run the scene again and refresh the web portal. Another log will be displayed on the web portal.
 
+7. Type/copy some text into the "Summarize Text" text box. Select summary length (short, medium, long) from the drop down. Click the "Summarize" button. A summary of the text will be generated.
+
 ### Data flow demonstrated
+
+#### Translation
 
 1. The Unity frontend sends an audio file which says "Hello, this is a test" as a bitstream to the backend
 
@@ -143,6 +158,26 @@ To demonstrate the connection between the containerized backend and the Unity fr
 12. The web portal displays the converation history
 
 13. Steps **1** through **12** repeated
+
+#### Summarization
+
+1. A user on the web portal enters text, selects a summary length, and clicks the "Summarize" button.
+
+2. The web portal sends the text and length preference to the backend's `/api/summarize` endpoint.
+
+3. The backend forwards the request to the `summarization-service`.
+
+4. The `summarization-service` constructs a prompt based on the desired length and text, and sends it to the `ollama` service.
+
+17. The `ollama` service uses its language model (`phi3:mini`) to generate a summary.
+
+18. The `ollama` service returns the generated summary to the `summarization-service`.
+
+19. The `summarization-service` forwards the summary back to the `backend`.
+
+20. The backend returns the summary to the web portal.
+
+21. The web portal UI updates to display the generated summary.
 
 ### Demo clean up
 

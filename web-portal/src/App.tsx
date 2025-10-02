@@ -16,6 +16,7 @@ function App() {
 
   const [textToSummarize, setTextToSummarize] = useState<string>('');
   const [summary, setSummary] = useState<string>('');
+  const [summaryLength, setSummaryLength] = useState<string>('medium');
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
@@ -43,7 +44,7 @@ function App() {
       setSummaryError("Please enter some text to summarize.");
       return;
     }
-    
+
     setIsSummarizing(true);
     setSummaryError(null);
     setSummary('');
@@ -52,7 +53,7 @@ function App() {
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToSummarize }),
+        body: JSON.stringify({ text: textToSummarize, length: summaryLength }),
       });
 
       if (!response.ok) {
@@ -85,6 +86,21 @@ function App() {
             onChange={(e) => setTextToSummarize(e.target.value)}
             placeholder="Paste or type text here to summarize..."
           />
+
+          <div className="flex items-center mt-4 space-x-4">
+            <label htmlFor="summary-length" className="font-semibold">Summary Length:</label>
+            <select
+              id="summary-length"
+              value={summaryLength}
+              onChange={(e) => setSummaryLength(e.target.value)}
+              className="bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="short">Short</option>
+              <option value="medium">Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+
           <button
             onClick={handleSummarize}
             disabled={isSummarizing}
