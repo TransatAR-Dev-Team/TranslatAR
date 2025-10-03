@@ -12,7 +12,7 @@
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2023.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
+    - Unity version `2022.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
 
 - For Unity, Windows or Apple silicon Mac machine.
 
