@@ -87,7 +87,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
 4. Locate this repository in your file system and select the `unity` directory
 
-5.  Download Unity version `2023.3.62f1` from the pop up. It should be the recommended version. 
+5.  Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version. 
 
 6. In the pop up, select *Android build support* and all subitems to be installed as well.
 
