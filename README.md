@@ -185,9 +185,82 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 2. Run `docker compose down` to shut off Docker containers.
 
-
 ## Testing
 
 Run `docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner` to run all tests. 
 
 See the `README.md` within each container for information on running tests locally.
+
+## Developer Guide
+
+While Docker provides a consistent environment for running the application, you may need to run services locally for tasks like managing dependencies or running tests without Docker. The Python-based services (`backend`, `stt-service`, `translation-service`, `summarization-service`) follow a common development workflow.
+
+> The following instructions are for macOS/Linux. Windows users, you're out of luck (edit this doc after you figure it out).
+
+### Prerequisites for Local Python Development
+
+- **Python Installation**: Each service's `README.md` specifies the required Python version. To manage multiple Python versions, consider using a tool like `pyenv`.
+  - **On Ubuntu/Debian-based systems**, you can use the `deadsnakes` PPA:
+    ```sh
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt update
+    # Example for Python 3.11
+    sudo apt install python3.11 python3.11-venv python3.11-dev
+    ```
+  - **On macOS**, you can use Homebrew:
+    ```sh
+    # Example for Python 3.11
+    brew install python@3.11
+    ```
+
+### Setting Up a Virtual Environment
+
+It is best practice to use a virtual environment (`venv`) to manage project-specific dependencies. From within a specific service directory (e.g., `cd backend`):
+
+1.  **Create the venv** (use the correct python version for the service):
+    ```sh
+    # Example for a service requiring Python 3.11
+    python3.11 -m venv .venv
+    ```
+
+2.  **Activate it**:
+    ```sh
+    source .venv/bin/activate
+    ```
+    Your shell prompt should now indicate that you are inside the `venv`.
+
+### Managing Python Dependencies
+
+The `requirements.txt` file in each service directory is the single source of truth for its dependencies.
+
+1.  **Sync your local environment.** After activating the `venv`, ensure it is aligned with the project's requirements file:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Install or uninstall a dependency.**
+    ```bash
+    # Example install
+    pip install <package-name>
+
+    # Example uninstall
+    pip uninstall <package-name>
+    ```
+
+3.  **Update the requirements file.** After making changes, "freeze" the current state of all packages into the `requirements.txt` file.
+    ```bash
+    pip freeze > requirements.txt
+    ```
+
+4.  **Commit the updated `requirements.txt` file.**
+
+> **IMPORTANT:** The `.venv/` directory is listed in the `.gitignore` file and should **never** be committed to version control.
+
+### Running Tests Locally
+
+1.  Ensure you are inside the correct service's directory with its corresponding `venv` activated.
+
+2.  Run the tests using `pytest`:
+    ```bash
+    pytest
+    ```
