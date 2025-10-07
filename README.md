@@ -25,7 +25,7 @@
 - For GPU acceleration:
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
 
-        > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
+    > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
 
@@ -187,7 +187,9 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 ## Testing
 
-Run `docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner` to run all tests. 
+Run `docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner` to run all tests *except for Unity tests*. 
+
+See [unity/README.md](#unity/README.md) to run Unity tests.
 
 See the `README.md` within each container for information on running tests locally.
 

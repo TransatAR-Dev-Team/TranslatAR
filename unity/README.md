@@ -28,6 +28,20 @@ See the `README.md` in the root of the project for instructions on building and 
 5. In the Unity Editor, activate the XR simulator: *Meta > Meta XR Simulator > Activate*
 6. Press ▶ (Play) to run the scene
 
+## Testing
+
+This project uses the **Unity Test Framework** for running tests directly inside the Unity Editor. Tests are located in the `Assets/Tests` directory.
+
+Tests are separated into two types:
+-   **Edit Mode**: Fast-running tests for logic and utility functions that don't require a running scene.
+-   **Play Mode**: Tests that run in a scene, allowing for the testing of `MonoBehaviour`s, coroutines, and component interactions.
+
+### How to Run Tests
+
+1.  In the Unity Editor, open the Test Runner window by navigating to **Window > General > Test Runner**.
+2.  In the Test Runner window, you will see two tabs: `PlayMode` and `EditMode`.
+3.  Click on a tab and press the **Run All** button to execute all tests in that category.
+
 ## Managing Dependencies
 
 Dependencies are handled through Unity’s Package Manager.  
