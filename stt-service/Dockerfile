@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 AS base
 
 # Set non-interactive mode for package installations.
 ENV DEBIAN_FRONTEND=noninteractive
@@ -30,6 +30,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Test stage
+FROM base AS test
+COPY . .
+
+# Production stage
+FROM base AS production
 # Copy the rest of the application code
 COPY . .
 

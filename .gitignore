@@ -4,6 +4,7 @@
 # Python garbage
 *venv/
 __pycache__/
+.pytest_cache/
 
 # VSCode settings
 .vscode/

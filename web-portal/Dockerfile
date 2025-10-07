@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:22-slim AS base
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -9,7 +9,16 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the rest of your application's code
+# Test stage
+FROM base AS test
+
+COPY . .
+
+CMD ["npm", "test", "--", "--run"]
+
+# Dev stage
+FROM base
+
 COPY . .
 
 # Expose the Vite development server port

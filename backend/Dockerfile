@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+# base stage
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
@@ -10,6 +11,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the backend code
 COPY . .
 
+# testing stage
+FROM base AS test
+COPY . .
+
+# prod stage
+FROM base AS production
+COPY . . 
 EXPOSE 8000
 
 # Run app

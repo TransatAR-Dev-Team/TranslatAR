@@ -3,16 +3,16 @@
 ## Prerequisites
 
 - About 50 GB of free space. This is for:
-    - Docker Desktop
-    - Docker images
-    - Ollama LLM model
-    - Unity Hub
-    - Unity Editor
+  - Docker Desktop
+  - Docker images
+  - Ollama LLM model
+  - Unity Hub
+  - Unity Editor
 
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2022.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
+  - Unity version `2022.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
 
 - For Unity, Windows or Apple silicon Mac machine.
 
@@ -21,13 +21,13 @@
     > A physical Meta Quest 3 will run the Unity app regardless of your machine.
 
 <a id="gpu"></a>
+
 - For GPU acceleration:
-  -  a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
+  - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
 
         > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
-
 
 ## Set Up
 
@@ -36,7 +36,7 @@
 First, ensure all [prerequisites](#prerequisites) are met.
 
 1. Clone this repository and set working directory to project directory:
-    
+
     ```sh
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git ; cd TranslatAR
     ```
@@ -184,3 +184,10 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. Press the "Stop" button (`⏹`) next to the "Play" button to stop the scene.
 
 2. Run `docker compose down` to shut off Docker containers.
+
+
+## Testing
+
+Run `docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner` to run all tests. 
+
+See the `README.md` within each container for information on running tests locally.

@@ -12,11 +12,13 @@ This directory contains the frontend web portal for the TranslatAR project. It's
 
 - [Tailwind CSS](https://tailwindcss.com/): A CSS framework for rapidly building custom user interfaces without writing custom CSS.
 
+- [Vitest](https://vitest.dev/): Vite-native test framework.
+
 - [Docker](https://www.docker.com/): A containerization tool, allowing it to run in an isolated and consistent environment across any machine and to be easily depoloyed to production.
 
 ## Getting Started
 
-See more detail in `README.md` in the root of the project for instructions on building and runnning the entire project. 
+See more detail in `README.md` in the root of the project for instructions on building and runnning the entire project.
 
 ## Managing Dependencies
 
@@ -61,3 +63,13 @@ The easiest and recommended way to add or update dependencies is as follows:
     > **IMPORTANT:** The `node_modules/` directory ***should never be committed.*** We use `git` keep track of the dendency lists, not the dependencies themselves. This will keep our repository as small and portable as possible.
 
 This ensures that when another developer (or the Docker build process) runs `npm install`, they will get the exact same dependency tree you have. 
+
+## Local Testing
+
+1. Ensure you have Node.js (and therefore `npm`) [installed](https://nodejs.org/en/download).
+
+2. Run the tests:
+
+    ```bash
+    npm test
+    ```

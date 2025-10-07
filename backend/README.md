@@ -15,7 +15,7 @@ See the `README.md` in the root of the project for instructions on building and 
 
 ### Prerequisites
 
-Python 3.11 must be installed on your system before managing dependencies locally. If you're not altering dependencies, this isn't needed.
+Python 3.11 must be installed on your system before running tests or managing dependencies locally. If you're not altering dependencies, this isn't needed.
 
 * On Ubuntu/Debian-based systems, you can use Dead Snakes to install it:
     ```sh
@@ -29,17 +29,9 @@ Python 3.11 must be installed on your system before managing dependencies locall
     ```
 * Windows makes everything harder. This is no different.
 
-## Managing Dependencies
-
-A benefit of Docker is that you can run the backend without a local Python installation. However, when managing dependencies (adding, removing, updating, etc.), it is more stable and reliable to use a local Python virtual environment (`venv`).
-
-Using a local `venv` ensures the `requirements.txt` file—the single source of truth for the project's dependencies—is updated correctly.
-
-The easiest and recommended way to add or update dependencies is as follows:
-
 > The following instructions are for macOS/Linux. Windows users, you're on your own.
 
-1.  **Create and activate a virtual environment.** From this directory, run:
+**Create and activate a virtual environment.** From this directory, run:
     ```sh
     # Create the venv
     python3.11 -m venv .venv
@@ -54,6 +46,26 @@ The easiest and recommended way to add or update dependencies is as follows:
     # Inside the venv:
     /path/to/repo/TranslatAR/backend/.venv/bin/pip
     ```
+
+## Managing Dependencies
+
+A benefit of Docker is that you can run the backend without a local Python installation. However, when managing dependencies (adding, removing, updating, etc.), it is more stable and reliable to use a local Python virtual environment (`venv`).
+
+Using a local `venv` ensures the `requirements.txt` file—the single source of truth for the project's dependencies—is updated correctly.
+
+The easiest and recommended way to add or update dependencies is as follows:
+
+1.  **Ensure you are within a venv running Python 3.11**. While the venv is activated, this command:
+
+    ```bash
+    python --version
+    ```
+
+    Should output:
+
+    ```log
+    Python 3.11.XX # XX is a revision number
+    ``` 
 
 2.  **Sync your local environment.** Before adding a new package, ensure your `venv` is aligned with the project's requirements file.
     ```bash
@@ -89,3 +101,29 @@ The easiest and recommended way to add or update dependencies is as follows:
     > `.venv` and `__pycache__/` can be safely deleted after committing: `rm -rf .venv __pycache__/`.
 
 This process ensures that when another developer (or the Docker build process) installs dependencies, they will get the exact same versions you used.
+
+## Local Testing
+
+1.  **Ensure you are within a venv running Python 3.11**. While the venv is activated, this command:
+
+    ```bash
+    python --version
+    ```
+
+    Should output:
+
+    ```log
+    Python 3.11.XX # XX is an arbitrary revision number
+    ``` 
+
+
+2.  **Sync your local environment.** Before running tests, ensure your `venv` is aligned with the project's requirements file.
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. Run the tests:
+
+    ```bash
+    pytest
+    ```
