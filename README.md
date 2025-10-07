@@ -258,9 +258,15 @@ The `requirements.txt` file in each service directory is the single source of tr
 
 ### Running Tests Locally
 
-1.  Ensure you are inside the correct service's directory with its corresponding `venv` activated.
+1. Ensure you are inside the correct service's directory with its corresponding `venv` activated.
 
-2.  Run the tests using `pytest`:
+2. Ensure all dependencies are installed.
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. Run the tests using `pytest`:
     ```bash
     pytest
     ```
