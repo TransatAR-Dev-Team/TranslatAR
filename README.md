@@ -25,7 +25,7 @@
 - For GPU acceleration:
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
 
-        > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
+    > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
 
@@ -49,9 +49,9 @@ First, ensure all [prerequisites](#prerequisites) are met.
     # This runs everything on your CPU
     docker compose up --build -d
     ```
-   
+
     Or, to use GPU acceleration for STT and Ollama:
-    
+
     ```sh
     # This layers the GPU config on top of the base config and enables GPU acceleration
     docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
@@ -59,7 +59,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
     > ***Only*** use the GPU acceleration command if you have an CUDA-capable NVIDIA GPU and NVIDIA Conainer Toolkit installed. [Read more here](#gpu).
 
-    > Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
+    Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
 
 2. Go to <http://localhost:5173> and <http://localhost:8000/api/db-hello> to verify the containers are running.
 
@@ -87,7 +87,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
 4. Locate this repository in your file system and select the `unity` directory
 
-5.  Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version. 
+5. Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version. 
 
 6. In the pop up, select *Android build support* and all subitems to be installed as well.
 
@@ -108,11 +108,11 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene
 
 2. A pop up with the head set simulator should appear.
-   
+
    > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras. 
 
    There should be text on the simulator screen reading: *"Hola, esto es una prueba."*, which is "Hello, this is a test" in Spanish.
-   
+
    Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
 3. Open the Unity console by selecting `Window > General > Console`, or press `Ctrl` + `Shift` + `C`
@@ -169,15 +169,15 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 4. The `summarization-service` constructs a prompt based on the desired length and text, and sends it to the `ollama` service.
 
-17. The `ollama` service uses its language model (`phi3:mini`) to generate a summary.
+5. The `ollama` service uses its language model (`phi3:mini`) to generate a summary.
 
-18. The `ollama` service returns the generated summary to the `summarization-service`.
+6. The `ollama` service returns the generated summary to the `summarization-service`.
 
-19. The `summarization-service` forwards the summary back to the `backend`.
+7. The `summarization-service` forwards the summary back to the `backend`.
 
-20. The backend returns the summary to the web portal.
+8. The backend returns the summary to the web portal.
 
-21. The web portal UI updates to display the generated summary.
+9. The web portal UI updates to display the generated summary.
 
 ### Demo clean up
 
@@ -187,7 +187,9 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 ## Testing
 
-Run `docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner` to run all tests. 
+Run `docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner` to run all tests *except for Unity tests*.
+
+See [Unity tests instructions](./unity/README.md#testing) to run Unity tests.
 
 See the `README.md` within each container for information on running tests locally.
 
@@ -201,13 +203,16 @@ While Docker provides a consistent environment for running the application, you 
 
 - **Python Installation**: Each service's `README.md` specifies the required Python version. To manage multiple Python versions, consider using a tool like `pyenv`.
   - **On Ubuntu/Debian-based systems**, you can use the `deadsnakes` PPA:
+
     ```sh
     sudo add-apt-repository ppa:deadsnakes/ppa
     sudo apt update
     # Example for Python 3.11
     sudo apt install python3.11 python3.11-venv python3.11-dev
     ```
-  - **On macOS**, you can use Homebrew:
+
+  - **On macOS**, you can use [Homebrew](https://brew.sh/):
+
     ```sh
     # Example for Python 3.11
     brew install python@3.11
@@ -217,28 +222,33 @@ While Docker provides a consistent environment for running the application, you 
 
 It is best practice to use a virtual environment (`venv`) to manage project-specific dependencies. From within a specific service directory (e.g., `cd backend`):
 
-1.  **Create the venv** (use the correct python version for the service):
+1. **Create the venv** (use the correct python version for the service):
+
     ```sh
     # Example for a service requiring Python 3.11
     python3.11 -m venv .venv
     ```
 
-2.  **Activate it**:
+2. **Activate it**:
+
     ```sh
     source .venv/bin/activate
     ```
+
     Your shell prompt should now indicate that you are inside the `venv`.
 
 ### Managing Python Dependencies
 
 The `requirements.txt` file in each service directory is the single source of truth for its dependencies.
 
-1.  **Sync your local environment.** After activating the `venv`, ensure it is aligned with the project's requirements file:
+1. **Sync your local environment.** After activating the `venv`, ensure it is aligned with the project's requirements file:
+
     ```bash
     pip install -r requirements.txt
     ```
 
-2.  **Install or uninstall a dependency.**
+2. **Install or uninstall a dependency.**
+
     ```bash
     # Example install
     pip install <package-name>
@@ -247,18 +257,19 @@ The `requirements.txt` file in each service directory is the single source of tr
     pip uninstall <package-name>
     ```
 
-3.  **Update the requirements file.** After making changes, "freeze" the current state of all packages into the `requirements.txt` file.
+3. **Update the requirements file.** After making changes, "freeze" the current state of all packages into the `requirements.txt` file.
+
     ```bash
     pip freeze > requirements.txt
     ```
 
-4.  **Commit the updated `requirements.txt` file.**
+4. **Commit the updated `requirements.txt` file.**
 
 > **IMPORTANT:** The `.venv/` directory is listed in the `.gitignore` file and should **never** be committed to version control.
 
 ### Running Tests Locally
 
-1. Ensure you are inside the correct service's directory with its corresponding `venv` activated.
+1. Ensure you are inside the correct service's directory with its corresponding `venv` activated (see [Managing Python Dependencies](#managing-python-dependencies)).
 
 2. Ensure all dependencies are installed.
 
@@ -267,6 +278,7 @@ The `requirements.txt` file in each service directory is the single source of tr
     ```
 
 3. Run the tests using `pytest`:
+
     ```bash
     pytest
     ```
