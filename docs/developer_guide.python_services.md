@@ -26,7 +26,7 @@ This guide provides common instructions for setting up and managing the Python-b
 
     - **On Windows**, you can use [pyenv-win](https://github.com/pyenv-win/pyenv-win).
 
-2. **Poetry**: You must have Poetry installed. Follow the [official installation guide](https://python-poetry.org/docs/#installation), which provides a simple command for most systems.
+2. **Poetry**: You must have the Python package manager [Poetry installed](https://python-poetry.org/docs/#installation).
 
 ## Local Testing
 
@@ -66,20 +66,27 @@ This workflow applies to every Python service in this repository.
 
 2. **Install Project Dependencies.** To add or remove packages, run the following commands from the service's root directory.
 
+    Add a new production dependency:
+
     ```bash
-    # Example: Add a new dependency
-    poetry add httpx
+    poetry add <package-name>
+    ```
 
-    # Example: Add a development-only dependency (e.g., a linter)
-    poetry add --group dev black
+    Add a development-only dependency (e.g., a linter, test dependencies):
+    
+    ```sh
+    poetry add --group dev <package-name>
+    ```
 
-    # Example: Remove a dependency
-    poetry remove httpx
+    Remove a dependency:
+
+    ```sh
+    poetry remove <package-name>
     ```
 
 3. **Commit Your Changes.** After you have modified dependencies, the `pyproject.toml` and `poetry.lock` files must be committed. These two files are the single source of truth for the project's dependencies.
 
     ```sh
     git add pyproject.toml poetry.lock
-    git commit -m "commit message"
+    git commit -m "<commit message>"
     ```

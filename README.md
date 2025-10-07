@@ -25,7 +25,7 @@
 - For GPU acceleration:
   - a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
 
-        > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
+    > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
 
@@ -61,7 +61,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
     > ***Only*** use the GPU acceleration command if you have an CUDA-capable NVIDIA GPU and NVIDIA Conainer Toolkit installed. [Read more here](#gpu).
 
-    > Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
+    Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
 
 2. Go to <http://localhost:5173> and <http://localhost:8000/api/db-hello> to verify the containers are running.
 
@@ -89,7 +89,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
 4. Locate this repository in your file system and select the `unity` directory
 
-5.  Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version. 
+5. Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version.
 
 6. In the pop up, select *Android build support* and all subitems to be installed as well.
 
@@ -114,16 +114,16 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene.
 
 2. A pop up with the headset simulator should appear.
-   
-   > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras. 
+
+   > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras.
 
    The text on the simulator screen will prompt you: *"Press and hold (B) or Left Click to record."*.
-   
+
    Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
 3. **Click your mouse inside the simulator window** to give it focus.
 
-4. **Press and hold the Left Mouse Button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
+4. **Press and hold the `B` button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
 
 5. **Release the Left Mouse Button**. The text will change to *"Processing audio..."*.
 
@@ -193,13 +193,17 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 ## Testing
 
-This project includes a suite of automated tests to ensure the stability and correctness of each microservice.
+### Testing Docker Containers
 
-### Running All Tests with Docker
+To run all tests *except for Unity tests*, use:
 
-The easiest way to run all backend and frontend tests is by using the dedicated Docker Compose file for testing. This command will build the `test` stage of each service, run its test suite in parallel, and then automatically shut down and clean up.
+```sh
+docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner
+```
 
-From the root of the project, run:
+This will build the `test` stage of each service, run its test suite in parallel, and then automatically shut down and clean up.
+
+See [Unity testing instructions](./unity/README.md#testing) to run Unity tests.
 
 ```sh
 docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner
@@ -211,5 +215,6 @@ For rapid development and debugging, you can run tests for individual services o
 
 Instructions for each service can be found at the links below:
 
-- **Web Portal (`web-portal`)**: [`./web-portal/README.md`](./web-portal/README.md#local-testing)
-- **Python Services (`backend`, `stt-service`, `summarization-service`, and `translation-service`)**: [`developer_guide.python_services.md`](./docs/developer_guide.python_services.md#local-testing)
+- [Web Portal (`web-portal`)](./web-portal/README.md#local-testing)
+- [Python Services (`backend`, `stt-service`, `summarization-service`, and `translation-service`)](./docs/developer_guide.python_services.md#local-testing)
+- [Unity (`unity`)](./unity/README.md#testing)
