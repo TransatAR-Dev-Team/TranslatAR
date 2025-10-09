@@ -6,6 +6,8 @@ import motor.motor_asyncio
 from pydantic import BaseModel
 from datetime import datetime, timezone
 
+from websocket import router as websocket_router
+
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
@@ -21,6 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- WebSocket Router ---
+app.include_router(websocket_router)
 
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://mongodb:27017")
