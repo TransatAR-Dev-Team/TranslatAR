@@ -99,6 +99,10 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
     > Leaving *Meta XR Simulator* set to *Deactivate* only renders the subtitle box in 2D and saves resources.
 
+10. Ensure the "Laptop" button next to the transpot buttons is blue. This runs the app on the headset simulator. Example:
+
+    ![Laptop button is selected/blue](docs/images/laptop_button.png)
+
 ## Demo
 
 ### Running the demo
