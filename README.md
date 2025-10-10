@@ -109,59 +109,59 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
 To demonstrate the connection between the containerized backend and the Unity frontend, first ensure all [Set Up](#set-up) steps are completed.
 
-1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene
+1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene.
 
-2. A pop up with the head set simulator should appear.
+2. A pop up with the headset simulator should appear.
    
    > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras. 
 
-   There should be text on the simulator screen reading: *"Hola, esto es una prueba."*, which is "Hello, this is a test" in Spanish.
+   The text on the simulator screen will prompt you: *"Press and hold (B) or Left Click to record."*.
    
    Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
-3. Open the Unity console by selecting `Window > General > Console`, or press `Ctrl` + `Shift` + `C`
+3. **Click your mouse inside the simulator window** to give it focus.
 
-4. Observe the log. If everything has gone right, there will be an entry that reads:
+4. **Press and hold the Left Mouse Button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
 
-    ```log
-    Received from backend: {"original_text": "Hello, this is a test", "translated_text": "Hola, esto es una prueba."}
-    ```
+5. **Release the Left Mouse Button**. The text will change to *"Processing audio..."*.
 
-5. Go to <http://localhost:5173> to see the web portal. The translation log will be displayed.
+6. After a moment, the text will update with the Spanish translation of what you said.
 
-6. Run the scene again and refresh the web portal. Another log will be displayed on the web portal.
+7. Go to <http://localhost:5173> to see the web portal. The new translation you just created will be at the top of the history log.
 
-7. Type/copy some text into the "Summarize Text" text box. Select summary length (short, medium, long) from the drop down. Click the "Summarize" button. A summary of the text will be generated.
+8. Repeat steps 4-6 to add more translations. Refresh the web portal to see the history update.
+
+9. Type/copy some text into the "Summarize Text" text box on the web portal. Select a summary length (short, medium, long) and click the "Summarize" button. A summary of the text will be generated.
 
 ### Data flow demonstrated
 
 #### Translation
 
-1. The Unity frontend sends an audio file which says "Hello, this is a test" as a bitstream to the backend
+1. The user presses and holds a button in the Unity frontend.
 
-2. The backend sends the audio file to the STT service
+2. Unity captures live audio from the microphone into an audio clip.
 
-3. The STT service processes audio using the Whisper model and return transcribed text to the backend
+3. When the user releases the button, Unity converts the audio clip to a WAV byte stream and sends it to the backend.
 
-4. The backend sends transcribed text to translation service
+4. The backend forwards the audio file to the STT service.
 
-5. The translation service sends translated text to the backend 
+5. The STT service processes the audio using the Whisper model and returns the transcribed text to the backend.
 
-6. The backend saves the log to the database
+6. The backend sends the transcribed text to the translation service.
 
-7. The backend returns the transcribed text and the translated text to Unity
+7. The translation service returns the translated text to the backend.
 
-8. Unity receives the response, logs the message in the console, and displays the translation in the UI
+8. The backend saves the original text, translated text, and languages to the database.
 
-9. The web portal makes a request to view the translation history
+9. The backend returns the original and translated text to the Unity frontend.
 
-10. The backend fetches the conversation history from the database
+10. Unity receives the response and displays the translated text in the UI.
 
-11. The backend returns the conversation history to the web portal
+11. The web portal periodically or manually requests the translation history from the backend.
 
-12. The web portal displays the converation history
+12. The backend fetches the conversation history from the database and returns it to the web portal.
 
-13. Steps **1** through **12** repeated
+13. The web portal displays the updated conversation history.
 
 #### Summarization
 
@@ -173,15 +173,15 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 4. The `summarization-service` constructs a prompt based on the desired length and text, and sends it to the `ollama` service.
 
-17. The `ollama` service uses its language model (`phi3:mini`) to generate a summary.
+5. The `ollama` service uses its language model (`phi3:mini`) to generate a summary.
 
-18. The `ollama` service returns the generated summary to the `summarization-service`.
+6. The `ollama` service returns the generated summary to the `summarization-service`.
 
-19. The `summarization-service` forwards the summary back to the `backend`.
+7. The `summarization-service` forwards the summary back to the `backend`.
 
-20. The backend returns the summary to the web portal.
+8. The backend returns the summary to the web portal.
 
-21. The web portal UI updates to display the generated summary.
+9. The web portal UI updates to display the generated summary.
 
 ### Demo clean up
 
