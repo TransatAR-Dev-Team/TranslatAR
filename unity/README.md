@@ -12,7 +12,7 @@ This directory contains the Unity frontend for the TranslatAR project. It is a V
 ## Prerequisites
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-- Unity version `2023.3.62f1` with **Android Build Support** (and subcomponents) installed
+- Unity version `2022.3.62f1` with **Android Build Support** (and subcomponents) installed
 - Windows PC or Apple Silicon Mac
   > Not supported on Linux or Intel Macs  
 - A physical Meta Quest 3 headset, or use the **Meta XR Simulator** in the Unity Editor
