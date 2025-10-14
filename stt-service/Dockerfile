@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 AS base
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 
 # Set non-interactive mode for package installations.
 ENV DEBIAN_FRONTEND=noninteractive
@@ -20,8 +20,24 @@ RUN apt-get -y install libcudnn9-cuda-12 libcudnn9-dev-cuda-12
 # Install Python and Pip
 RUN apt-get install -y --no-install-recommends \
     python3.10 \
+    python3.10-dev \
     python3-pip && \
     rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
+    ca-certificates \
+    pkg-config \
+    ffmpeg \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavutil-dev \
+    libavfilter-dev \
+    libswscale-dev \
+    libswresample-dev
 
 # Set the working directory
 WORKDIR /app
@@ -30,12 +46,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Test stage
-FROM base AS test
-COPY . .
-
-# Production stage
-FROM base AS production
 # Copy the rest of the application code
 COPY . .
 
