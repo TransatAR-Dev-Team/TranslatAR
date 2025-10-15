@@ -190,3 +190,26 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. Press the "Stop" button (`⏹`) next to the "Play" button to stop the scene.
 
 2. Run `docker compose down` to shut off Docker containers.
+
+## Testing
+
+This project includes a suite of automated tests to ensure the stability and correctness of each microservice.
+
+### Running All Tests with Docker
+
+The easiest way to run all backend and frontend tests is by using the dedicated Docker Compose file for testing. This command will build the `test` stage of each service, run its test suite in parallel, and then automatically shut down and clean up.
+
+From the root of the project, run:
+
+```sh
+docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner
+```
+
+### Running Tests Locally
+
+For rapid development and debugging, you can run tests for individual services on your local machine. Before running tests, you must navigate to the service's directory and install its dependencies.
+
+Instructions for each service can be found at the links below:
+
+- **Web Portal (`web-portal`)**: [`./web-portal/README.md`](./web-portal/README.md#local-testing)
+- **Python Services (`backend`, `stt-service`, `summarization-service`, and `translation-service`)**: [`developer_guide.python_services.md`](./docs/developer_guide.python_services.md#local-testing)

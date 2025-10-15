@@ -32,13 +32,20 @@ This guide provides common instructions for setting up and managing the Python-b
 
 1. Ensure [prerequisites](#prerequisites) are met.
 
-2. Install all dependencies:
+2. `cd` into the service's directory.
+
+    ```sh
+    # For example:
+    cd backend
+    ```
+
+3. Install all dependencies:
 
     ```sh
     poetry install
     ```
 
-3. Run the tests:
+4. Run the tests:
 
     ```sh
     poetry run pytest -v

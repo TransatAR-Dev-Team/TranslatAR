@@ -1,0 +1,80 @@
+services:
+  test_runner:
+    image: alpine:latest
+    command: echo "All tests passed!"
+    depends_on:
+      backend_test:
+        condition: service_completed_successfully
+      stt_test:
+        condition: service_completed_successfully
+      translation_test:
+        condition: service_completed_successfully
+      summarization_test:
+        condition: service_completed_successfully
+      web_portal_test:
+        condition: service_completed_successfully
+
+  backend_test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mongodb_test
+    command: ["pytest", "-v"]
+
+  stt_test:
+    build:
+      context: ./stt-service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./stt-service:/app
+    command: ["pytest", "-v"]
+
+  translation_test:
+    build:
+      context: ./translation-service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./translation-service:/app
+    command: ["pytest", "-v"]
+
+  summarization_test:
+    build:
+      context: ./summarization-service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./summarization-service:/app
+    command: ["pytest", "-v"]
+
+  web_portal_test:
+    build:
+      context: ./web-portal
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./web-portal:/app
+    command: ["npm", "test", "--", "--run"]
+    depends_on:
+      # This condition ensures that this service only starts
+      # after the others have completed successfully.
+      backend_test:
+        condition: service_completed_successfully
+      stt_test:
+        condition: service_completed_successfully
+      translation_test:
+        condition: service_completed_successfully
+      summarization_test:
+        condition: service_completed_successfully
+
+  mongodb_test:
+    container_name: mongodb_test
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    command: mongod --quiet --logpath /dev/null
