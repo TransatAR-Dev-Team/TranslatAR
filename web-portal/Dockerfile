@@ -1,19 +1,22 @@
-FROM node:22-slim
-
-# Set the working directory inside the container
+# Base stage installs prod dependencies
+FROM node:22-slim AS base
 WORKDIR /app
 
-# Copy package.json and package-lock.json (or yarn.lock)
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies
+RUN npm install --production
+
+# Test stage installs dev dependencies runs the tests
+FROM base AS test
 RUN npm install
-
-# Copy the rest of your application's code
 COPY . .
+CMD ["npm", "test"]
 
-# Expose the Vite development server port
+# Development stage
+FROM base
+RUN npm install
+COPY . .
 EXPOSE 5173
-
-# The command to start the Vite development server
 CMD ["npm", "run", "dev"]
