@@ -15,7 +15,12 @@ dependencies = [
     "httpx (>=0.28.1,<0.29.0)",
     "python-dotenv (>=1.1.1,<2.0.0)",
     "python-multipart (>=0.0.20,<0.0.21)",
+<<<<<<< Updated upstream
     "uvicorn (>=0.37.0,<0.38.0)"
+=======
+    "uvicorn (>=0.37.0,<0.38.0)",
+    "websocket (>=0.2.1,<0.3.0)",
+>>>>>>> Stashed changes
 ]
 
 
