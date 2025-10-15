@@ -13,4 +13,4 @@ This directory contains the translation microservice for the TranslatAR project.
 
 See the `README.md` in the root of the project for instructions on building and running the entire project.
 
-For details on managing Python dependencies and setting up a local development environment, please see the [Python Services - Development Guide](../docs/developer_guide.python_services.md).
+For details on managing Python dependencies and setting up a local testing environment, please see the [Python Services - Development Guide](../docs/developer_guide.python_services.md).

@@ -4,7 +4,7 @@ This guide provides common instructions for setting up and managing the Python-b
 
 ## Prerequisites
 
-1. A specific version of Python is required for local development and dependency management for each service. Please refer to the service's specific `README.md` to ensure you have the correct version installed (`stt-service` uses `3.10`, all others use `3.11`).
+1. A specific version of Python is required for local testing and dependency management for each service. Please refer to the service's specific `README.md` to ensure you have the correct version installed (`stt-service` uses `3.10`, all others use `3.11`).
 
     If you do not have the required version, you can use the following methods:
 
@@ -27,6 +27,22 @@ This guide provides common instructions for setting up and managing the Python-b
     - **On Windows**, you can use [pyenv-win](https://github.com/pyenv-win/pyenv-win).
 
 2. **Poetry**: You must have Poetry installed. Follow the [official installation guide](https://python-poetry.org/docs/#installation), which provides a simple command for most systems.
+
+## Local Testing
+
+1. Ensure [prerequisites](#prerequisites) are met.
+
+2. Install all dependencies:
+
+    ```sh
+    poetry install
+    ```
+
+3. Run the tests:
+
+    ```sh
+    poetry run pytest -v
+    ```
 
 ## Managing Dependencies with Poetry
 
@@ -58,5 +74,5 @@ This workflow applies to every Python service in this repository.
 
     ```sh
     git add pyproject.toml poetry.lock
-    git commit -m "feat: Add httpx dependency"
+    git commit -m "commit message"
     ```
