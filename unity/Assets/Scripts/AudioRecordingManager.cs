@@ -9,17 +9,19 @@ using UnityEngine.Android;
 public class AudioRecordingManager : MonoBehaviour
 {
     [Header("Recording Settings")]
-    public float chunkDurationSeconds = 1.5f; // Send chunks every 1.5 seconds
-    public int targetSampleRate = 44100; // CD quality for better transcription
+    public float chunkDurationSeconds = 8f; // Send chunks every 1.5 seconds
+    public int targetSampleRate = 48000;
     public float silenceThreshold = 0.01f; // Minimum volume to consider as speech (adjust if needed)
+    public float chunkOverlapSeconds = 0.5f; // Add overlap to avoid cutting words
 
     private bool isRecording = false;
     private bool permissionGranted = false;
     private AudioClip recordingClip;
     private int lastSamplePosition = 0;
     private float chunkTimer = 0f;
+    private int overlapSamples = 0;
 
-    private const int maxRecordingLength = 10; // 10 second circular buffer
+    private const int maxRecordingLength = 30; // 10 second circular buffer
 
     void Start()
     {
@@ -35,6 +37,8 @@ public class AudioRecordingManager : MonoBehaviour
 #else
         permissionGranted = true;
 #endif
+
+        overlapSamples = (int)(chunkOverlapSeconds * targetSampleRate);
     }
 
     void Update()
@@ -98,18 +102,6 @@ public class AudioRecordingManager : MonoBehaviour
         // Start continuous recording into circular buffer
         recordingClip = Microphone.Start(null, true, maxRecordingLength, targetSampleRate);
 
-        // Wait for microphone to start
-        StartCoroutine(WaitForMicrophoneStart());
-    }
-
-    IEnumerator WaitForMicrophoneStart()
-    {
-        // Wait until microphone starts recording
-        while (Microphone.GetPosition(null) <= 0)
-        {
-            yield return null;
-        }
-        Debug.Log("Microphone active, sending chunks...");
     }
 
     void StopRecording()
@@ -143,17 +135,18 @@ public class AudioRecordingManager : MonoBehaviour
 
         int samplesAvailable = currentPosition - lastSamplePosition;
 
-        // Skip if not enough data
-        if (samplesAvailable < targetSampleRate * 0.5f) // at least 0.5 seconds
+        if (samplesAvailable < targetSampleRate * 2.0f) // At least 2 seconds
         {
             return;
         }
 
-        // Extract audio chunk
-        float[] samples = new float[samplesAvailable * recordingClip.channels];
-        recordingClip.GetData(samples, lastSamplePosition % recordingClip.samples);
+        // Include overlap from previous chunk to avoid word cutting
+        int startPosition = Mathf.Max(0, (lastSamplePosition - overlapSamples) % recordingClip.samples);
+        int totalSamples = samplesAvailable + overlapSamples;
 
-        // Check if chunk contains actual speech (not just silence)
+        float[] samples = new float[totalSamples * recordingClip.channels];
+        recordingClip.GetData(samples, startPosition);
+
         if (!HasSufficientVolume(samples))
         {
             Debug.Log("Skipping silent chunk");
@@ -161,22 +154,21 @@ public class AudioRecordingManager : MonoBehaviour
             return;
         }
 
-        // Convert to 16-bit PCM WAV
+        // Convert to WAV
         byte[] wavData = ConvertSamplesToWav(samples, targetSampleRate, recordingClip.channels);
 
-        // Send via WebSocket
         if (WebSocketManager.Instance != null)
         {
             WebSocketManager.Instance.SendAudioChunk(wavData);
         }
 
-        // Update position
+        // Update position (not including overlap for next chunk)
         lastSamplePosition = currentPosition % recordingClip.samples;
     }
 
     bool HasSufficientVolume(float[] samples)
     {
-        // Calculate RMS (Root Mean Square) volume
+        // Calculate RMS
         float sum = 0f;
         for (int i = 0; i < samples.Length; i++)
         {
@@ -184,9 +176,19 @@ public class AudioRecordingManager : MonoBehaviour
         }
         float rms = Mathf.Sqrt(sum / samples.Length);
 
-        Debug.Log($"Audio RMS: {rms:F4} (threshold: {silenceThreshold:F4})");
+        // Also check peak amplitude
+        float maxAmplitude = 0f;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float abs = Mathf.Abs(samples[i]);
+            if (abs > maxAmplitude) maxAmplitude = abs;
+        }
 
-        return rms > silenceThreshold;
+        bool hasVolume = rms > silenceThreshold && maxAmplitude > silenceThreshold * 2;
+
+        Debug.Log($"Audio RMS: {rms:F4}, Peak: {maxAmplitude:F4}, HasSpeech: {hasVolume}");
+
+        return hasVolume;
     }
 
     public static byte[] ConvertSamplesToWav(float[] samples, int sampleRate, int channels)
