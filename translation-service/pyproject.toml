@@ -1,0 +1,19 @@
+[project]
+name = "translation-service"
+version = "0.1.0"
+description = "Translation Microservice for TranslatAR"
+authors = [
+    {name = "TranslatAR Dev Team"}
+]
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+    "fastapi (>=0.119.0,<0.120.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "uvicorn (>=0.37.0,<0.38.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

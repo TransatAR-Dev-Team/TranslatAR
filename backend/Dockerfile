@@ -2,10 +2,20 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Install poetry
+RUN pip install poetry
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Configure poetry to not create a virtualenv
+RUN poetry config virtualenvs.create false
+
+# Copy dependency definition files
+COPY pyproject.toml poetry.lock* ./
+
+# Install dependencies using Poetry
+# --no-interaction: Do not ask any interactive questions
+# --no-ansi: Disable ANSI output
+# --no-root: Do not install the project itself
+RUN poetry install --no-interaction --no-ansi --no-root
 
 # Copy the rest of the backend code
 COPY . .
