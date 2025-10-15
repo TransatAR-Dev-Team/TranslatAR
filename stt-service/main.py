@@ -39,9 +39,6 @@ app = FastAPI(lifespan=lifespan)
 
 @app.post("/transcribe")
 async def transcribe_audio(audio_file: UploadFile = File(...)):
-    """
-    Accepts an audio file and returns the transcription.
-    """
     if "whisper_model" not in ml_models:
         raise HTTPException(status_code=503, detail="Model is not loaded or ready.")
 
@@ -52,11 +49,32 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):
         loop = asyncio.get_event_loop()
         segments, info = await loop.run_in_executor(
             None,
-            lambda: ml_models["whisper_model"].transcribe(audio_stream)
+            lambda: ml_models["whisper_model"].transcribe(
+                audio_stream,
+                vad_filter=True,  # Enable VAD filtering
+                vad_parameters=dict(
+                    threshold=0.5,
+                    min_speech_duration_ms=250,
+                    min_silence_duration_ms=100
+                )
+            )
         )
 
         logger.info(f"Detected language '{info.language}' with probability {info.language_probability}")
-        transcription = "".join(segment.text for segment in segments)
+        
+        # Filter out segments with high no_speech probability
+        transcription_parts = []
+        for segment in segments:
+            if segment.no_speech_prob < 0.6:  # Adjust threshold as needed
+                transcription_parts.append(segment.text)
+            else:
+                logger.info(f"Skipping segment with no_speech_prob: {segment.no_speech_prob}")
+        
+        transcription = "".join(transcription_parts)
+        
+        # Return empty if no real speech detected
+        if not transcription.strip():
+            return {"transcription": ""}
         
         return {"transcription": transcription.strip()}
 
