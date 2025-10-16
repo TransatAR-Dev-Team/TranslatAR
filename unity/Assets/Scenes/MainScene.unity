@@ -856,7 +856,7 @@ GameObject:
   - component: {fileID: 1595725571}
   - component: {fileID: 1595725570}
   m_Layer: 0
-  m_Name: BackendManager
+  m_Name: WebSocketManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -874,10 +874,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 707319b702cc012469cbd526ef1f3400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  subtitleText: {fileID: 150052533}
-  testAudioClip: {fileID: 8300000, guid: e5bfcc64027552644b04bb6e87f9d7e2, type: 3}
+  websocketUrl: ws://localhost:8000/ws
   sourceLanguage: en
   targetLanguage: es
+  subtitleText: {fileID: 150052533}
 --- !u!4 &1595725571
 Transform:
   m_ObjectHideFlags: 0
@@ -1043,6 +1043,53 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!1 &1885403215
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1885403217}
+  - component: {fileID: 1885403216}
+  m_Layer: 0
+  m_Name: AudioRecordingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1885403216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1885403215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e2dd56358f3985469891c91ec4f4a63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chunkDurationSeconds: 1.5
+  targetSampleRate: 44100
+  silenceThreshold: 0.005
+--- !u!4 &1885403217
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1885403215}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -40.669285, y: 74.930405, z: 13.824202}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1999154893 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100002, guid: 126d619cf4daa52469682f85c1378b4a,
@@ -1137,3 +1184,4 @@ SceneRoots:
   - {fileID: 125368349}
   - {fileID: 1644137992}
   - {fileID: 1595725571}
+  - {fileID: 1885403217}
