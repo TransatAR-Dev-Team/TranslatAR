@@ -31,6 +31,8 @@
 
 ## Set Up
 
+> If you'd like to know how to run docker containers directly in VS Code read this [document on .devcontainer setup](docs/dev_container.md)
+
 ### Initial set up
 
 First, ensure all [prerequisites](#prerequisites) are met.
