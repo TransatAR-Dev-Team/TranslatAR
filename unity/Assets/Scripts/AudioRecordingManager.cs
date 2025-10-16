@@ -6,26 +6,74 @@ using System.Collections;
 using UnityEngine.Android;
 #endif
 
+/// <summary>
+/// Manages microphone audio recording, chunking, and transmission to the WebSocket backend.
+/// Handles permission requests, silence detection, and continuous recording with overlap.
+/// </summary>
 public class AudioRecordingManager : MonoBehaviour
 {
     [Header("Recording Settings")]
-    public float chunkDurationSeconds = 8f; // Send chunks every 1.5 seconds
-    public int targetSampleRate = 48000;
-    public float silenceThreshold = 0.01f; // Minimum volume to consider as speech (adjust if needed)
-    public float chunkOverlapSeconds = 0.5f; // Add overlap to avoid cutting words
+    /// <summary>
+    /// Duration in seconds for each audio chunk sent to the backend.
+    /// </summary>
+    public float chunkDurationSeconds = 8f;
 
+    /// <summary>
+    /// The sample rate (in Hz) used for microphone recording.
+    /// </summary>
+    public int targetSampleRate = 48000;
+
+    /// <summary>
+    /// Minimum RMS volume threshold to consider audio as containing speech rather than silence.
+    /// </summary>
+    public float silenceThreshold = 0.01f; 
+
+    /// <summary>
+    /// Duration in seconds of audio overlap between consecutive chunks to prevent word cutting.
+    /// </summary>
+    public float chunkOverlapSeconds = 0.5f; 
+
+    /// <summary>
+    /// Flag indicating whether the microphone is currently recording.
+    /// </summary>
     private bool isRecording = false;
+
+    /// <summary>
+    /// Flag indicating whether microphone permission has been granted by the user.
+    /// </summary>
     private bool permissionGranted = false;
+
+    /// <summary>
+    /// The AudioClip instance that holds the continuous microphone recording data.
+    /// </summary>    
     private AudioClip recordingClip;
+
+    /// <summary>
+    /// The sample position in the recording buffer where the last chunk ended.
+    /// </summary>
     private int lastSamplePosition = 0;
+
+    /// <summary>
+    /// Timer tracking elapsed time since the last chunk was sent.
+    /// </summary>
     private float chunkTimer = 0f;
+    
+    /// <summary>
+    /// The number of audio samples to include as overlap between chunks.
+    /// </summary>
     private int overlapSamples = 0;
 
-    private const int maxRecordingLength = 30; // 10 second circular buffer
+    /// <summary>
+    /// Maximum length in seconds for the circular recording buffer.
+    /// </summary>
+    private const int maxRecordingLength = 30;
 
+    /// <summary>
+    /// Requests microphone permission on Android and initializes overlap sample count.
+    /// </summary>
     void Start()
     {
-#if PLATFORM_ANDROID
+        #if PLATFORM_ANDROID
         if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
         {
             Permission.RequestUserPermission(Permission.Microphone);
@@ -34,21 +82,24 @@ public class AudioRecordingManager : MonoBehaviour
         {
             permissionGranted = true;
         }
-#else
+        #else
         permissionGranted = true;
-#endif
+        #endif
 
         overlapSamples = (int)(chunkOverlapSeconds * targetSampleRate);
     }
 
+    /// <summary>
+    /// Monitors button input to start/stop recording and sends audio chunks at regular intervals.
+    /// </summary>
     void Update()
     {
-#if PLATFORM_ANDROID
+        #if PLATFORM_ANDROID
         if (!permissionGranted && Permission.HasUserAuthorizedPermission(Permission.Microphone))
         {
             permissionGranted = true;
         }
-#endif
+        #endif
 
         if (!permissionGranted) return;
 
@@ -78,6 +129,9 @@ public class AudioRecordingManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Begins continuous microphone recording into a circular buffer.
+    /// </summary>
     void StartRecording()
     {
         if (isRecording) return;
@@ -104,6 +158,9 @@ public class AudioRecordingManager : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Stops microphone recording, sends any remaining audio chunk, and cleans up resources.
+    /// </summary>
     void StopRecording()
     {
         if (!isRecording) return;
@@ -121,6 +178,10 @@ public class AudioRecordingManager : MonoBehaviour
         chunkTimer = 0f; // Reset timer
     }
 
+    /// <summary>
+    /// Captures the current audio chunk from the recording buffer, checks for sufficient volume,
+    /// converts to WAV format, and sends it to the WebSocket backend.
+    /// </summary>
     void CaptureAndSendChunk()
     {
         if (recordingClip == null) return;
@@ -166,6 +227,12 @@ public class AudioRecordingManager : MonoBehaviour
         lastSamplePosition = currentPosition % recordingClip.samples;
     }
 
+    /// <summary>
+    /// Analyzes audio samples to determine if they contain sufficient volume to be considered speech.
+    /// Uses both RMS and peak amplitude thresholds.
+    /// </summary>
+    /// <param name="samples">The audio sample data to analyze.</param>
+    /// <returns>True if the audio exceeds the silence threshold; otherwise, false.</returns>
     bool HasSufficientVolume(float[] samples)
     {
         // Calculate RMS
@@ -191,6 +258,13 @@ public class AudioRecordingManager : MonoBehaviour
         return hasVolume;
     }
 
+    /// <summary>
+    /// Converts raw float audio samples to WAV file format with proper headers.
+    /// </summary>
+    /// <param name="samples">The audio sample data to convert.</param>
+    /// <param name="sampleRate">The sample rate of the audio in Hz.</param>
+    /// <param name="channels">The number of audio channels (1 for mono, 2 for stereo).</param>
+    /// <returns>A byte array containing the complete WAV file data.</returns>
     public static byte[] ConvertSamplesToWav(float[] samples, int sampleRate, int channels)
     {
         using (var memoryStream = new MemoryStream())
@@ -231,6 +305,9 @@ public class AudioRecordingManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Ensures the microphone is properly stopped when the application quits.
+    /// </summary>
     void OnApplicationQuit()
     {
         if (isRecording)

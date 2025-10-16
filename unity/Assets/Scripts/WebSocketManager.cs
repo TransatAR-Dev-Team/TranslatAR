@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using WebSocketSharp;
 using TMPro;
 
+/// <summary>
+/// Represents the expected JSON response structure from the backend's /process-audio endpoint.
+/// </summary>
 [System.Serializable]
 public class TranscriptionResponse
 {
@@ -15,14 +18,34 @@ public class TranscriptionResponse
 public class WebSocketManager : MonoBehaviour
 {
     [Header("WebSocket Settings")]
+    /// <summary>
+    /// The URL of the websocket endpoint responsible for processing audio.
+    /// </summary>
     public string websocketUrl = "ws://localhost:8000/ws";
+
+    /// <summary>
+    /// The language code (e.g., "en" for English) of the audio being recorded.
+    /// </summary>
     public string sourceLanguage = "en";
+
+    /// <summary>
+    /// The language code (e.g., "es" for Spanish) into which the audio should be translated.
+    /// </summary>
     public string targetLanguage = "es";
 
     [Header("UI References")]
+    /// <summary>
+    /// Reference to the TextMeshProUGUI component used to display subtitles to the user.
+    /// </summary>
     public TextMeshProUGUI subtitleText;
 
+    /// <summary>
+    /// The WebSocket connection instance used to communicate with the backend server.
+    /// </summary>
     private WebSocket ws;
+    /// <summary>
+    /// A flag indicating whether the websocket endpoint is connected.
+    /// </summary>
     private bool isConnected = false;
 
     // Queue for main thread execution
@@ -32,6 +55,9 @@ public class WebSocketManager : MonoBehaviour
     // Singleton pattern
     public static WebSocketManager Instance { get; private set; }
 
+    /// <summary>
+    /// Initializes the singleton instance and prevents duplicate instances across scenes.
+    /// </summary>
     void Awake()
     {
         if (Instance == null)
@@ -45,11 +71,17 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Initiates the WebSocket connection when the component starts.
+    /// </summary>
     void Start()
     {
         ConnectWebSocket();
     }
-
+    
+    /// <summary>
+    /// Processes queued actions from WebSocket callbacks on the main thread each frame.
+    /// </summary>
     void Update()
     {
         // Process queued actions on main thread
@@ -62,6 +94,9 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Establishes the WebSocket connection and configures event handlers for open, message, error, and close events.
+    /// </summary>
     void ConnectWebSocket()
     {
         try
@@ -127,6 +162,11 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sends an audio chunk to the backend with language and format metadata.
+    /// The data is packaged as: [4-byte length][JSON metadata][raw audio bytes].
+    /// </summary>
+    /// <param name="audioData">The raw audio data bytes to transmit.</param>
     public void SendAudioChunk(byte[] audioData)
     {
         if (!isConnected || ws == null || ws.ReadyState != WebSocketState.Open)
@@ -164,6 +204,11 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Parses the JSON transcription response from the backend and updates the subtitle display.
+    /// Prioritizes translated text over original text if both are present.
+    /// </summary>
+    /// <param name="json">The JSON string containing transcription results.</param>
     void HandleTranscriptionResponse(string json)
     {
         try
@@ -185,6 +230,10 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates the subtitle UI text component with the provided text.
+    /// </summary>
+    /// <param name="text">The text to display in the subtitle area.</param>
     void UpdateSubtitle(string text)
     {
         if (subtitleText != null)
@@ -193,6 +242,9 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Closes the WebSocket connection gracefully when the application quits.
+    /// </summary>
     void OnApplicationQuit()
     {
         if (ws != null && ws.ReadyState == WebSocketState.Open)
