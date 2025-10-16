@@ -10,8 +10,9 @@ RUN npm install --production
 
 # Test stage installs dev dependencies runs the tests
 FROM base AS test
-RUN npm install
 COPY . .
+RUN npm install
+
 CMD ["npm", "test"]
 
 # Development stage

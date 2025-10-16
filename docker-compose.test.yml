@@ -59,6 +59,7 @@ services:
       target: test
     volumes:
       - ./web-portal:/app
+      - /app/node_modules
     command: ["npm", "test", "--", "--run"]
     depends_on:
       # This condition ensures that this service only starts
