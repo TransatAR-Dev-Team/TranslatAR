@@ -68,6 +68,22 @@ public class AudioRecordingManager : MonoBehaviour
     /// </summary>
     private const int maxRecordingLength = 30;
 
+    [Header("Silence Detection")]
+    /// <summary>
+    /// Send chunk if silence lasts more than certain duration
+    /// </summary>
+    public float maxSilenceDuration = 3.0f; // seconds
+
+    /// <summary>
+    /// Represents whether speaking or not
+    /// </summary>
+    private bool isSpeaking = false;
+
+    /// <summary>
+    /// A timer measuring the duration of silence
+    /// </summary>
+    private float silenceTimer = 0f;
+
     /// <summary>
     /// Requests microphone permission on Android and initializes overlap sample count.
     /// </summary>
@@ -120,6 +136,59 @@ public class AudioRecordingManager : MonoBehaviour
         // While recording, capture and send chunks periodically
         if (isRecording)
         {
+            // Addition of silence detection logic right above the time-based chunking logic
+            // Check the current audio volume in real time
+            if(recordingClip != null)
+            {
+                int currentPos = Microphone.GetPosition(null);
+                int window = 1024;
+                int bufferLen = recordingClip.samples;
+                int channels = recordingClip.channels;
+
+                int prevPos = currentPos - window;
+                if (prevPos < 0) prevPos += bufferLen;
+
+                float[] tempSamples = new float[window * channels];
+
+                if (prevPos + window <= bufferLen)
+                {
+                    recordingClip.GetData(tempSamples, prevPos);
+                }
+                else
+                {
+                    int first = bufferLen - prevPos;
+                    int second = window - first;
+
+                    float[] p1 = new float[first * channels];
+                    float[] p2 = new float[second * channels];
+
+                    recordingClip.GetData(p1, prevPos);
+                    recordingClip.GetData(p2, 0);
+
+                    System.Buffer.BlockCopy(p1, 0, tempSamples, 0, p1.Length * sizeof(float));
+                    System.Buffer.BlockCopy(p2, 0, tempSamples, p1.Length * sizeof(float), p2.Length * sizeof(float));
+                }
+
+                if (HasSufficientVolume(tempSamples))
+                {
+                    isSpeaking = true;
+                    silenceTimer = 0f;
+                }
+                else
+                {
+                    silenceTimer += Time.deltaTime;
+                }
+
+                if (isSpeaking && silenceTimer >= maxSilenceDuration)
+                {
+                    Debug.Log("Silence detected, sending chunk now.");
+                    CaptureAndSendChunk(); // send chunk immediately
+                    isSpeaking = false;    // reset status for the next speak
+                    silenceTimer = 0f;     // reset silence timer
+                    chunkTimer = 0f;       // reset previous 8-second timer (to avoid redundancy)
+                }
+            }
+
             chunkTimer += Time.deltaTime;
             if (chunkTimer >= chunkDurationSeconds)
             {
@@ -169,7 +238,7 @@ public class AudioRecordingManager : MonoBehaviour
         Debug.Log("Recording stopped.");
 
         // Send any remaining audio if it has speech
-        CaptureAndSendChunk();
+        CaptureAndSendChunk(true);
 
         // Clean up
         Microphone.End(null);
@@ -178,15 +247,16 @@ public class AudioRecordingManager : MonoBehaviour
         chunkTimer = 0f; // Reset timer
     }
 
-    /// <summary>
+        /// <summary>
     /// Captures the current audio chunk from the recording buffer, checks for sufficient volume,
     /// converts to WAV format, and sends it to the WebSocket backend.
     /// </summary>
-    void CaptureAndSendChunk()
+    void CaptureAndSendChunk(bool force = false)
     {
         if (recordingClip == null) return;
 
         int currentPosition = Microphone.GetPosition(null);
+        if (currentPosition < 0) return;
 
         // Handle wraparound in circular buffer
         if (currentPosition < lastSamplePosition)
@@ -196,35 +266,68 @@ public class AudioRecordingManager : MonoBehaviour
 
         int samplesAvailable = currentPosition - lastSamplePosition;
 
-        if (samplesAvailable < targetSampleRate * 2.0f) // At least 2 seconds
+        // Allow shorter chunks to reduce latency; force=true bypasses this check
+        if (!force && samplesAvailable < (int)(targetSampleRate * 0.75f))
         {
             return;
         }
 
-        // Include overlap from previous chunk to avoid word cutting
-        int startPosition = Mathf.Max(0, (lastSamplePosition - overlapSamples) % recordingClip.samples);
-        int totalSamples = samplesAvailable + overlapSamples;
+        int bufferSamplesPerChannel = recordingClip.samples;
+        int channels = recordingClip.channels;
 
-        float[] samples = new float[totalSamples * recordingClip.channels];
-        recordingClip.GetData(samples, startPosition);
+        // Include overlap from previous chunk to avoid word cutting (safe modulo for negatives)
+        int startPosition = (lastSamplePosition - overlapSamples) % bufferSamplesPerChannel;
+        if (startPosition < 0) startPosition += bufferSamplesPerChannel;
+
+        int totalSamplesPerChannel = samplesAvailable + overlapSamples;
+
+        float[] samples = new float[totalSamplesPerChannel * channels];
+
+        int endPosition = startPosition + totalSamplesPerChannel;
+        if (endPosition <= bufferSamplesPerChannel)
+        {
+            // No wrap: single read
+            recordingClip.GetData(samples, startPosition);
+        }
+        else
+        {
+            // Wrap: read two parts and stitch
+            int firstPart = bufferSamplesPerChannel - startPosition;
+            int secondPart = totalSamplesPerChannel - firstPart;
+
+            float[] part1 = new float[firstPart * channels];
+            float[] part2 = new float[secondPart * channels];
+
+            recordingClip.GetData(part1, startPosition);
+            recordingClip.GetData(part2, 0);
+
+            System.Buffer.BlockCopy(part1, 0, samples, 0, part1.Length * sizeof(float));
+            System.Buffer.BlockCopy(part2, 0, samples, part1.Length * sizeof(float), part2.Length * sizeof(float));
+        }
 
         if (!HasSufficientVolume(samples))
         {
             Debug.Log("Skipping silent chunk");
-            lastSamplePosition = currentPosition % recordingClip.samples;
+            lastSamplePosition = currentPosition % bufferSamplesPerChannel;
             return;
         }
 
         // Convert to WAV
-        byte[] wavData = ConvertSamplesToWav(samples, targetSampleRate, recordingClip.channels);
+        byte[] wavData = ConvertSamplesToWav(samples, targetSampleRate, channels);
 
         if (WebSocketManager.Instance != null)
         {
-            WebSocketManager.Instance.SendAudioChunk(wavData);
+            // If WebSocketManager has an overload that accepts sampleRate/channels, prefer it:
+            // WebSocketManager.Instance.SendAudioChunk(wavData, targetSampleRate, channels);
+            WebSocketManager.Instance.SendAudioChunk(wavData, targetSampleRate, channels);
         }
 
         // Update position (not including overlap for next chunk)
-        lastSamplePosition = currentPosition % recordingClip.samples;
+        lastSamplePosition = currentPosition % bufferSamplesPerChannel;
+
+        // Initiates the status after sending chunk(s)
+        isSpeaking = false;
+        silenceTimer = 0f;
     }
 
     /// <summary>

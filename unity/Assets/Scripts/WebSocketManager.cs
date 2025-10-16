@@ -167,7 +167,7 @@ public class WebSocketManager : MonoBehaviour
     /// The data is packaged as: [4-byte length][JSON metadata][raw audio bytes].
     /// </summary>
     /// <param name="audioData">The raw audio data bytes to transmit.</param>
-    public void SendAudioChunk(byte[] audioData)
+    public void SendAudioChunk(byte[] audioData, int sampleRate, int channels)
     {
         if (!isConnected || ws == null || ws.ReadyState != WebSocketState.Open)
         {
@@ -182,8 +182,8 @@ public class WebSocketManager : MonoBehaviour
             {
                 source_lang = sourceLanguage,
                 target_lang = targetLanguage,
-                sample_rate = 44100,
-                channels = 1
+                sample_rate = sampleRate,
+                channels = channels
             });
 
             byte[] metadataBytes = Encoding.UTF8.GetBytes(metadata);
@@ -196,12 +196,17 @@ public class WebSocketManager : MonoBehaviour
             Buffer.BlockCopy(audioData, 0, fullMessage, 4 + metadataBytes.Length, audioData.Length);
 
             ws.Send(fullMessage);
-            Debug.Log($"Sent audio chunk: {audioData.Length} bytes");
+            Debug.Log($"Sent audio chunk: {audioData.Length} bytes @ {sampleRate} Hz, {channels} channels");
         }
         catch (Exception e)
         {
             Debug.LogError("Error sending audio: " + e.Message);
         }
+    }
+
+    public void SendAudioChunk(byte[] audioData)
+    {
+        SendAudioChunk(audioData, 44100, 1);
     }
 
     /// <summary>
