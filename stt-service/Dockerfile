@@ -29,14 +29,14 @@ WORKDIR /app
 RUN python3.10 -m pip install poetry
 RUN poetry config virtualenvs.create false
 COPY pyproject.toml poetry.lock* ./
-RUN poetry install --no-interaction --no-ansi --no-root --only main
+RUN poetry install --no-interaction --no-ansi  --only main
 
 
 # The 'test' stage builds on 'base' and adds development dependencies to run tests
 FROM base AS test
 COPY . .
 # Install dev dependencies
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction --no-ansi 
 CMD ["pytest", "-v"]
 
 

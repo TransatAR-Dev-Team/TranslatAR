@@ -205,10 +205,6 @@ This will build the `test` stage of each service, run its test suite in parallel
 
 See [Unity testing instructions](./unity/README.md#testing) to run Unity tests.
 
-```sh
-docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner
-```
-
 ### Running Tests Locally
 
 For rapid development and debugging, you can run tests for individual services on your local machine. Before running tests, you must navigate to the service's directory and install its dependencies.
