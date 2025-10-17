@@ -34,7 +34,7 @@ app.add_middleware(
 app.include_router(websocket_router)
 
 # --- Database Connection ---
-client = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URL)
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
