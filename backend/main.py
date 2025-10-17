@@ -4,6 +4,7 @@ from fastapi import FastAPI, APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import motor.motor_asyncio
 from pydantic import BaseModel
+from pymongo.errors import ConnectionFailure
 from datetime import datetime, timezone
 
 from websocket import router as websocket_router
@@ -12,6 +13,8 @@ from websocket import router as websocket_router
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
 SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
+
+MONGO_DATABASE_URL = os.getenv("DATABASE_URL", "mongodb://mongodb:27017")
 
 # --- FastAPI App & Router Setup ---
 app = FastAPI()
@@ -28,7 +31,7 @@ app.add_middleware(
 app.include_router(websocket_router)
 
 # --- Database Connection ---
-client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://mongodb:27017")
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
 
@@ -141,5 +144,19 @@ async def get_summary(request: SummarizationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during summarization: {str(e)}")
 
+@router.get("/health")
+async def health_check():
+    """
+    Checks the health of the service, including the database connection.
+    """
+    try:
+        # The 'ping' command is cheap and does not require auth.
+        await client.admin.command('ping')
+        return {"status": "ok", "database_status": "connected"}
+    except ConnectionFailure as e:
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Service Unavailable: Cannot connect to the database. Error: {e}"
+        )
 
 app.include_router(router, prefix="/api")

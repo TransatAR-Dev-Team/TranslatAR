@@ -193,19 +193,39 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 ## Testing
 
-### Testing Docker Containers
+### Testing Docker Containers - Automated Test Suites
 
-To run all tests *except for Unity tests*, use:
+Below are inscrutions for running all tests ***except for Unity tests.*** See our [Unity testing instructions](./unity/README.md#testing) to run Unity tests.
+
+These scripts handle building the necessary Docker images, running the tests in an isolated environment, and cleaning up afterward.
+
+> **For Windows Users:** Our testing scripts are written in Bash (`.sh`). The recommended way to run them on Windows is by using **Git Bash**, which is included with the standard [Git for Windows](https://git-scm.com/download/win). [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install) is also an option.
+
+#### Run All Tests
+
+This is the main command you should run before committing code. It executes all unit and integration tests will stop immediately if any suite fails.
 
 ```sh
-docker compose -f docker-compose.test.unit.yml up --build --exit-code-from test_runner
+./scripts/run_all_tests.sh
 ```
 
-This will build the `test` stage of each service, run its test suite in parallel, and then automatically shut down and clean up.
+#### Run Only Unit Tests
 
-See [Unity testing instructions](./unity/README.md#testing) to run Unity tests.
+To run only the fast unit tests for all services, use the following command. This is useful for quickly checking for errors.
 
-### Running Tests Locally
+```sh
+./scripts/run_unit_tests.sh
+```
+
+#### Run Only Integration Tests
+
+To run the integration tests, use this command. These tests take longer to run.
+
+```sh
+./scripts/run_integration_tests.sh
+```
+
+### Running Individual Service Tests Locally
 
 For rapid development and debugging, you can run tests for individual services on your local machine. Before running tests, you must navigate to the service's directory and install its dependencies.
 
