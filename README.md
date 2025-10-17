@@ -3,16 +3,16 @@
 ## Prerequisites
 
 - About 50 GB of free space. This is for:
-    - Docker Desktop
-    - Docker images
-    - Ollama LLM model
-    - Unity Hub
-    - Unity Editor
+  - Docker Desktop
+  - Docker images
+  - Ollama LLM model
+  - Unity Hub
+  - Unity Editor
 
 - Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
 
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-    - Unity version `2022.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
+  - Unity version `2022.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
 
 - For Unity, Windows or Apple silicon Mac machine.
 
@@ -21,13 +21,13 @@
     > A physical Meta Quest 3 will run the Unity app regardless of your machine.
 
 <a id="gpu"></a>
-- For GPU acceleration:
-  -  a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
 
-        > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
+- For GPU acceleration:
+  - a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
+
+    > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
-
 
 ## Set Up
 
@@ -38,7 +38,7 @@
 First, ensure all [prerequisites](#prerequisites) are met.
 
 1. Clone this repository and set working directory to project directory:
-    
+
     ```sh
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git ; cd TranslatAR
     ```
@@ -51,9 +51,9 @@ First, ensure all [prerequisites](#prerequisites) are met.
     # This runs everything on your CPU
     docker compose up --build -d
     ```
-   
+
     Or, to use GPU acceleration for STT and Ollama:
-    
+
     ```sh
     # This layers the GPU config on top of the base config and enables GPU acceleration
     docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
@@ -61,7 +61,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
     > ***Only*** use the GPU acceleration command if you have an CUDA-capable NVIDIA GPU and NVIDIA Conainer Toolkit installed. [Read more here](#gpu).
 
-    > Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
+    Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
 
 2. Go to <http://localhost:5173> and <http://localhost:8000/api/db-hello> to verify the containers are running.
 
@@ -89,7 +89,7 @@ First, ensure all [prerequisites](#prerequisites) are met.
 
 4. Locate this repository in your file system and select the `unity` directory
 
-5.  Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version. 
+5. Download Unity version `2022.3.62f1` from the pop up. It should be the recommended version.
 
 6. In the pop up, select *Android build support* and all subitems to be installed as well.
 
@@ -114,16 +114,16 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene.
 
 2. A pop up with the headset simulator should appear.
-   
-   > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras. 
+
+   > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras.
 
    The text on the simulator screen will prompt you: *"Press and hold (B) or Left Click to record."*.
-   
+
    Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
 3. **Click your mouse inside the simulator window** to give it focus.
 
-4. **Press and hold the Left Mouse Button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
+4. **Press and hold the `B` button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
 
 5. **Release the Left Mouse Button**. The text will change to *"Processing audio..."*.
 
@@ -190,3 +190,27 @@ To demonstrate the connection between the containerized backend and the Unity fr
 1. Press the "Stop" button (`⏹`) next to the "Play" button to stop the scene.
 
 2. Run `docker compose down` to shut off Docker containers.
+
+## Testing
+
+### Testing Docker Containers
+
+To run all tests *except for Unity tests*, use:
+
+```sh
+docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner
+```
+
+This will build the `test` stage of each service, run its test suite in parallel, and then automatically shut down and clean up.
+
+See [Unity testing instructions](./unity/README.md#testing) to run Unity tests.
+
+### Running Tests Locally
+
+For rapid development and debugging, you can run tests for individual services on your local machine. Before running tests, you must navigate to the service's directory and install its dependencies.
+
+Instructions for each service can be found at the links below:
+
+- [Web Portal (`web-portal`)](./web-portal/README.md#local-testing)
+- [Python Services (`backend`, `stt-service`, `summarization-service`, and `translation-service`)](./docs/developer_guide.python_services.md#local-testing)
+- [Unity (`unity`)](./unity/README.md#testing)

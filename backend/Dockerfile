@@ -1,13 +1,24 @@
-FROM python:3.11-slim
-
+# Base stage installs ONLY production dependencies
+FROM python:3.11-slim AS base
 WORKDIR /app
 
-COPY requirements.txt .
+RUN pip install poetry
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN poetry config virtualenvs.create false
 
-# Copy the rest of the backend code
+COPY pyproject.toml poetry.lock* ./
+
+RUN poetry install --no-interaction --no-ansi  --only main
+
+# Test stage builds on 'base' and adds development dependencies
+FROM base AS test
+COPY . .
+# Install dev dependencies
+RUN poetry install --no-interaction --no-ansi
+CMD ["pytest", "-v"]
+
+# Production stage copies code into the 'base' image
+FROM base AS production
 COPY . .
 
 EXPOSE 8000
