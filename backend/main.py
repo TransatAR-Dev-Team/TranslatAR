@@ -34,6 +34,7 @@ app.include_router(websocket_router)
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
+settings_collection = db.get_collection("settings")
 
 # --- Pydantic Models ---
 class TranslationResponse(BaseModel):
@@ -46,6 +47,18 @@ class SummarizationRequest(BaseModel):
     
 class SummarizationResponse(BaseModel):
     summary: str
+
+class SettingsModel(BaseModel):
+    source_language: str = "en"
+    target_language: str = "es"
+    chunk_duration_seconds: float = 8.0
+    target_sample_rate: int = 48000
+    silence_threshold: float = 0.01
+    chunk_overlap_seconds: float = 0.5
+    websocket_url: str = "ws://localhost:8000/ws"
+
+class SettingsResponse(BaseModel):
+    settings: SettingsModel
 
 # --- Endpoints ---
 
@@ -143,6 +156,49 @@ async def get_summary(request: SummarizationRequest):
             return SummarizationResponse(summary=summary_text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during summarization: {str(e)}")
+
+@router.get("/settings", response_model=SettingsResponse)
+async def get_settings():
+    """
+    Retrieves the current application settings from the database.
+    If no settings exist, returns default values.
+    """
+    try:
+        settings_doc = await settings_collection.find_one({})
+
+        if not settings_doc:
+            # Return default settings if none exist
+            default_settings = SettingsModel()
+            return SettingsResponse(settings=default_settings)
+        else:
+            # Remove MongoDB _id field before returning
+            settings_doc.pop("_id", None)
+            settings = SettingsModel(**settings_doc)
+            return SettingsResponse(settings=settings)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve settings from database: {str(e)}")
+
+@router.post("/settings", response_model=SettingsResponse)
+async def save_settings(settings_update: SettingsModel):
+    """
+    Saves or updates application settings in the database.
+    """
+    try:
+        # Convert to dict for MongoDB insertion
+        settings_dict = settings_update.dict()
+
+        # Upsert the settings (insert if doesn't exist, update if exists)
+        await settings_collection.replace_one(
+            {},  # empty filter matches any document (there's only one settings document)
+            settings_dict,
+            upsert=True
+        )
+
+        return SettingsResponse(settings=settings_update)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save settings to database: {str(e)}")
 
 @router.get("/health")
 async def health_check():
