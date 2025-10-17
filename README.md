@@ -198,7 +198,7 @@ To demonstrate the connection between the containerized backend and the Unity fr
 To run all tests *except for Unity tests*, use:
 
 ```sh
-docker compose -f docker-compose.test.yml up --build --exit-code-from test_runner
+docker compose -f docker-compose.test.unit.yml up --build --exit-code-from test_runner
 ```
 
 This will build the `test` stage of each service, run its test suite in parallel, and then automatically shut down and clean up.
