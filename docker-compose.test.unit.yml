@@ -1,7 +1,8 @@
 services:
   test_runner:
+    container_name: test_runner_unit
     image: alpine:latest
-    command: echo "All tests passed!"
+    command: echo "All unit tests passed!"
     depends_on:
       backend_test:
         condition: service_completed_successfully
@@ -15,6 +16,7 @@ services:
         condition: service_completed_successfully
 
   backend_test:
+    container_name: backend_unit_test
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -26,6 +28,7 @@ services:
     command: ["pytest", "-v"]
 
   stt_test:
+    container_name: stt_unit_test
     build:
       context: ./stt-service
       dockerfile: Dockerfile
@@ -35,6 +38,7 @@ services:
     command: ["pytest", "-v"]
 
   translation_test:
+    container_name: translation_unit_test
     build:
       context: ./translation-service
       dockerfile: Dockerfile
@@ -44,6 +48,7 @@ services:
     command: ["pytest", "-v"]
 
   summarization_test:
+    container_name: summarization_unit_test
     build:
       context: ./summarization-service
       dockerfile: Dockerfile
@@ -53,6 +58,7 @@ services:
     command: ["pytest", "-v"]
 
   web_portal_test:
+    container_name: web_portal_unit_test
     build:
       context: ./web-portal
       dockerfile: Dockerfile
