@@ -203,13 +203,13 @@ These scripts handle building the necessary Docker images, running the tests in 
 
 #### Run All Tests
 
-This is the main command you should run before committing code. It executes all unit and integration tests will stop immediately if any suite fails.
+This is the main command you should run before committing code. On macOS and Windows, this will run everything. On Linux, it will run the backend tests and print a warning that the Unity tests are being skipped.
 
 ```sh
 ./scripts/run_all_tests.sh
 ```
 
-#### Run Only Unit Tests
+#### Run Backend Tests Only
 
 To run only the fast unit tests for all services, use the following command. This is useful for quickly checking for errors.
 
@@ -217,13 +217,21 @@ To run only the fast unit tests for all services, use the following command. Thi
 ./scripts/run_unit_tests.sh
 ```
 
-#### Run Only Integration Tests
-
 To run the integration tests, use this command. These tests take longer to run.
 
 ```sh
 ./scripts/run_integration_tests.sh
 ```
+
+#### Run Unity Tests Only
+
+To run only the Unity **Edit Mode** and **Play Mode** tests, use the script below. This requires a local installation of the correct Unity Editor version and can only be run on **macOS or Windows**.
+
+```sh
+./scripts/run_unity_tests.sh
+```
+
+> This test suite takes the longest to run, especially if you haven't run it before.
 
 ### Running Individual Service Tests Locally
 

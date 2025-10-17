@@ -6,20 +6,28 @@ set -euo pipefail
 
 # --- Configuration ---
 UNITY_VERSION="2022.3.62f1"
-PROJECT_PATH="$(pwd)/unity" # Assumes the script is run from the project root
+# Assumes the script is run from the project root. We need the full path.
+PROJECT_PATH="$(pwd)/unity" 
 
 # --- OS-Specific Setup ---
 UNITY_EXECUTABLE=""
-if [[ "$(uname)" == "Darwin" ]]; then
+# Get the lowercase name of the OS for easier checking
+OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+if [[ "$OS_NAME" == "darwin" ]]; then
     # macOS default path
     UNITY_EXECUTABLE="/Applications/Unity/Hub/Editor/$UNITY_VERSION/Unity.app/Contents/MacOS/Unity"
-elif [[ "$(uname -s)" == "Linux" ]]; then
-    echo "Unity testing on Linux is not supported for this project." >&2
-    exit 1
-elif [[ "$(uname -s)" == MINGW* || "$(uname -s)" == CYGWIN* || "$(uname -s)" == MSYS* ]]; then
+elif [[ "$OS_NAME" == "linux" ]] && grep -q -i "microsoft" /proc/version; then
+    # WSL (Windows Subsystem for Linux)
+    # The C: drive is mounted at /mnt/c
+    UNITY_EXECUTABLE="/mnt/c/Program Files/Unity/Hub/Editor/$UNITY_VERSION/Editor/Unity.exe"
+elif [[ "$OS_NAME" == mingw* || "$OS_NAME" == cygwin* || "$OS_NAME" == msys* ]]; then
     # Windows (Git Bash) default path
-    # We must use quotes to handle the space in "Program Files".
     UNITY_EXECUTABLE="/c/Program Files/Unity/Hub/Editor/$UNITY_VERSION/Editor/Unity.exe"
+elif [[ "$OS_NAME" == "linux" ]]; then
+    # Native Linux
+    echo "Unity testing on native Linux is not supported for this project." >&2
+    exit 1
 else
     echo "Unsupported operating system: $(uname -s)" >&2
     exit 1
@@ -32,7 +40,6 @@ if [ ! -f "$UNITY_EXECUTABLE" ]; then
 fi
 
 # --- Paths for Test Artifacts ---
-# Create a directory to store test results and logs, ignored by git.
 ARTIFACTS_PATH="$PROJECT_PATH/Logs/TestResults"
 mkdir -p "$ARTIFACTS_PATH"
 RESULTS_PATH_EDITMODE="$ARTIFACTS_PATH/editmode-results.xml"
@@ -40,13 +47,15 @@ LOG_PATH_EDITMODE="$ARTIFACTS_PATH/editmode.log"
 RESULTS_PATH_PLAYMODE="$ARTIFACTS_PATH/playmode-results.xml"
 LOG_PATH_PLAYMODE="$ARTIFACTS_PATH/playmode.log"
 
-# This variable will track the final exit code.
 FINAL_RC=0
+
+echo "This may take a while, especially if this is your first time running Unity tests."
 
 # --- Run Edit Mode Tests ---
 echo "-------------------------------------"
 echo "  RUNNING UNITY EDIT MODE TESTS"
 echo "-------------------------------------"
+# Note the quotes around the executable path to handle spaces
 "$UNITY_EXECUTABLE" \
   -batchmode \
   -nographics \
@@ -64,9 +73,7 @@ else
     echo "✅ Edit Mode tests passed."
 fi
 
-
 # --- Run Play Mode Tests ---
-# Only run playmode tests if editmode tests passed
 if [[ $FINAL_RC -eq 0 ]]; then
     echo "-------------------------------------"
     echo "  RUNNING UNITY PLAY MODE TESTS"

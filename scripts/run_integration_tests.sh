@@ -10,7 +10,6 @@ echo "Tearing down previous test environment if it exists..."
 docker compose -f docker-compose.test.integration.yml down --remove-orphans > /dev/null 2>&1 || true
 
 # --- Step 2: Run the tests and capture the exit code ---
-# We REMOVED 'exec' so that this script can continue after the command finishes.
 docker compose -f docker-compose.test.integration.yml up --build --abort-on-container-exit --exit-code-from test_runner
 RC=$?
 
