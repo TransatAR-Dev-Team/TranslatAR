@@ -9,11 +9,14 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      - mongodb
-      - stt
-      - translation
+      mongodb:
+        condition: service_healthy
+      stt:
+        condition: service_started
+      translation:
+        condition: service_started
     environment:
-      - DATABASE_URL=mongodb://mongodb:21017
+      - DATABASE_URL=mongodb://mongodb:27017
       - STT_URL=http://stt:9000
       - TRANSLATION_URL=http://translation:9001
       - SUMMARIZATION_URL=http://summarization:9002
@@ -87,6 +90,12 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   mongo-data:

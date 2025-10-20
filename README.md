@@ -56,7 +56,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker Desktop is 
     make up
     ```
 
-3. Go to `http://localhost:5173` (Web Portal) and `http://localhost:8000/api/health` (Backend Health) to verify the containers are running.
+3. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
 4. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
