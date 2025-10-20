@@ -1,13 +1,9 @@
-# docker-compose.test.integration.yml (updated)
 services: 
   test_runner:
     container_name: test_runner_integration
     build:
       context: ./tests/integration
       dockerfile: Dockerfile
-    # --- MODIFIED SECTION ---
-    # Now, this service will not even start until the 'backend'
-    # service reports that it is healthy.
     depends_on:
       backend:
         condition: service_healthy
@@ -25,7 +21,6 @@ services:
       - SUMMARIZATION_URL=http://summarization:9002
     depends_on:
       - mongodb_test
-    # --- NEW SECTION ---
     # This tells Docker how to determine if the backend is ready.
     healthcheck:
       # The command runs INSIDE the container. 'curl -f' fails with a non-zero
@@ -40,7 +35,6 @@ services:
     container_name: mongodb_integration_test
     image: mongo:latest
     command: mongod --quiet --logpath /dev/null
-    # You can also add a healthcheck to mongo!
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
