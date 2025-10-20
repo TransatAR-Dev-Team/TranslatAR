@@ -7,9 +7,7 @@ from datetime import datetime, timezone
 
 router = APIRouter()
 
-# Service URLs from environment
-STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
-TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
+from config import STT_SERVICE_URL, TRANSLATION_SERVICE_URL
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

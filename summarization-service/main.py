@@ -4,11 +4,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import logging
 
+from config import OLLAMA_URL, MODEL_NAME
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "phi3:mini")
 
 app = FastAPI()
 

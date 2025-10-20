@@ -7,12 +7,14 @@ from pydantic import BaseModel
 from pymongo.errors import ConnectionFailure
 from datetime import datetime, timezone
 
-from websocket import router as websocket_router
-
 # --- Configuration ---
-STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
-TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
-SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
+from config import (
+    DATABASE_URL,
+    STT_SERVICE_URL,
+    TRANSLATION_SERVICE_URL,
+    SUMMARIZATION_SERVICE_URL
+)
+from websocket import router as websocket_router
 
 MONGO_DATABASE_URL = os.getenv("DATABASE_URL", "mongodb://mongodb:27017")
 
@@ -28,10 +30,11 @@ app.add_middleware(
 )
 
 # --- WebSocket Router ---
+
 app.include_router(websocket_router)
 
 # --- Database Connection ---
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
+client = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URL)
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
