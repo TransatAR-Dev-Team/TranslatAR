@@ -2,82 +2,69 @@
 
 ## Prerequisites
 
-- About 50 GB of free space. This is for:
-  - Docker Desktop
-  - Docker images
-  - Ollama LLM model
-  - Unity Hub
-  - Unity Editor
-
-- Docker installled. The easiest way is to install [Docker Desktop](https://docs.docker.com/desktop/). You can also install the [CLI tool](https://docs.docker.com/engine/install/).
-
-- [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
-  - Unity version `2022.3.62f1` installed (instructions in [Set Up: Unity frontend](#unity-frontend)).
-
-- For Unity, Windows or Apple silicon Mac machine.
-
-    > The Unity project cannot run on Linux machines or Intel Macs.
-
-    > A physical Meta Quest 3 will run the Unity app regardless of your machine.
+- About 50 GB of free space.
+- [Docker Desktop](https://docs.docker.com/desktop/) installed and running.
+- **A Bash-compatible terminal.**
+  - **macOS/Linux:** Use the default Terminal.
+  - **Windows:** Use **Git Bash** (included with [Git for Windows](https://git-scm.com/download/win)) or [WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
+- **`make` command-line tool.**
+  - **macOS:** `make` is pre-installed. You may need to install Xcode Command Line Tools by running `xcode-select --install`.
+  - **Windows:** `make` is available through various packages. The easiest way is to install it via [Chocolatey](https://chocolatey.org/): `choco install make`.
+  - **Linux (Debian/Ubuntu):** `sudo apt update && sudo apt install make -y`
+- [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The [Unity Set Up Guide](#unity-frontend) will instruct you on how to install Unity version `2022.3.62f1`.
+- For running the Unity frontend, a Windows PC or Apple Silicon Mac is required.
 
 <a id="gpu"></a>
 
-- For GPU acceleration:
-  - a [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus)
-
+- **(Optional) For GPU acceleration:**
+  - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus).
     > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
-  
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
+
+## Common Commands
+
+This project uses a `Makefile` to provide simple commands for common operations. You can run `make` at any time to see a list of all available commands.
+
+| Command                 | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `make up`               | Build and start all services in Docker (auto-detects GPU).        |
+| `make down`             | Stop and remove all services.                                     |
+| `make restart`          | A convenient shortcut to stop and restart all services.           |
+| `make logs`             | Show logs of all running services.                            |
+| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).            |
+| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).    |
+| `make test-unit`        | Run only the fast unit tests for all backend services.            |
+| `make test-integration` | Run only the backend integration tests.                           |
+| `make test-unity`       | Run only the Unity tests (requires macOS or Windows).             |
+| `make help` or `make`   | Show help message (same info as this table).                      |
 
 ## Set Up
 
-> If you'd like to know how to run docker containers directly in VS Code read this [document on .devcontainer setup](docs/dev_container.md)
-
 ### Initial set up
 
-First, ensure all [prerequisites](#prerequisites) are met.
+First, ensure all [prerequisites](#prerequisites) are met and Docker Desktop is running.
 
-1. Clone this repository and set working directory to project directory:
+1. Clone this repository and enter the directory:
 
     ```sh
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git ; cd TranslatAR
     ```
 
-### Docker containers
-
-1. Use `docker compose` to start everything. Initially downloading the images may take a while. Use:
+2. Start all the backend services. The script will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
     ```sh
-    # This runs everything on your CPU
-    docker compose up --build -d
+    make up
     ```
 
-    Or, to use GPU acceleration for STT and Ollama:
+3. Go to `http://localhost:5173` (Web Portal) and `http://localhost:8000/api/health` (Backend Health) to verify the containers are running.
 
-    ```sh
-    # This layers the GPU config on top of the base config and enables GPU acceleration
-    docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
-    ```
-
-    > ***Only*** use the GPU acceleration command if you have an CUDA-capable NVIDIA GPU and NVIDIA Conainer Toolkit installed. [Read more here](#gpu).
-
-    Docker caches downloaded images and the layers of built images. Only altered layers will be rebuilt with `docker compose up --build`. Building and starting the images will be faster the second time
-
-2. Go to <http://localhost:5173> and <http://localhost:8000/api/db-hello> to verify the containers are running.
-
-3. If you haven't, download the LLM model for Ollama. Downloading the model may take a while. **Only run this command if you haven't before.**
+4. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
     ```sh
     docker exec -it ollama ollama pull phi3:mini
     ```
 
-    > You only have to run this command once. The model is saved to a Docker volume (`ollama-data`).
-
-    > `docker exec -it <container name> <command>` runs the command *inside* the container.
-
-> Run `docker compose down` to shut off all containers. See [Demo clean up](#demo-clean-up).
-
-### Unity frontend
+### Unity Frontend
 
 1. Install [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html)
 
@@ -187,48 +174,43 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 ### Demo clean up
 
-1. Press the "Stop" button (`⏹`) next to the "Play" button to stop the scene.
+1. Press the "Stop" button (`⏹`) in the Unity Editor.
+2. Shut down all Docker containers:
 
-2. Run `docker compose down` to shut off Docker containers.
+    ```sh
+    make down
+    ```
 
 ## Testing
 
-### Testing Docker Containers - Automated Test Suites
+Ensure all [Prerequisites](#prerequisites) are met before running tests.
 
-Below are inscrutions for running all tests ***except for Unity tests.*** See our [Unity testing instructions](./unity/README.md#testing) to run Unity tests.
-
-These scripts handle building the necessary Docker images, running the tests in an isolated environment, and cleaning up afterward.
-
-> **For Windows Users:** Our testing scripts are written in Bash (`.sh`). The recommended way to run them on Windows is by using **Git Bash**, which is included with the standard [Git for Windows](https://git-scm.com/download/win). [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install) is also an option.
-
-#### Run All Tests
+### Running the Full Test Suite
 
 This is the main command you should run before committing code. On macOS and Windows, this will run everything. On Linux, it will run the backend tests and print a warning that the Unity tests are being skipped.
 
 ```sh
-./scripts/run_all_tests.sh
+make test
 ```
 
-#### Run Backend Tests Only
+### Running Specific Test Suites
 
-To run only the fast unit tests for all services, use the following command. This is useful for quickly checking for errors.
+To run only  unit tests for all services, use the following command. This is useful for quickly checking for errors.
 
 ```sh
-./scripts/run_unit_tests.sh
+make test-unit
 ```
 
 To run the integration tests, use this command. These tests take longer to run.
 
 ```sh
-./scripts/run_integration_tests.sh
+make test-integration
 ```
-
-#### Run Unity Tests Only
 
 To run only the Unity **Edit Mode** and **Play Mode** tests, use the script below. This requires a local installation of the correct Unity Editor version and can only be run on **macOS or Windows**.
 
 ```sh
-./scripts/run_unity_tests.sh
+make test-unity
 ```
 
 > This test suite takes the longest to run, especially if you haven't run it before.
@@ -240,5 +222,5 @@ For rapid development and debugging, you can run tests for individual services o
 Instructions for each service can be found at the links below:
 
 - [Web Portal (`web-portal`)](./web-portal/README.md#local-testing)
-- [Python Services (`backend`, `stt-service`, `summarization-service`, and `translation-service`)](./docs/developer_guide.python_services.md#local-testing)
+- [Python Services (`backend`, etc.)](./docs/developer_guide.python_services.md#local-testing)
 - [Unity (`unity`)](./unity/README.md#testing)
