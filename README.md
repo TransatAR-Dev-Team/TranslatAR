@@ -40,7 +40,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 
 ## Further Documentation
 
--   **Service-Specific READMEs:** Each microservice has its own `README.md` with information about its tech stack and local testing procedures.
+-   **Service-Specific READMEs:** Each microservice has its own `README.md` with information about its tech stack, dependency management, and local testing procedures.
     -   [Backend Service](./backend/README.md)
     -   [Web Portal](./web-portal/README.md)
     -   [Speech-to-Text Service](./stt-service/README.md)
@@ -52,22 +52,22 @@ This project uses a `Makefile` to provide simple commands for common operations.
     -   [Python Services Development Guide](./docs/developer_guide.python_services.md)
     -   [VS Code Dev Containers Guide](./docs/dev_container.md)
 
-- **Live API Documentation (FastAPI):** The Python services automatically generate interactive API documentation. Once the services are running (`make up`), you can access them at:
-- **Backend Service**:
-  - **Swagger UI:** <http://localhost:8000/docs>
-  - **ReDoc:** <http://localhost:8000/redoc>
+- **Live API Documentation (FastAPI):** The FastAPI Python services automatically generate interactive API documentation. Once the services are running (`make up`), you can access them at:
+  - **Backend Service**:
+    - **Swagger UI:** <http://localhost:8000/docs>
+    - **ReDoc:** <http://localhost:8000/redoc>
 
-- **Speech-to-Text Service:**
-  - **Swagger UI:** <http://localhost:9000/docs>
-  - **ReDoc:** <http://localhost:9000/redoc>
+  - **Speech-to-Text Service:**
+    - **Swagger UI:** <http://localhost:9000/docs>
+    - **ReDoc:** <http://localhost:9000/redoc>
 
-- **Translation Service:**
-  - **Swagger UI:** <http://localhost:9001/docs>
-  - **ReDoc:** <http://localhost:9001/redoc>
+  - **Translation Service:**
+    - **Swagger UI:** <http://localhost:9001/docs>
+    - **ReDoc:** <http://localhost:9001/redoc>
 
-- **Summarization Service:**
-  - **Swagger UI:** <http://localhost:9002/docs>
-  - **ReDoc:** <http://localhost:9002/redoc>
+  - **Summarization Service:**
+    - **Swagger UI:** <http://localhost:9002/docs>
+    - **ReDoc:** <http://localhost:9002/redoc>
 
 
 ## Set Up
