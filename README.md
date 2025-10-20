@@ -25,18 +25,19 @@
 
 This project uses a `Makefile` to provide simple commands for common operations. You can run `make` at any time to see a list of all available commands.
 
-| Command                 | Description                                                       |
-| ----------------------- | ----------------------------------------------------------------- |
-| `make up`               | Build and start all services in Docker (auto-detects GPU).        |
-| `make down`             | Stop and remove all services.                                     |
-| `make restart`          | A convenient shortcut to stop and restart all services.           |
-| `make logs`             | Show logs of all running services.                                |
-| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                |
-| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).    |
-| `make test-unit`        | Run only the fast unit tests for all backend services.            |
-| `make test-integration` | Run only the backend integration tests.                           |
-| `make test-unity`       | Run only the Unity tests (requires macOS or Windows).             |
-| `make help` or `make`   | Show help message (same info as this table).                      |
+| Command                 | Description                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `make up`               | Build and start all services in Docker (auto-detects GPU).                          |
+| `make down`             | Stop and remove all services.                                                       |
+| `make restart`          | A shortcut to stop and restart all services.                                        |
+| `make logs`             | Show logs of all running services.                                                  |
+| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                  |
+| `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows). |
+| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).                      |
+| `make test-unit`        | Run only the unit tests for all backend services.                                   |
+| `make test-integration` | Run only the backend integration tests.                                             |
+| `make test-unity`       | Run only the Unity tests (requires macOS or Windows).                               |
+| `make help` or `make`   | Show help message (same info as this table).                                        |
 
 ## Further Documentation
 
@@ -68,7 +69,6 @@ This project uses a `Makefile` to provide simple commands for common operations.
   - **Summarization Service:**
     - **Swagger UI:** <http://localhost:9002/docs>
     - **ReDoc:** <http://localhost:9002/redoc>
-
 
 ## Set Up
 

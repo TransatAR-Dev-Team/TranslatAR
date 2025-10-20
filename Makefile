@@ -27,6 +27,10 @@ restart: ## Stop and restart all services
 logs: ## Show logs. Ex: `make logs backend` for a specific service.
 	@./scripts/start.sh logs $(ARGS)
 
+unity-editor: ## Open the Unity project in the editor (macOS/Windows only)
+	@./scripts/open_unity_editor.sh
+	@./scripts/open_unity_editor.sh
+
 test: ## Run all applicable test suites (Unit, Integration, Unity)
 	@./scripts/run_all_tests.sh
 
