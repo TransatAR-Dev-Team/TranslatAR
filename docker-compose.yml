@@ -16,10 +16,10 @@ services:
       translation:
         condition: service_started
     environment:
-      - DATABASE_URL=mongodb://mongodb:27017
-      - STT_URL=http://stt:9000
-      - TRANSLATION_URL=http://translation:9001
-      - SUMMARIZATION_URL=http://summarization:9002
+      - DATABASE_URL=${DATABASE_URL}
+      - STT_SERVICE_URL=${STT_SERVICE_URL}
+      - TRANSLATION_SERVICE_URL=${TRANSLATION_SERVICE_URL}
+      - SUMMARIZATION_SERVICE_URL=${SUMMARIZATION_SERVICE_URL}
 
   web-portal:
     container_name: web-portal
@@ -30,7 +30,9 @@ services:
       - "5173:5173"
     volumes:
       - ./web-portal:/app
-      - /app/node_modules 
+      - /app/node_modules
+    environment:
+      - VITE_API_PROXY_TARGET=${VITE_API_PROXY_TARGET}
       
   stt:
     container_name: stt
@@ -50,7 +52,7 @@ services:
     ports:
       - "9001:9001"
     environment:
-      - LIBRETRANSLATE_URL=http://libretranslate:5000
+      - LIBRETRANSLATE_URL=${LIBRETRANSLATE_URL}
     depends_on:
       - libretranslate
 
@@ -60,8 +62,7 @@ services:
     ports:
       - "5001:5000"
     # Pre-load only a few common languages to save RAM and speed up startup.
-    # Add any other language codes you need (e.g., "ja", "zh", "ru").
-    command: ["--load-only", "en,es,fr,de"]
+    command: ["--load-only", "en,es"]
 
   summarization:
     container_name: summarization
@@ -70,7 +71,7 @@ services:
     ports:
       - "9002:9002"
     environment:
-      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_URL=${OLLAMA_URL}
       - OLLAMA_MODEL=phi3:mini
     depends_on:
       - ollama

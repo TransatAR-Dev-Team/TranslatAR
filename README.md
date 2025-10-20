@@ -79,15 +79,21 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
+2. Copy `.env.example` to `.env`.
+
+    ```sh
+    cp .env.example .env
+    ```
+
+3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
     ```sh
     make up
     ```
 
-3. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
+4. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
-4. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
+5. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
     ```sh
     docker exec -it ollama ollama pull phi3:mini

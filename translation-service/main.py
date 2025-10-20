@@ -3,11 +3,10 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import logging
+import config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-LIBRETRANSLATE_URL = os.getenv("LIBRETRANSLATE_URL", "http://libretranslate:5000")
 
 app = FastAPI()
 
@@ -32,22 +31,22 @@ async def translate(request: TranslationRequest):
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{LIBRETRANSLATE_URL}/translate", json=payload)
+            response = await client.post(f"{config.LIBRETRANSLATE_URL}/translate", json=payload)
             response.raise_for_status()
             data = response.json()
             if "translatedText" not in data:
-                logger.error(f"Invalid response from translation engine: {data}") # <-- Add log
+                logger.error(f"Invalid response from translation engine: {data}")
                 raise HTTPException(status_code=500, detail="Invalid response from translation engine.")
             return TranslationResponse(translated_text=data["translatedText"])
 
     except httpx.RequestError as e:
-        logger.error(f"Could not connect to translation engine: {e}") # <-- Add log
+        logger.error(f"Could not connect to translation engine: {e}")
         raise HTTPException(status_code=503, detail=f"Error connecting to translation engine: {e}")
     except httpx.HTTPStatusError as e:
         logger.error(f"Translation engine returned an error: {e.response.status_code} - {e.response.text}") # <-- Add log
         raise HTTPException(status_code=500, detail=f"Translation engine failed: {e.response.text}")
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {str(e)}") # <-- Add log
+        logger.error(f"An unexpected error occurred: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @app.get("/health")

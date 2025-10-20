@@ -3,32 +3,23 @@ from faster_whisper import WhisperModel
 import asyncio
 from contextlib import asynccontextmanager
 import logging
-import os
 import io
+import config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 MODEL_SIZE = "base"
 
-DEVICE = os.getenv("STT_DEVICE", "cpu")
-
-if DEVICE == "cuda":
-    COMPUTE_TYPE = "auto"
-    logger.info("Configured for GPU (CUDA) execution.")
-else:
-    COMPUTE_TYPE = "int8"
-    logger.info("Configured for CPU execution.")
-
 ml_models = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"Loading Whisper model '{MODEL_SIZE}' onto '{DEVICE}' device...")
+    logger.info(f"Loading Whisper model '{MODEL_SIZE}' onto '{config.DEVICE}' device...")
     ml_models["whisper_model"] = WhisperModel(
         MODEL_SIZE, 
-        device=DEVICE, 
-        compute_type=COMPUTE_TYPE
+        device=config.DEVICE, 
+        compute_type=config.COMPUTE_TYPE
     )
     logger.info("Whisper model loaded successfully.")
     yield

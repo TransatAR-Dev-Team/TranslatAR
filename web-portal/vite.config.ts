@@ -12,7 +12,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://backend:8000', // "backend" is the service name from docker-compose.yml
+        target: process.env.VITE_API_PROXY_TARGET || 'http://backend:8000', // "backend" is the service name from docker-compose.yml
         changeOrigin: true,
       },
     },
