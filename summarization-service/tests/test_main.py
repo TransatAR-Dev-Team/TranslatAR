@@ -1,14 +1,29 @@
 import pytest
 
-def test_synchronous_pass():
+def test_app_import():
     """
-    Verifies that pytest is set up and running correctly.
+    Tests that the FastAPI app object can be imported from main.py.
+    This confirms that all top-level imports within main.py, including the
+    config module, are resolved correctly.
     """
-    assert "hello" != "world"
+    try:
+        from main import app
+    except ImportError as e:
+        pytest.fail(f"Failed to import 'app' from main.py. Error: {e}")
+    
+    assert app is not None
 
-@pytest.mark.asyncio
-async def test_asynchronous_pass():
+def test_config_import():
     """
-    Verifies that pytest-asyncio is configured correctly.
+    Tests that configuration variables can be imported directly from the config module.
+    This confirms that the config.py file is accessible.
     """
-    assert 1 == 1
+    try:
+        from config import OLLAMA_URL, MODEL_NAME
+    except ImportError as e:
+        pytest.fail(f"Failed to import from config.py. Error: {e}")
+
+    # Assert that the variables were imported and have default values
+    assert OLLAMA_URL is not None
+    assert MODEL_NAME is not None
+    assert "http://" in OLLAMA_URL
