@@ -28,7 +28,7 @@ See the `README.md` in the root of the project for instructions on building and 
 5. In the Unity Editor, activate the XR simulator: *Meta > Meta XR Simulator > Activate*
 6. Press ▶ (Play) to run the scene
 
-## Testing
+## Local Testing
 
 This project uses the **Unity Test Framework** for running tests directly inside the Unity Editor. Tests are located in the `Assets/Tests` directory.
 
