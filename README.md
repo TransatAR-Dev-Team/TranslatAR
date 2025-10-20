@@ -30,13 +30,45 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | `make up`               | Build and start all services in Docker (auto-detects GPU).        |
 | `make down`             | Stop and remove all services.                                     |
 | `make restart`          | A convenient shortcut to stop and restart all services.           |
-| `make logs`             | Show logs of all running services.                            |
-| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).            |
+| `make logs`             | Show logs of all running services.                                |
+| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                |
 | `make test`             | Run all applicable test suites (Unit, Integration, and Unity).    |
 | `make test-unit`        | Run only the fast unit tests for all backend services.            |
 | `make test-integration` | Run only the backend integration tests.                           |
 | `make test-unity`       | Run only the Unity tests (requires macOS or Windows).             |
 | `make help` or `make`   | Show help message (same info as this table).                      |
+
+## Further Documentation
+
+-   **Service-Specific READMEs:** Each microservice has its own `README.md` with information about its tech stack and local testing procedures.
+    -   [Backend Service](./backend/README.md)
+    -   [Web Portal](./web-portal/README.md)
+    -   [Speech-to-Text Service](./stt-service/README.md)
+    -   [Translation Service](./translation-service/README.md)
+    -   [Summarization Service](./summarization-service/README.md)
+    -   [Unity Frontent](./unity/README.md)
+
+-   **Developer Guides:**
+    -   [Python Services Development Guide](./docs/developer_guide.python_services.md)
+    -   [VS Code Dev Containers Guide](./docs/dev_container.md)
+
+- **Live API Documentation (FastAPI):** The Python services automatically generate interactive API documentation. Once the services are running (`make up`), you can access them at:
+- **Backend Service**:
+  - **Swagger UI:** <http://localhost:8000/docs>
+  - **ReDoc:** <http://localhost:8000/redoc>
+
+- **Speech-to-Text Service:**
+  - **Swagger UI:** <http://localhost:9000/docs>
+  - **ReDoc:** <http://localhost:9000/redoc>
+
+- **Translation Service:**
+  - **Swagger UI:** <http://localhost:9001/docs>
+  - **ReDoc:** <http://localhost:9001/redoc>
+
+- **Summarization Service:**
+  - **Swagger UI:** <http://localhost:9002/docs>
+  - **ReDoc:** <http://localhost:9002/redoc>
+
 
 ## Set Up
 
