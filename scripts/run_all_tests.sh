@@ -30,23 +30,32 @@ echo "================================="
 echo "  CHECKING FOR UNITY TEST SUPPORT"
 echo "================================="
 
-# Check if the current OS is macOS (Darwin) or Windows (MINGW/CYGWIN/MSYS)
-if [[ "$(uname)" == "Darwin" ]] || [[ "$(uname -s)" == MINGW* || "$(uname -s)" == CYGWIN* || "$(uname -s)" == MSYS* ]]; then
+# Check if the current OS is macOS (Darwin) or Windows (Git Bash or WSL)
+IS_SUPPORTED_OS=false
+OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+if [[ "$OS_NAME" == "darwin" ]] || \
+   [[ "$OS_NAME" == mingw* || "$OS_NAME" == cygwin* || "$OS_NAME" == msys* ]] || \
+   ([[ "$OS_NAME" == "linux" ]] && [ -f "/proc/version" ] && grep -q -i "microsoft" /proc/version); then
+    IS_SUPPORTED_OS=true
+fi
+
+if [[ "$IS_SUPPORTED_OS" == true ]]; then
     echo "Supported platform detected. Running Unity tests..."
     "$UNITY_TEST_SCRIPT"
 else
-    # For unsupported platforms like Linux, print a warning but do not fail.
+    # For unsupported platforms like native Linux, print a warning but do not fail.
     echo "⚠️  WARNING: Skipping Unity tests. Unsupported platform '$(uname -s)'."
-    echo "   Unity tests can only be run on macOS or Windows."
+    echo "   Unity tests can only be run on macOS or Windows (via Git Bash or WSL)."
 fi
 
 # --- Final Success Message ---
 # This line will only be reached if all mandatory scripts passed.
 echo ""
 echo "================================="
-if [[ "$(uname -s)" == "Linux" ]]; then
-    echo "✅ ALL TEST SUITES (EXCEPT UNITY) PASSED!"
+if [[ "$IS_SUPPORTED_OS" == false ]]; then
+    echo "✅ ALL BACKEND TEST SUITES PASSED (UNITY SKIPPED)!"
 else
-    echo "✅ All TEST SUITES PASSED!"
+    echo "✅ ALL TEST SUITES PASSED!"
 fi
 echo "================================="
