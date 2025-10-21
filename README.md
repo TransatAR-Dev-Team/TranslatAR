@@ -79,7 +79,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 1. Clone this repository and enter the directory:
 
     ```sh
-    git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git ; cd TranslatAR
+    git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
 2. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
@@ -144,7 +144,7 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 4. **Press and hold the `B` button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
 
-5. **Release the Left Mouse Button**. The text will change to *"Processing audio..."*.
+5. **Release the `B` button**. The text will change to *"Processing audio..."*.
 
 6. After a moment, the text will update with the Spanish translation of what you said.
 
@@ -198,11 +198,11 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 6. The `ollama` service returns the generated summary to the `summarization-service`.
 
-7. The `summarization-service` forwards the summary back to the `backend`.
+7. The `summarization-service` forwards the summary back to `backend`.
 
-8. The backend returns the summary to the web portal.
+8. `backend` returns the summary to the web portal.
 
-9. The web portal UI updates to display the generated summary.
+9. The `web-portal` UI updates to display the generated summary.
 
 ### Demo clean up
 
@@ -227,13 +227,13 @@ make test
 
 ### Running Specific Test Suites
 
-To run only  unit tests for all services, use the following command. This is useful for quickly checking for errors.
+To run only unit tests for all services, use the following command. This is useful for quickly checking for errors.
 
 ```sh
 make test-unit
 ```
 
-To run the integration tests, use this command. These tests take longer to run.
+To run only the integration tests, use this command. These tests take longer to run.
 
 ```sh
 make test-integration
@@ -245,11 +245,11 @@ To run only the Unity **Edit Mode** and **Play Mode** tests, use the script belo
 make test-unity
 ```
 
-> This test suite takes the longest to run, especially if you haven't run it before.
+This test suite takes the longest to run, especially if you haven't run it before.
 
 ### Running Individual Service Tests Locally
 
-For rapid development, can run tests for individual services on your local machine without Docker. Before running tests, you must navigate to the service's directory and install its dependencies.
+For rapid development, you can run tests for individual services on your local machine without Docker or scripts. Before running tests, you must navigate to the service's directory and install its dependencies.
 
 Instructions for each service can be found at the links below:
 
