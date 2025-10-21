@@ -1,67 +1,69 @@
+from types import SimpleNamespace
 from fastapi.testclient import TestClient
 import pytest
 import main
 from main import app, SettingsModel
 
-
-class FakeSettingsCollection:
-    def __init__(self):
-        self._doc = None
-
-    async def find_one(self, _filter: dict):
-        return self._doc
-
-    async def replace_one(self, _filter: dict, replacement: dict, upsert: bool):
-        self._doc = dict(replacement)
-        return type("Result", (), {"acknowledged": True, "modified_count": 1})
-
+@pytest.fixture
+def fake_settings_collection():
+    class _Fake:
+        def __init__(self):
+            self._doc = None
+        async def find_one(self, _filter: dict):
+            return self._doc
+        async def replace_one(self, _filter: dict, replacement: dict, upsert: bool):
+            self._doc = dict(replacement)
+            return SimpleNamespace(acknowledged=True, modified_count=1)
+    return _Fake()
 
 @pytest.fixture(autouse=True)
-def override_settings_collection():
-    # Override Mongo collection with in-memory fake per test
-    main.settings_collection = FakeSettingsCollection()
+def override_settings_collection(fake_settings_collection, monkeypatch):
+    # Replace the collection used by the backend with an in-memory mock
+    monkeypatch.setattr(main, "settings_collection", fake_settings_collection, raising=False)
     yield
 
-
 def test_get_settings_returns_defaults_when_empty():
-    # Test case 1: Get initial settings (default values)
     client = TestClient(app)
     resp = client.get("/api/settings")
     assert resp.status_code == 200
-    data = resp.json()
-    assert data["settings"] == SettingsModel().model_dump()
-
+    assert resp.json()["settings"] == SettingsModel().model_dump()
 
 def test_post_then_get_returns_saved_values():
-    # Test case 2: Get saved settings
     client = TestClient(app)
     payload = SettingsModel(source_language="ko", target_language="en").model_dump()
     resp_post = client.post("/api/settings", json=payload)
     assert resp_post.status_code == 200
+    assert resp_post.json()["settings"] == payload  # Check POST response reflects updates
 
-    resp_get = client.get("/api/settings")
+    resp_get = client.get("/api/settings")          # Get saved settings
     assert resp_get.status_code == 200
     assert resp_get.json()["settings"] == payload
 
+# Failure cases
 
-def test_post_response_reflects_updates():
-    # Test case 3: Check POST response reflects updates
+def test_post_invalid_type_returns_422():
     client = TestClient(app)
-    payload = SettingsModel(source_language="ja", target_language="fr").model_dump()
-    resp = client.post("/api/settings", json=payload)
-    assert resp.status_code == 200
-    assert resp.json()["settings"] == payload
+    bad_payload = {
+        **SettingsModel().model_dump(),
+        "target_sample_rate": "not-an-int"  # Type error
+    }
+    resp = client.post("/api/settings", json=bad_payload)
+    assert resp.status_code == 422
 
-
-def test_persistence_post_followed_by_get():
-    # Test case 4: Check data persistence (POST followed by GET)
+@pytest.mark.asyncio
+async def test_get_settings_db_error_returns_500(fake_settings_collection):
+    async def boom(_):
+        raise Exception("db down")
+    fake_settings_collection.find_one = boom  # Force DB exception
     client = TestClient(app)
-    payload = SettingsModel(
-        source_language="ko",
-        target_language="en",
-        chunk_duration_seconds=4.0,
-    ).model_dump()
-    client.post("/api/settings", json=payload)
-    resp_get = client.get("/api/settings")
-    assert resp_get.status_code == 200
-    assert resp_get.json()["settings"] == payload
+    resp = client.get("/api/settings")
+    assert resp.status_code == 500
+
+@pytest.mark.asyncio
+async def test_post_settings_db_error_returns_500(fake_settings_collection):
+    async def boom(_, __, ___):
+        raise Exception("db down")
+    fake_settings_collection.replace_one = boom  # Force DB exception
+    client = TestClient(app)
+    resp = client.post("/api/settings", json=SettingsModel().model_dump())
+    assert resp.status_code == 500
