@@ -47,7 +47,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
     -   [Speech-to-Text Service](./stt-service/README.md)
     -   [Translation Service](./translation-service/README.md)
     -   [Summarization Service](./summarization-service/README.md)
-    -   [Unity Frontent](./unity/README.md)
+    -   [Unity Frontend](./unity/README.md)
 
 -   **Developer Guides:**
     -   [Python Services Development Guide](./docs/developer_guide.python_services.md)
@@ -74,7 +74,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 
 ### Initial set up
 
-First, ensure all [prerequisites](#prerequisites) are met and Docker Desktop is running.
+First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
 1. Clone this repository and enter the directory:
 
@@ -82,7 +82,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker Desktop is 
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git ; cd TranslatAR
     ```
 
-2. Start all the backend services. The script will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
+2. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
     ```sh
     make up
@@ -249,7 +249,7 @@ make test-unity
 
 ### Running Individual Service Tests Locally
 
-For rapid development and debugging, you can run tests for individual services on your local machine. Before running tests, you must navigate to the service's directory and install its dependencies.
+For rapid development, can run tests for individual services on your local machine without Docker. Before running tests, you must navigate to the service's directory and install its dependencies.
 
 Instructions for each service can be found at the links below:
 
