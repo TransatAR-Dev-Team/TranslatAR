@@ -14,11 +14,8 @@
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The [Unity Set Up Guide](#unity-frontend) will instruct you on how to install Unity version `2022.3.62f1`.
 - For running the Unity frontend, a Windows PC or Apple Silicon Mac is required.
 
-<a id="gpu"></a>
-
 - **(Optional) For GPU acceleration:**
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus).
-    > Hint: If you're using a Mac, you don't have a CUDA-capable GPU.
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
 
 ## Common Commands
@@ -215,7 +212,7 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
 ## Testing
 
-Ensure all [Prerequisites](#prerequisites) are met before running tests.
+Ensure all [Prerequisites](#prerequisites) are met and the project has been [Set Up](#set-up) before running tests.
 
 ### Running the Full Test Suite
 

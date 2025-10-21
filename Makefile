@@ -11,34 +11,34 @@ ARGS = $(filter-out $@,$(MAKECMDGOALS))
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .PHONY: help up down restart logs test test-unit test-integration test-unity
 
-help: ## Show this help message
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
-up: ## Start all services (auto-detects GPU)
+up: ## Start all services (auto-detects GPU).
 	@./scripts/start.sh up --build -d
 
-down: ## Stop and remove all services
+down: ## Stop and remove all services.
 	@./scripts/start.sh down --remove-orphans
 
-restart: ## Stop and restart all services
+restart: ## Stop and restart all services.
 	@$(MAKE) down
 	@$(MAKE) up
 
-logs: ## Show logs. Ex: `make logs backend` for a specific service.
+logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
 	@./scripts/start.sh logs $(ARGS)
 
-unity-editor: ## Open the Unity project in the editor (macOS/Windows only)
+unity-editor: ## Open the Unity project in the editor (macOS/Windows only).
 	@./scripts/open_unity_editor.sh
 	@./scripts/open_unity_editor.sh
 
-test: ## Run all applicable test suites (Unit, Integration, Unity)
+test: ## Run all applicable test suites (Unit, Integration, Unity).
 	@./scripts/run_all_tests.sh
 
-test-unit: ## Run only the fast unit tests
+test-unit: ## Run unit tests.
 	@./scripts/run_unit_tests.sh
 
-test-integration: ## Run only the backend integration tests
+test-integration: ## Run backend integration tests.
 	@./scripts/run_integration_tests.sh
 
-test-unity: ## Run only the Unity tests (macOS/Windows only)
+test-unity: ## Run Unity tests (macOS/Windows only).
 	@./scripts/run_unity_tests.sh
+
+help: ## Show this help message.
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
