@@ -79,21 +79,20 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. **(Optional) Configure Google OAuth Login:**
+2. Configure Google OAuth Login:**
    
    If you want to enable user authentication via Google, follow these steps:
    
    - Copy the environment template file:
      ```sh
-     cp .env.template .env
+     cp .env.example .env
      ```
    
-   - Follow the detailed setup guide in [GOOGLE_AUTH_SETUP.md](./GOOGLE_AUTH_SETUP.md) to:
+   - Follow the detailed setup guide in [AUTH_SETUP.md](backend/README.md) to:
      - Create a Google Cloud project
      - Set up OAuth 2.0 credentials
      - Configure your `.env` file with the credentials
-   
-   - If you skip this step, the authentication endpoints will not work, but all other features will function normally.
+     - If you skip this step, the authentication endpoints will not work, but all other features will function normally.
 
 3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
@@ -103,7 +102,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
 4. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
-5. **(Optional) Test Google Login:** If you configured OAuth, visit <http://localhost:8000/static/login.html> to test the Google login functionality.
+5. Test Google Login: If you configured OAuth, visit <http://localhost:8000/static/login.html> to test the Google login functionality.
 
 6. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
