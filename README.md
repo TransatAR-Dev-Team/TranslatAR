@@ -9,7 +9,6 @@
     -   **macOS:** Pre-installed. May require `xcode-select --install`.
     -   **Windows:** Install via Chocolatey: `choco install make`.
     -   **Linux (Debian/Ubuntu):** `sudo apt install make`.
-- **Git**: For version control.
 
 - **(Optional) For GPU acceleration:**
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus).
@@ -36,7 +35,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | `make up`               | Build and start all services in Docker (auto-detects GPU).                          |
 | `make down`             | Stop and remove all services.                                                       |
-| `make restart`          | A shortcut to stop and restart all services.                                        |
+| `make restart`          | Restart all services. Alias for `make down` + `make up`.                            |
 | `make logs`             | Show logs of all running services.                                                  |
 | `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                  |
 | `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows). |
@@ -300,4 +299,4 @@ make format
 make lint
 ```
 
-For instructions on running these tools within a specific service, see the developer guides for [Python](./docs/developer_guide.python_services.md) and the [Web Portal](./web-portal/README.md).
+For instructions on running these tools within a specific service, see the developer guides for [Python](./docs/developer_guide.python_services.md#formatting-and-linting) and the [Web Portal](./web-portal/README.md#formatting-and-linting).
