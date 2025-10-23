@@ -2,12 +2,18 @@ import os
 import httpx
 from fastapi import FastAPI, APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import motor.motor_asyncio
 from pydantic import BaseModel
 from pymongo.errors import ConnectionFailure
 from datetime import datetime, timezone
+from dotenv import load_dotenv
 
 from websocket import router as websocket_router
+from auth_controller import router as auth_router
+from database_client import DatabaseClient
+
+load_dotenv()
 
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
@@ -30,11 +36,18 @@ app.add_middleware(
 # --- WebSocket Router ---
 app.include_router(websocket_router)
 
+# --- Auth Router ---
+app.include_router(auth_router, prefix="/auth")
+
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
+
+# --- Initialize Database Client for Auth ---
+db_client = DatabaseClient(MONGO_DATABASE_URL)
+app.state.db = db_client
 
 # --- Pydantic Models ---
 class TranslationResponse(BaseModel):
@@ -186,7 +199,7 @@ async def save_settings(settings_update: SettingsModel):
     """
     try:
         # Convert to dict for MongoDB insertion
-        settings_dict = settings_update.dict()
+        settings_dict = settings_update.model_dump()
 
         # Upsert the settings (insert if doesn't exist, update if exists)
         await settings_collection.replace_one(
@@ -216,3 +229,10 @@ async def health_check():
         )
 
 app.include_router(router, prefix="/api")
+
+# --- Static Files (for login page) ---
+# Mount static files AFTER all routers to avoid conflicts
+import pathlib
+static_dir = pathlib.Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")

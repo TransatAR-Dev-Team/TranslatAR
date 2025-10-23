@@ -20,6 +20,10 @@ services:
       - STT_URL=http://stt:9000
       - TRANSLATION_URL=http://translation:9001
       - SUMMARIZATION_URL=http://summarization:9002
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:8000/auth/google/callback}
+      - JWT_SECRET=${JWT_SECRET:-default_jwt_secret_change_in_production}
 
   web-portal:
     container_name: web-portal
