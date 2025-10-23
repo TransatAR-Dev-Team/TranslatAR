@@ -51,6 +51,27 @@ This guide provides common instructions for setting up and managing the Python-b
     poetry run pytest -v
     ```
 
+## Formatting and Linting
+
+We use **Black** for code formatting and **Ruff** for linting and import sorting.
+
+1.  **Navigate to the service directory** (e.g., `cd backend`).
+
+2.  To format your code, run:
+
+    ```sh
+    poetry run black .
+    poetry run ruff format .
+    ```
+
+3.  To lint your code and automatically fix any issues, run:
+
+    ```sh
+    poetry run ruff check . --fix
+    ```
+
+You can also format and lint all services at once from the project root using `make format` and `make lint`.
+
 ## Managing Dependencies with Poetry
 
 > The following instructions are for macOS/Linux.

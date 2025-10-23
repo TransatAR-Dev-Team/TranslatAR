@@ -34,6 +34,9 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | `make test-unit`        | Run only the unit tests for all backend services.                                   |
 | `make test-integration` | Run only the backend integration tests.                                             |
 | `make test-unity`       | Run only the Unity tests (requires macOS or Windows).                               |
+| `make check`            | Alias for `make format` + `make lint`.                                              |
+| `make format`           | Format all Python and web portal source code.                                       |
+| `make lint`             | Lint all Python and web portal source code.                                         |
 | `make help` or `make`   | Show help message (same info as this table).                                        |
 
 ## Further Documentation
@@ -253,3 +256,32 @@ Instructions for each service can be found at the links below:
 - [Web Portal (`web-portal`)](./web-portal/README.md#local-testing)
 - [Python Services (`backend`, etc.)](./docs/developer_guide.python_services.md#local-testing)
 - [Unity (`unity`)](./unity/README.md#testing)
+
+## Code Quality
+
+To ensure code consistency and quality, this project uses a combination of formatters and linters.
+
+- **Python Services**: Formatted with **Black** and linted with **Ruff**.
+- **Web Portal**: Formatted with **Prettier** and linted with **ESLint**.
+
+You can run these tools across the entire project using a single command:
+
+**To format then lint all code:**
+
+```sh
+make format-lint
+```
+
+**To format all code:**
+
+```sh
+make format
+```
+
+**To lint all code and automatically fix issues:**
+
+```sh
+make lint
+```
+
+For instructions on running these tools within a specific service, see the developer guides for [Python](./docs/developer_guide.python_services.md) and the [Web Portal](./web-portal/README.md).
