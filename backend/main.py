@@ -2,7 +2,7 @@
 
 import os
 from datetime import UTC, datetime
-
+import uuid
 import httpx
 import motor.motor_asyncio
 from fastapi import APIRouter, FastAPI, File, Form, HTTPException, UploadFile
@@ -49,6 +49,7 @@ app.state.db = db
 class TranslationResponse(BaseModel):
     original_text: str
     translated_text: str
+    conversation_id: str
 
 
 class SummarizationRequest(BaseModel):
@@ -93,7 +94,11 @@ async def process_audio_and_translate(
     audio_file: UploadFile = File(...),
     source_lang: str = Form("en"),
     target_lang: str = Form("es"),
+    convservation_id: str | None = Form(None),
+    user_id: str | None = Form(None)
 ):
+    if convservation_id is None:
+        conversation_id = str(uuid.uuid4()) 
     async with httpx.AsyncClient(timeout=60.0) as client:
         # Step 1: STT call
         try:
@@ -132,6 +137,8 @@ async def process_audio_and_translate(
         # Step 3: Save to the DB
         try:
             translation_log = {
+                "conversation_id": conversation_id,
+                "user_id": user_id,
                 "original_text": original_text,
                 "translated_text": translated_text,
                 "source_lang": source_lang,
@@ -142,17 +149,24 @@ async def process_audio_and_translate(
         except Exception as e:
             print(f"CRITICAL: Failed to save translation to database: {e}")
 
-        return TranslationResponse(original_text=original_text, translated_text=translated_text)
-
-
+        return TranslationResponse(
+            original_text=original_text,
+            translated_text=translated_text,
+            convservation_id=conversation_id
+        )
+    
 @router.get("/history")
-async def get_history():
+async def get_history(conversation_id: str | None = None):
     """
     Retrieves the translation records from the database.
     """
     try:
-        history_cursor = translations_collection.find({}).sort("timestamp", -1).limit(50)
-
+        query = {"conversation_id": conversation_id} if conversation_id else {}
+        history_cursor = (
+            translations_collection.find(query)
+            .sort("timestamp", -1)
+            .limit(50)
+        )
         history_list = []
         async for doc in history_cursor:
             doc["_id"] = str(doc["_id"])
