@@ -16,11 +16,13 @@ services:
       dockerfile: Dockerfile
     environment:
       - DATABASE_URL=mongodb://mongodb_test:27017
-      - STT_URL=http://stt:9000
-      - TRANSLATION_URL=http://translation:9001
+      - STT_URL=http://mock_stt:9000
+      - TRANSLATION_URL=http://mock_translation:9001
       - SUMMARIZATION_URL=http://summarization:9002
     depends_on:
       - mongodb_test
+      - mock_stt
+      - mock_translation
     # This tells Docker how to determine if the backend is ready.
     healthcheck:
       # The command runs INSIDE the container. 'curl -f' fails with a non-zero
@@ -41,3 +43,17 @@ services:
       timeout: 10s
       retries: 5
       start_period: 20s
+
+  mock_stt:
+    container_name: mock_stt_integration
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile
+    command: ["poetry","run","uvicorn","mock_stt:app","--host","0.0.0.0","--port","9000"]
+
+  mock_translation:
+    container_name: mock_translation_integration
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile
+    command: ["poetry","run","uvicorn","mock_translation:app","--host","0.0.0.0","--port","9001"]

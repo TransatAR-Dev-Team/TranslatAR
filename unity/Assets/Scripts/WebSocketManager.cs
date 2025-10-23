@@ -182,7 +182,7 @@ public class WebSocketManager : MonoBehaviour
             {
                 source_lang = sourceLanguage,
                 target_lang = targetLanguage,
-                sample_rate = 44100,
+                sample_rate = AudioSettings.outputSampleRate,
                 channels = 1
             });
 
