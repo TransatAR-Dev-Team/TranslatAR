@@ -1,0 +1,21 @@
+[project]
+name = "integration"
+version = "0.1.0"
+description = "Integration tests for TranslatAR"
+authors = [
+    {name = "TranslatAR Dev Team"}
+]
+requires-python = "^3.11"
+dependencies = [
+    "pytest (>=8.4.2,<9.0.0)",
+    "pytest-asyncio (>=1.2.0,<2.0.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "pyjwt (>=2.10.1,<3.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,111 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      stt:
+        condition: service_started
+      translation:
+        condition: service_started
+    environment:
+      - DATABASE_URL=mongodb://mongodb:27017
+      - STT_URL=http://stt:9000
+      - TRANSLATION_URL=http://translation:9001
+      - SUMMARIZATION_URL=http://summarization:9002
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:8000/auth/google/callback}
+      - JWT_SECRET=${JWT_SECRET:-default_jwt_secret_change_in_production}
+
+  web-portal:
+    container_name: web-portal
+    build:
+      context: ./web-portal
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web-portal:/app
+      - /app/node_modules 
+      
+  stt:
+    container_name: stt
+    build:
+      context: ./stt-service
+    ports:
+      - "9000:9000"
+    volumes:
+      - whisper-models:/root/.cache/huggingface
+    environment:
+      - STT_DEVICE=cpu 
+
+  translation:
+    container_name: translation
+    build:
+      context: ./translation-service
+    ports:
+      - "9001:9001"
+    environment:
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+    depends_on:
+      - libretranslate
+
+  libretranslate:
+    container_name: libretranslate
+    image: libretranslate/libretranslate:latest
+    ports:
+      - "5001:5000"
+    # Pre-load only a few common languages to save RAM and speed up startup.
+    # Add any other language codes you need (e.g., "ja", "zh", "ru").
+    command: ["--load-only", "en,es,fr,de"]
+
+  summarization:
+    container_name: summarization
+    build:
+      context: ./summarization-service
+    ports:
+      - "9002:9002"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=phi3:mini
+    depends_on:
+      - ollama
+
+  ollama:
+    container_name: ollama
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  mongo-data:
+  whisper-models:
+  ollama-data:
+
+networks:
+  default:
+    driver: bridge
