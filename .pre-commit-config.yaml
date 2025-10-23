@@ -1,0 +1,49 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+
+# == Python Formatting & Linting ==
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.5
+    hooks:
+    # Run the Ruff linter
+    -   id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        # Important: only run on files inside the python service directories
+        files: ^(backend|stt-service|summarization-service|translation-service)/
+    # Run the Ruff formatter (as a backup to Black)
+    -   id: ruff-format
+        files: ^(backend|stt-service|summarization-service|translation-service)/
+
+-   repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+    -   id: black
+        files: ^(backend|stt-service|summarization-service|translation-service)/
+
+
+# == Web Portal Formatting & Linting ==
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+    -   id: prettier
+        # Prettier will use the .prettierrc.json config in the web-portal directory
+        files: ^web-portal/
+        # Tell prettier where to run from so it can find its plugins (like for tailwind)
+        entry: bash -c 'cd web-portal && prettier --write "$@"' --
+
+-   repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.7.0
+    hooks:
+    -   id: eslint
+        args: [--fix]
+        files: ^web-portal/.*\.[tj]sx?$
+        # Tell eslint where to run from so it can find its config and plugins
+        entry: bash -c 'cd web-portal && eslint --fix "$@"' --

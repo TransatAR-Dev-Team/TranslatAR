@@ -2,21 +2,31 @@
 
 ## Prerequisites
 
-- About 50 GB of free space.
-- [Docker Desktop](https://docs.docker.com/desktop/) installed and running.
-- **A Bash-compatible terminal.**
-  - **macOS/Linux:** Use the default Terminal.
-  - **Windows:** Use **Git Bash** (included with [Git for Windows](https://git-scm.com/download/win)) or [WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
-- **`make` command-line tool.**
-  - **macOS:** `make` is pre-installed. You may need to install Xcode Command Line Tools by running `xcode-select --install`.
-  - **Windows:** `make` is available through various packages. The easiest way is to install it via [Chocolatey](https://chocolatey.org/): `choco install make`.
-  - **Linux (Debian/Ubuntu):** `sudo apt update && sudo apt install make -y`
-- [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The [Unity Set Up Guide](#unity-frontend) will instruct you on how to install Unity version `2022.3.62f1`.
-- For running the Unity frontend, a Windows PC or Apple Silicon Mac is required.
+### Core Tools
+
+- **Docker Desktop**: For running the services. [Download here](https://docs.docker.com/desktop/).
+- **make**: A command-line tool for running project commands.
+    -   **macOS:** Pre-installed. May require `xcode-select --install`.
+    -   **Windows:** Install via Chocolatey: `choco install make`.
+    -   **Linux (Debian/Ubuntu):** `sudo apt install make`.
+- **Git**: For version control.
 
 - **(Optional) For GPU acceleration:**
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus).
-  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
+  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.
+
+### Local Development & Code Quality
+
+While Docker can run the project, local development (running tests, formatters, and managing dependencies) requires the following:
+
+-   **Python**: Both versions **3.10** and **3.11** are required for the different microservices. instructions on installing different Python versions are available in our [developer guide](./docs/developer_guide.python_services.md#prerequisites).
+-   **Node.js**: Required for the `web-portal`. [Download here](https://nodejs.org/en/download).
+-   **Poetry**: The dependency manager for Python services. [Installation guide](https://python-poetry.org/docs/#installation).
+-   **pre-commit**: For managing automated code quality hooks. Install with `pipx install pre-commit`.
+
+### Unity
+
+-   [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The guide below will instruct you on installing the correct Unity Editor version.
 
 ## Common Commands
 
@@ -80,6 +90,12 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
     ```sh
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
+    ```
+
+2. Activate Automated Code Quality Checks. This command installs the pre-commit hooks into your local git configuration. It will automatically format and lint your code every time you commit. **This is a required step for all contributors.**
+
+    ```sh
+    pre-commit install
     ```
 
 2. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
