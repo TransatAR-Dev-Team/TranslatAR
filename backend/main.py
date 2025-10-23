@@ -211,7 +211,7 @@ async def save_settings(settings_update: SettingsModel):
     """
     try:
         # Convert to dict for MongoDB insertion
-        settings_dict = settings_update.dict()
+        settings_dict = settings_update.model_dump()
 
         # Upsert the settings (insert if doesn't exist, update if exists)
         await settings_collection.replace_one(
