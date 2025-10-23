@@ -40,5 +40,15 @@ test-integration: ## Run backend integration tests.
 test-unity: ## Run Unity tests (macOS/Windows only).
 	@./scripts/run_unity_tests.sh
 
+format: ## Format all source code with Black, Ruff Formatter, and Prettier.
+	@./scripts/format.sh
+
+lint: ## Lint all source code with Ruff and ESLint.
+	@./scripts/lint.sh
+
+check: format lint ## Alias for format + lint.
+	@$(MAKE) format
+	@$(MAKE) lint
+
 help: ## Show this help message.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
