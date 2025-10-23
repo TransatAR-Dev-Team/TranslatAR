@@ -43,14 +43,8 @@ JWT_SECRET=your_jwt_secret_key_here
 
 ### Setting Up Google OAuth
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Google+ API
-4. Go to "Credentials" and create OAuth 2.0 Client ID
-5. Add authorized redirect URIs:
-   - `http://localhost:8000/auth/google/callback` (for local development)
-   - Add your production URL when deploying
-6. Copy the Client ID and Client Secret to your `.env` file
+- Follow the detailed setup guide: [Google OAuth 2.0 Setup Guide](https://developers.google.com/identity/protocols/oauth2)
+- If you are in dev team, you will find your key in the google sheet
 
 ## API Endpoints
 
