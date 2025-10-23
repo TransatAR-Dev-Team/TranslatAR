@@ -39,7 +39,9 @@ function App() {
     chunk_overlap_seconds: 0.5,
     websocket_url: 'ws://localhost:8000/ws',
   });
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+
+  // TODO: add isSettingsLoading variable
+  const [, setIsSettingsLoading] = useState(true);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
