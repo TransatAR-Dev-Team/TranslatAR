@@ -27,7 +27,7 @@ for service in "${PYTHON_SERVICES[@]}"; do
         
         echo "--> Ensuring dependencies are installed with ${PYTHON_EXEC}..."
         poetry env use "$PYTHON_EXEC" >/dev/null
-        poetry install --sync --no-root >/dev/null
+        poetry sync --no-root >/dev/null
 
         echo "--> Running formatters..."
         poetry run black .
