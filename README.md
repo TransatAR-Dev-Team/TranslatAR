@@ -83,16 +83,11 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
    
    If you want to enable user authentication via Google, follow these steps:
    
-   - Copy the environment template file:
-     ```sh
-     cp .env.example .env
-     ```
+  - Copy the environment template file: [`.env.example.md`](./.env.example.md)
    
    - Follow the detailed backend setup guide in [Setup guide](backend/README.md)
-     - Create a Google Cloud project
-     - Set up OAuth 2.0 credentials
-     - Configure your `.env` file with the credentials
      - If you skip this step, the authentication endpoints will not work, but all other features will function normally.
+     - If you are in dev team, you will find your key in the google sheet
 
 3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
