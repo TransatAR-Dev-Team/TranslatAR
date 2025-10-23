@@ -19,10 +19,10 @@
 
 While Docker can run the project, local development (running tests, formatters, and managing dependencies) requires the following:
 
--   **Python**: Both versions **3.10** and **3.11** are required for the different microservices. instructions on installing different Python versions are available in our [developer guide](./docs/developer_guide.python_services.md#prerequisites).
--   **Node.js**: Required for the `web-portal`. [Download here](https://nodejs.org/en/download).
--   **Poetry**: The dependency manager for Python services. [Installation guide](https://python-poetry.org/docs/#installation).
--   **pre-commit**: For managing automated code quality hooks. Install with `pipx install pre-commit`.
+- **Python**: Both versions **3.10** and **3.11** are required for the different microservices. instructions on installing different Python versions are available in our [Python Service Developer Guide](./docs/developer_guide.python_services.md#prerequisites).
+- **Node.js**: Required for the `web-portal`. [Download here](https://nodejs.org/en/download).
+- **Poetry**: The dependency manager for Python services. [Installation guide](https://python-poetry.org/docs/#installation).
+- [**pre-commit**](https://pre-commit.com/): For managing automated code quality hooks. Install with `pipx install pre-commit`.
 
 ### Unity
 
@@ -44,7 +44,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | `make test-unit`        | Run only the unit tests for all backend services.                                   |
 | `make test-integration` | Run only the backend integration tests.                                             |
 | `make test-unity`       | Run only the Unity tests (requires macOS or Windows).                               |
-| `make check`            | Alias for `make format` + `make lint`.                                              |
+| `make validate`         | Alias for `make format` + `make lint`.                                              |
 | `make format`           | Format all Python and web portal source code.                                       |
 | `make lint`             | Lint all Python and web portal source code.                                         |
 | `make help` or `make`   | Show help message (same info as this table).                                        |
