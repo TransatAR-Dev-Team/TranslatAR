@@ -88,7 +88,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
      cp .env.example .env
      ```
    
-   - Follow the detailed setup guide in [AUTH_SETUP.md](backend/README.md) to:
+   - Follow the detailed backend setup guide in [Setup guide](backend/README.md)
      - Create a Google Cloud project
      - Set up OAuth 2.0 credentials
      - Configure your `.env` file with the credentials
