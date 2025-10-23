@@ -37,7 +37,9 @@ async def summarize(request: SummarizationRequest):
     payload = {"model": MODEL_NAME, "prompt": prompt, "stream": False}
 
     logger.info(
-        f"Forwarding summarization request with length '{request.length}' to model '{MODEL_NAME}'..."
+        "Forwarding summarization request with length '%s' to model '%s'...",
+        request.length,
+        MODEL_NAME,
     )
 
     try:
@@ -48,20 +50,16 @@ async def summarize(request: SummarizationRequest):
 
             if "response" not in data:
                 logger.error(f"Invalid response from Ollama: {data}")
-                raise HTTPException(
-                    status_code=500, detail="Invalid response from Ollama."
-                )
+                raise HTTPException(status_code=500, detail="Invalid response from Ollama.")
 
             return SummarizationResponse(summary=data["response"].strip())
 
     except httpx.RequestError as e:
         logger.error(f"Could not connect to Ollama: {e}")
-        raise HTTPException(status_code=503, detail=f"Error connecting to Ollama: {e}")
+        raise HTTPException(status_code=503, detail=f"Error connecting to Ollama: {e}") from e
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"Ollama returned an error: {e.response.status_code} - {e.response.text}"
-        )
-        raise HTTPException(status_code=500, detail=f"Ollama failed: {e.response.text}")
+        logger.error(f"Ollama returned an error: {e.response.status_code} - {e.response.text}")
+        raise HTTPException(status_code=500, detail=f"Ollama failed: {e}") from e
 
 
 @app.get("/health")

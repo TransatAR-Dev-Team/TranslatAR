@@ -1,3 +1,5 @@
+# ruff: noqa: B008
+
 import asyncio
 import io
 import logging
@@ -27,9 +29,7 @@ ml_models = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Loading Whisper model '{MODEL_SIZE}' onto '{DEVICE}' device...")
-    ml_models["whisper_model"] = WhisperModel(
-        MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE
-    )
+    ml_models["whisper_model"] = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
     logger.info("Whisper model loaded successfully.")
     yield
     ml_models.clear()
@@ -63,7 +63,9 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):
         )
 
         logger.info(
-            f"Detected language '{info.language}' with probability {info.language_probability}"
+            "Detected language '%s' with probability %s",
+            info.language,
+            info.language_probability,
         )
 
         # Filter out segments with high no_speech probability
@@ -72,9 +74,7 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):
             if segment.no_speech_prob < 0.6:  # Adjust threshold as needed
                 transcription_parts.append(segment.text)
             else:
-                logger.info(
-                    f"Skipping segment with no_speech_prob: {segment.no_speech_prob}"
-                )
+                logger.info(f"Skipping segment with no_speech_prob: {segment.no_speech_prob}")
 
         transcription = "".join(transcription_parts)
 
@@ -86,7 +86,7 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):
 
     except Exception as e:
         logger.error(f"Error during transcription: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}") from e
 
 
 @app.get("/health")

@@ -26,9 +26,7 @@ def fake_settings_collection():
 @pytest.fixture(autouse=True)
 def override_settings_collection(fake_settings_collection, monkeypatch):
     # Replace the collection used by the backend with an in-memory mock
-    monkeypatch.setattr(
-        main, "settings_collection", fake_settings_collection, raising=False
-    )
+    monkeypatch.setattr(main, "settings_collection", fake_settings_collection, raising=False)
     yield
 
 
@@ -44,9 +42,7 @@ def test_post_then_get_returns_saved_values():
     payload = SettingsModel(source_language="ko", target_language="en").model_dump()
     resp_post = client.post("/api/settings", json=payload)
     assert resp_post.status_code == 200
-    assert (
-        resp_post.json()["settings"] == payload
-    )  # Check POST response reflects updates
+    assert resp_post.json()["settings"] == payload  # Check POST response reflects updates
 
     resp_get = client.get("/api/settings")  # Get saved settings
     assert resp_get.status_code == 200
