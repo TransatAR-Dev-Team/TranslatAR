@@ -58,9 +58,7 @@ async def process_audio_chunk(
             # Step 1: Send to STT service
             files = {"audio_file": ("chunk.wav", audio_data, "audio/wav")}
 
-            stt_response = await client.post(
-                f"{STT_SERVICE_URL}/transcribe", files=files
-            )
+            stt_response = await client.post(f"{STT_SERVICE_URL}/transcribe", files=files)
             stt_response.raise_for_status()
             original_text = stt_response.json().get("transcription", "")
 

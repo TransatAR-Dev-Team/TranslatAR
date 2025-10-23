@@ -1,3 +1,5 @@
+# ruff: noqa: B008
+
 import os
 from datetime import UTC, datetime
 
@@ -76,9 +78,7 @@ async def read_db_hello():
     hello_coll = hello_db.get_collection("messages")
     greeting = await hello_coll.find_one({"type": "greeting"})
     if not greeting:
-        await hello_coll.insert_one(
-            {"type": "greeting", "message": "Hello from MongoDB!"}
-        )
+        await hello_coll.insert_one({"type": "greeting", "message": "Hello from MongoDB!"})
         greeting = await hello_coll.find_one({"type": "greeting"})
     return {"message": greeting["message"]}
 
@@ -99,17 +99,13 @@ async def process_audio_and_translate(
                     audio_file.content_type,
                 )
             }
-            stt_response = await client.post(
-                f"{STT_SERVICE_URL}/transcribe", files=stt_files
-            )
+            stt_response = await client.post(f"{STT_SERVICE_URL}/transcribe", files=stt_files)
             stt_response.raise_for_status()
             original_text = stt_response.json().get("transcription")
             if not original_text:
                 raise HTTPException(status_code=500, detail="Transcription failed.")
         except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Error in STT service: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=f"Error in STT service: {e}") from e
 
         # Step 2: Translation call
         try:
@@ -126,9 +122,7 @@ async def process_audio_and_translate(
             if translated_text is None:
                 raise HTTPException(status_code=500, detail="Translation failed.")
         except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Error in Translation service: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=f"Error in Translation service: {e}") from e
 
         # Step 3: Save to the DB
         try:
@@ -143,9 +137,7 @@ async def process_audio_and_translate(
         except Exception as e:
             print(f"CRITICAL: Failed to save translation to database: {e}")
 
-        return TranslationResponse(
-            original_text=original_text, translated_text=translated_text
-        )
+        return TranslationResponse(original_text=original_text, translated_text=translated_text)
 
 
 @router.get("/history")
@@ -154,9 +146,7 @@ async def get_history():
     Retrieves the translation records from the database.
     """
     try:
-        history_cursor = (
-            translations_collection.find({}).sort("timestamp", -1).limit(50)
-        )
+        history_cursor = translations_collection.find({}).sort("timestamp", -1).limit(50)
 
         history_list = []
         async for doc in history_cursor:
@@ -166,9 +156,8 @@ async def get_history():
         return {"history": history_list}
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve history from database: {str(e)}",
-        )
+            status_code=500, detail=f"Failed to retrieve history from database: {e}"
+        ) from e
 
 
 @router.post("/summarize", response_model=SummarizationResponse)
@@ -179,18 +168,14 @@ async def get_summary(request: SummarizationRequest):
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             payload = {"text": request.text, "length": request.length}
-            response = await client.post(
-                f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload
-            )
+            response = await client.post(f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload)
             response.raise_for_status()
             summary_text = response.json().get("summary")
             if summary_text is None:
                 raise HTTPException(status_code=500, detail="Summarization failed.")
             return SummarizationResponse(summary=summary_text)
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error during summarization: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error during summarization: {e}") from e
 
 
 @router.get("/settings", response_model=SettingsResponse)
@@ -215,8 +200,8 @@ async def get_settings():
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve settings from database: {str(e)}",
-        )
+            detail=f"Failed to retrieve settings from database: {e}",
+        ) from e
 
 
 @router.post("/settings", response_model=SettingsResponse)
@@ -239,8 +224,8 @@ async def save_settings(settings_update: SettingsModel):
 
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Failed to save settings to database: {str(e)}"
-        )
+            status_code=500, detail=f"Failed to save settings to database: {e}"
+        ) from e
 
 
 @router.get("/health")
@@ -256,7 +241,7 @@ async def health_check():
         raise HTTPException(
             status_code=503,
             detail=f"Service Unavailable: Cannot connect to the database. Error: {e}",
-        )
+        ) from e
 
 
 app.include_router(router, prefix="/api")
