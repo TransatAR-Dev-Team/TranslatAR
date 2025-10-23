@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 
 interface HistoryItem {
   _id: string;
+  conversation_id: string;
+  user_id: string;
   original_text: string;
   translated_text: string;
   source_lang: string;
@@ -43,11 +45,20 @@ function App() {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
+  const historyEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollToBottom = () => {
+    historyEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   useEffect(() => {
     // Load both history and settings on component mount
     loadHistory();
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [history]);
 
   const loadHistory = async () => {
     setIsLoading(true);
@@ -129,6 +140,14 @@ function App() {
     }
   };
 
+  const groupedHistory = history.reduce((acc: Record<string, HistoryItem[]>, item) => {
+    if (!acc[item.conversation_id]) {
+      acc[item.conversation_id] = [];
+    }
+    acc[item.conversation_id].push(item);
+    return acc;
+  }, {});
+
 
   return (
     <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
@@ -191,7 +210,7 @@ function App() {
           {error && <p className="text-red-400">{error}</p>}
 
           {!isLoading && !error && (
-            <div className="text-left space-y-4 max-h-96 overflow-y-auto">
+            <div className="text-left max-h-[500px] overflow-y-auto space-y-4 p-2 bg-slate-700 rounded-md">
               {history.length === 0 ? (
                 <p className="text-gray-400">No translations found in the database.</p>
               ) : (
