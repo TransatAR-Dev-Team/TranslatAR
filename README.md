@@ -79,7 +79,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Configure Google OAuth Login:**
+2. Configure Google OAuth Login:
    
    If you want to enable user authentication via Google, follow these steps:
    
