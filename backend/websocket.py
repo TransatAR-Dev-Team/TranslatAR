@@ -64,6 +64,11 @@ async def process_audio_chunk(
 
             if not original_text or original_text.strip() == "":
                 print("No transcription detected in chunk")
+                # Send explicit empty result to simplify client logic
+                await websocket.send_json({
+                    "original_text": "",
+                    "translated_text": ""
+                })
                 return
 
             print(f"Transcribed: {original_text}")

@@ -178,6 +178,29 @@ public class AudioRecordingManager : MonoBehaviour
         chunkTimer = 0f; // Reset timer
     }
 
+    private float[] ReadSamplesWrap(AudioClip clip, int startSample, int totalSamples)
+    {
+        int channels = clip.channels;
+        int clipSamples = clip.samples;
+        float[] buffer = new float[totalSamples * channels];
+
+        int s0 = ((startSample % clipSamples) + clipSamples) % clipSamples;
+        int firstLen = Mathf.Min(totalSamples, clipSamples - s0);
+
+        float[] first = new float[firstLen * channels];
+        clip.GetData(first, s0);
+        System.Buffer.BlockCopy(first, 0, buffer, 0, first.Length * sizeof(float));
+
+        if (firstLen < totalSamples)
+        {
+            float[] tail = new float[(totalSamples - firstLen) * channels];
+            clip.GetData(tail, 0);
+            System.Buffer.BlockCopy(tail, 0, buffer, first.Length * sizeof(float), tail.Length * sizeof(float));
+        }
+
+        return buffer;
+    }
+
     /// <summary>
     /// Captures the current audio chunk from the recording buffer, checks for sufficient volume,
     /// converts to WAV format, and sends it to the WebSocket backend.
@@ -187,43 +210,29 @@ public class AudioRecordingManager : MonoBehaviour
         if (recordingClip == null) return;
 
         int currentPosition = Microphone.GetPosition(null);
+        if (currentPosition < lastSamplePosition) currentPosition += recordingClip.samples;
 
-        // Handle wraparound in circular buffer
-        if (currentPosition < lastSamplePosition)
-        {
-            currentPosition += recordingClip.samples;
-        }
+        int samplesSinceLast = currentPosition - lastSamplePosition;
 
-        int samplesAvailable = currentPosition - lastSamplePosition;
+        int desiredSamples = Mathf.RoundToInt(chunkDurationSeconds * targetSampleRate);
+        if (samplesSinceLast + overlapSamples < desiredSamples) return;
 
-        if (samplesAvailable < targetSampleRate * 2.0f) // At least 2 seconds
-        {
-            return;
-        }
+        int startPosition = lastSamplePosition - overlapSamples;
 
-        // Include overlap from previous chunk to avoid word cutting
-        int startPosition = Mathf.Max(0, (lastSamplePosition - overlapSamples) % recordingClip.samples);
-        int totalSamples = samplesAvailable + overlapSamples;
-
-        float[] samples = new float[totalSamples * recordingClip.channels];
-        recordingClip.GetData(samples, startPosition);
+        float[] samples = ReadSamplesWrap(recordingClip, startPosition, desiredSamples + overlapSamples);
 
         if (!HasSufficientVolume(samples))
         {
-            Debug.Log("Skipping silent chunk");
             lastSamplePosition = currentPosition % recordingClip.samples;
             return;
         }
 
-        // Convert to WAV
         byte[] wavData = ConvertSamplesToWav(samples, targetSampleRate, recordingClip.channels);
-
         if (WebSocketManager.Instance != null)
         {
             WebSocketManager.Instance.SendAudioChunk(wavData);
         }
 
-        // Update position (not including overlap for next chunk)
         lastSamplePosition = currentPosition % recordingClip.samples;
     }
 
