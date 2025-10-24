@@ -1,0 +1,87 @@
+services:
+  test_runner:
+    container_name: test_runner_unit
+    image: alpine:latest
+    command: echo "All unit tests passed!"
+    depends_on:
+      backend_test:
+        condition: service_completed_successfully
+      stt_test:
+        condition: service_completed_successfully
+      translation_test:
+        condition: service_completed_successfully
+      summarization_test:
+        condition: service_completed_successfully
+      web_portal_test:
+        condition: service_completed_successfully
+
+  backend_test:
+    container_name: backend_unit_test
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mongodb_test
+    command: ["pytest", "-v"]
+
+  stt_test:
+    container_name: stt_unit_test
+    build:
+      context: ./stt-service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./stt-service:/app
+    command: ["pytest", "-v"]
+
+  translation_test:
+    container_name: translation_unit_test
+    build:
+      context: ./translation-service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./translation-service:/app
+    command: ["pytest", "-v"]
+
+  summarization_test:
+    container_name: summarization_unit_test
+    build:
+      context: ./summarization-service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./summarization-service:/app
+    command: ["pytest", "-v"]
+
+  web_portal_test:
+    container_name: web_portal_unit_test
+    build:
+      context: ./web-portal
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./web-portal:/app
+      - /app/node_modules
+    command: ["npm", "test", "--", "--run"]
+    depends_on:
+      # This condition ensures that this service only starts
+      # after the others have completed successfully.
+      backend_test:
+        condition: service_completed_successfully
+      stt_test:
+        condition: service_completed_successfully
+      translation_test:
+        condition: service_completed_successfully
+      summarization_test:
+        condition: service_completed_successfully
+
+  mongodb_test:
+    container_name: mongodb_test
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    command: mongod --quiet --logpath /dev/null
