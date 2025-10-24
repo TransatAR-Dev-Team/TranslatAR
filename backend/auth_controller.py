@@ -55,7 +55,7 @@ async def google_callback(request: Request, code: str):
     async with httpx.AsyncClient() as client:
         # Exchange code for access token
         r = await client.post("https://oauth2.googleapis.com/token", data=token_data)
-        token_info = await r.json()
+        token_info = r.json()
         access_token = token_info.get("access_token")
 
         if not access_token:
@@ -66,7 +66,7 @@ async def google_callback(request: Request, code: str):
             "https://www.googleapis.com/oauth2/v1/userinfo",
             headers={"Authorization": f"Bearer {access_token}"}
         )
-        user_info = await user_info_response.json()
+        user_info = user_info_response.json()
 
     if "email" not in user_info:
         raise HTTPException(status_code=400, detail="Invalid Google login")

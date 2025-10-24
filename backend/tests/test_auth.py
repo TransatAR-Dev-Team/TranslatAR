@@ -71,13 +71,13 @@ async def test_google_callback_success(client, mock_db_client):
         mock_client.return_value.__aenter__.return_value = mock_instance
         
         # Mock token exchange
-        mock_token_resp = AsyncMock()
-        mock_token_resp.json.return_value = mock_token_response
+        mock_token_resp = Mock()
+        mock_token_resp.json = Mock(return_value=mock_token_response)
         mock_instance.post.return_value = mock_token_resp
         
         # Mock user info request
-        mock_userinfo_resp = AsyncMock()
-        mock_userinfo_resp.json.return_value = mock_user_info
+        mock_userinfo_resp = Mock()
+        mock_userinfo_resp.json = Mock(return_value=mock_user_info)
         mock_instance.get.return_value = mock_userinfo_resp
         
         response = client.get("/auth/google/callback?code=test_auth_code")
