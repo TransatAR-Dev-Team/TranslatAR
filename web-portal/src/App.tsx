@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { AuthProvider, useAuth } from './AuthContext';
+import GoogleLoginButton from './GoogleLoginButton';
+import GoogleOneTap from './GoogleOneTap';
 
 interface HistoryItem {
   _id: string;
@@ -19,7 +22,8 @@ interface Settings {
   websocket_url: string;
 }
 
-function App() {
+function AppContent() {
+  const { user, token } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +56,12 @@ function App() {
   const loadHistory = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/history');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/history', { headers });
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setHistory(data.history);
@@ -67,7 +76,12 @@ function App() {
   const loadSettings = async () => {
     setIsSettingsLoading(true);
     try {
-      const response = await fetch('/api/settings');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/settings', { headers });
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setSettings(data.settings);
@@ -81,9 +95,14 @@ function App() {
 
   const saveSettings = async (newSettings: Settings) => {
     try {
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(newSettings),
       });
 
@@ -108,9 +127,14 @@ function App() {
     setSummary('');
 
     try {
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/summarize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ text: textToSummarize, length: summaryLength }),
       });
 
@@ -132,15 +156,19 @@ function App() {
 
   return (
     <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
+      <GoogleOneTap />
       <div className="w-full max-w-2xl">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">TranslatAR Web Portal</h1>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
-          >
-            Settings
-          </button>
+          <div className="flex items-center space-x-4">
+            <GoogleLoginButton />
+            <button
+              onClick={() => setShowSettings(true)}
+              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              Settings
+            </button>
+          </div>
         </div>
 
         <div className="bg-slate-800 rounded-lg p-6 shadow-lg mb-8">
@@ -354,6 +382,14 @@ function App() {
         </div>
       )}
     </main>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
