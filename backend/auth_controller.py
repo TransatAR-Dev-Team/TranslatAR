@@ -74,7 +74,10 @@ async def google_callback(request: Request, code: str = None, error: str = None)
             user_info = user_response.json()
             
             # Save user to database
-            db = request.app.state.db
+            db = getattr(request.app.state, 'db', None)
+            if not db:
+                raise HTTPException(status_code=500, detail="Database not available")
+            
             user = db.create_or_update_user({
                 "email": user_info.get("email"),
                 "name": user_info.get("name", ""),
@@ -134,7 +137,10 @@ async def google_one_tap(request: Request, one_tap_request: OneTapRequest):
                 raise HTTPException(status_code=400, detail="No email in Google token")
 
             # Save user to database
-            db = request.app.state.db
+            db = getattr(request.app.state, 'db', None)
+            if not db:
+                raise HTTPException(status_code=500, detail="Database not available")
+            
             user = db.create_or_update_user(user_info)
 
             # Create JWT token
@@ -172,7 +178,10 @@ async def verify_token(request: Request, token: str):
             raise HTTPException(status_code=401, detail="Invalid token")
         
         # Get user from database
-        db = request.app.state.db
+        db = getattr(request.app.state, 'db', None)
+        if not db:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
         user = db.get_user_by_id(user_id)
         
         if not user:

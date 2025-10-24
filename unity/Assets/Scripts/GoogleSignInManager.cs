@@ -9,10 +9,8 @@ public class GoogleSignInManager : MonoBehaviour
 {
     public static GoogleSignInManager Instance { get; private set; }
     
-    [Header("OAuth Configuration")]
-    public string clientId = "YOUR_GOOGLE_CLIENT_ID";
-    public string redirectUri = "http://localhost:8000/auth/google/callback";
-    public string backendUrl = "http://localhost:8000";
+    [Header("Configuration")]
+    public GoogleSignInConfig config;
     
     [Header("User Data")]
     public string userName = "";
@@ -57,7 +55,14 @@ public class GoogleSignInManager : MonoBehaviour
     private void StartEditorSignIn()
     {
         Debug.Log("Editor Google Sign-In");
-        string authUrl = $"{backendUrl}/auth/google";
+        
+        if (config == null)
+        {
+            Debug.LogError("GoogleSignInConfig is not assigned!");
+            return;
+        }
+        
+        string authUrl = config.GetAuthUrl();
         
         // Open browser for OAuth
         Application.OpenURL(authUrl);
@@ -99,7 +104,13 @@ public class GoogleSignInManager : MonoBehaviour
     
     private IEnumerator ExchangeCodeForToken(string authCode)
     {
-        string url = $"{backendUrl}/auth/google/callback?code={authCode}";
+        if (config == null)
+        {
+            Debug.LogError("GoogleSignInConfig is not assigned!");
+            yield break;
+        }
+        
+        string url = $"{config.GetCallbackUrl()}?code={authCode}";
         
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {

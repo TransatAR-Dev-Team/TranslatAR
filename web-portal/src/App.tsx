@@ -23,7 +23,7 @@ interface Settings {
 }
 
 function AppContent() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +43,7 @@ function AppContent() {
     chunk_overlap_seconds: 0.5,
     websocket_url: 'ws://localhost:8000/ws'
   });
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+  const [, setIsSettingsLoading] = useState(true);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 

@@ -10,7 +10,6 @@ This document describes the Unity Google Sign-In system implemented for the Tran
 - **`GoogleSignInConfig.cs`** - Configuration ScriptableObject
 - **`GoogleSignInWebGL.cs`** - WebGL-specific OAuth handling
 - **`UnityGoogleSignInDemo.cs`** - Demo implementation
-- **`GoogleSignInTest.cs`** - Testing utilities
 
 ## **Features**
 
@@ -77,18 +76,18 @@ else
 
 ## **Testing**
 
-### **Test Script:**
-Use `GoogleSignInTest.cs` to verify:
-- Manager initialization
-- Authentication status
-- Token validation
-- User data retrieval
-
 ### **Manual Testing:**
 1. **Start the demo scene**
 2. **Click "Sign In with Google"**
 3. **Complete OAuth in browser**
 4. **Verify user profile display**
+
+### **Demo Scene Setup:**
+Use `UnityGoogleSignInDemo.cs` to test:
+- Manager initialization
+- Authentication status
+- Token validation
+- User data retrieval
 
 ## **Security Considerations**
 
@@ -102,27 +101,18 @@ Use `GoogleSignInTest.cs` to verify:
 - **Client Secret** must be kept secure
 - **Redirect URIs** must be whitelisted
 
-## **Troubleshooting**
+## **Configuration**
 
-### **Common Issues:**
+### **GoogleSignInConfig Setup:**
+1. Create a GoogleSignInConfig asset: `Right-click → Create → Google Sign-In → Config`
+2. Configure the OAuth settings in the inspector
+3. Assign the config to GoogleSignInManager and GoogleSignInWebGL components
 
-#### **"Manager not found":**
-- Ensure `GoogleSignInManager` is in the scene
-- Check that the component is properly attached
-
-#### **"OAuth popup blocked":**
-- Allow popups in your browser
-- Check browser security settings
-
-#### **"Token verification failed":**
-- Verify backend is running
-- Check JWT secret configuration
-- Ensure network connectivity
-
-#### **"WebGL not working":**
-- Verify JavaScript interop setup
-- Check browser console for errors
-- Ensure proper CORS configuration
+### **Required Settings:**
+- **Client ID**: Your Google OAuth client ID
+- **Redirect URI**: Your OAuth callback URL
+- **Backend URL**: Your backend server URL
+- **OAuth Scopes**: Required permissions (openid, email, profile)
 
 ## **API Reference**
 
@@ -139,6 +129,7 @@ Use `GoogleSignInTest.cs` to verify:
 - `UpdateUI()` - Refresh UI state
 - `OnSignInButtonClick()` - Handle sign-in
 - `OnSignOutButtonClick()` - Handle sign-out
+- `LoadProfileImage(string)` - Load user profile picture
 
 ## **Next Steps**
 
@@ -151,10 +142,10 @@ Use `GoogleSignInTest.cs` to verify:
 ## **Support**
 
 For issues or questions:
-1. Check the **troubleshooting section**
-2. Review **Unity console** logs
-3. Verify **backend connectivity**
-4. Test with **demo scene**
+1. Check the **Unity console** for error messages
+2. Verify **backend connectivity** and configuration
+3. Test with the **demo scene** setup
+4. Review the **GoogleSignInConfig** settings
 
 ---
 

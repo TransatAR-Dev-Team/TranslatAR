@@ -5,9 +5,8 @@ using UnityEngine;
 
 public class GoogleSignInWebGL : MonoBehaviour
 {
-    [Header("WebGL Configuration")]
-    public string clientId = "YOUR_GOOGLE_CLIENT_ID";
-    public string redirectUri = "http://localhost:8000/auth/google/callback";
+    [Header("Configuration")]
+    public GoogleSignInConfig config;
     
     private GoogleSignInManager authManager;
     
@@ -36,23 +35,16 @@ public class GoogleSignInWebGL : MonoBehaviour
     
     private void InitializeGoogleSignIn()
     {
+        if (config == null)
+        {
+            Debug.LogError("GoogleSignInConfig is not assigned!");
+            return;
+        }
+        
         try
         {
-            // Initialize Google Sign-In JavaScript
-            string initScript = $@"
-                window.google.accounts.id.initialize({{
-                    client_id: '{clientId}',
-                    callback: handleCredentialResponse,
-                    auto_select: false,
-                    cancel_on_tap_outside: false,
-                    context: 'signup',
-                    itp_support: true,
-                    use_fedcm_for_prompt: true,
-                    ux_mode: 'popup',
-                    login_uri: window.location.origin
-                }});
-            ";
-            
+            // Initialize Google Sign-In JavaScript using config
+            string initScript = config.GetWebGLInitScript();
             Application.ExternalEval(initScript);
             
             Debug.Log("Google Sign-In initialized for WebGL");
@@ -67,15 +59,7 @@ public class GoogleSignInWebGL : MonoBehaviour
     {
         try
         {
-            string promptScript = @"
-                window.google.accounts.id.prompt((notification) => {
-                    console.log('One-tap notification:', notification);
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        console.log('One-tap not displayed');
-                    }
-                });
-            ";
-            
+            string promptScript = config.GetWebGLPromptScript();
             Application.ExternalEval(promptScript);
             
             Debug.Log("WebGL Google Sign-In prompt initiated");

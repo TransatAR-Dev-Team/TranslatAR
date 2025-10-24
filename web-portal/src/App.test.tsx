@@ -3,13 +3,16 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from './App';
 
 // We need to declare fetchMock for TypeScript
-declare var fetchMock: typeof vi & { mockResponseOnce: (body: string, init?: ResponseInit) => void };
+declare var fetchMock: typeof vi & { 
+  mockResponseOnce: (body: string, init?: ResponseInit) => void;
+  mockReject: (error: Error) => void;
+};
 
 
 describe('App Component', () => {
   // Reset mocks before each test runs
   beforeEach(() => {
-    fetchMock.resetMocks();
+    fetchMock.resetAllMocks();
   });
 
   it('should render the main heading and show the initial loading state', () => {

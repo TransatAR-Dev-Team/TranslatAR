@@ -8,6 +8,8 @@ from pymongo.errors import ConnectionFailure
 from datetime import datetime, timezone
 
 from websocket import router as websocket_router
+from auth_controller import router as auth_router
+from database_client import DatabaseClient
 
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
@@ -27,8 +29,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- Database Client ---
+db_client = DatabaseClient()
+
 # --- WebSocket Router ---
 app.include_router(websocket_router)
+
+# --- Auth Router ---
+app.include_router(auth_router, prefix="/auth")
+
+# --- Set database client for auth router ---
+app.state.db = db_client
 
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)

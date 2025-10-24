@@ -41,6 +41,50 @@ public class GoogleSignInConfig : ScriptableObject
         return $"{backendUrl}{verifyEndpoint}?token={token}";
     }
     
+    public string GetOneTapEndpoint()
+    {
+        return $"{backendUrl}/auth/google/one-tap";
+    }
+    
+    public string GetOneTapUrl()
+    {
+        return $"{backendUrl}/auth/google/one-tap";
+    }
+    
+    public string GetScopeString()
+    {
+        return string.Join(" ", scopes);
+    }
+    
+    public string GetWebGLInitScript()
+    {
+        return $@"
+            window.google.accounts.id.initialize({{
+                client_id: '{clientId}',
+                callback: handleCredentialResponse,
+                auto_select: {autoSelect.ToString().ToLower()},
+                cancel_on_tap_outside: {cancelOnTapOutside.ToString().ToLower()},
+                context: '{context}',
+                itp_support: {itpSupport.ToString().ToLower()},
+                use_fedcm_for_prompt: {useFedcmForPrompt.ToString().ToLower()},
+                ux_mode: '{uxMode}',
+                login_uri: window.location.origin
+            }});
+        ";
+    }
+    
+    public string GetWebGLPromptScript()
+    {
+        return @"
+            window.google.accounts.id.prompt((notification) => {
+                console.log('One-tap notification:', notification);
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    console.log('One-tap not displayed');
+                }
+            });
+        ";
+    }
+    
     public bool IsValid()
     {
         return !string.IsNullOrEmpty(clientId) && 
