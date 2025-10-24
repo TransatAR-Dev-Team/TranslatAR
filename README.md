@@ -90,7 +90,6 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
    ```
    
    - Edit the `.env` file and fill in your Google OAuth credentials
-   - For detailed instructions, see: [`.env.example.md`](./.env.example.md)
    - Follow the detailed backend setup guide in [Setup guide](backend/README.md)
      - If you skip this step, the authentication endpoints will not work, but all other features will function normally.
      - If you are in dev team, you will find your key in the google sheet
