@@ -81,7 +81,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
 2. Configure Google OAuth Login:
    
-   If you want to enable user authentication via Google, follow these steps:
+   To enable user authentication via Google, follow these steps:
    
   - Copy the environment template file: [`.env.example.md`](./.env.example.md)
    
