@@ -4,7 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class GoogleSignInPlayModeTests
+public class BasicPlayModeTests
 {
     [UnityTest]
     public IEnumerator GoogleSignInPlayMode_SimpleTest_Passes()
