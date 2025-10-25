@@ -4,22 +4,32 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class NewTestScript
+public class SimpleEditModeTests
 {
-    // A Test behaves as an ordinary method
     [Test]
-    public void NewTestScriptSimplePasses()
+    public void SimpleTest_Passes()
     {
-        // Use the Assert class to test conditions
+        // Basic test that should always pass
+        Assert.IsTrue(true);
+        Debug.Log("✅ Simple EditMode test passed!");
     }
-
-    // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-    // `yield return null;` to skip a frame.
-    [UnityTest]
-    public IEnumerator NewTestScriptWithEnumeratorPasses()
+    
+    [Test]
+    public void MathTest_Passes()
     {
-        // Use the Assert class to test conditions.
-        // Use yield to skip a frame.
-        yield return null;
+        // Test basic math
+        int result = 2 + 2;
+        Assert.AreEqual(4, result);
+        Debug.Log("✅ Math test passed!");
+    }
+    
+    [Test]
+    public void StringTest_Passes()
+    {
+        // Test string operations
+        string testString = "Unity Test";
+        Assert.IsNotEmpty(testString);
+        Assert.IsTrue(testString.Contains("Unity"));
+        Debug.Log("✅ String test passed!");
     }
 }

@@ -21,11 +21,11 @@ docker compose -f docker-compose.test.unit.yml down --remove-orphans > /dev/null
 # --- Step 4: Check the result and print the final summary message ---
 if [[ $RC -eq 0 ]]; then
     echo "-------------------------------------"
-    echo "✅ All unit tests passed!"
+    echo "All unit tests passed!"
     echo "-------------------------------------"
 else
     echo "-------------------------------------" >&2
-    echo "❌ Unit tests failed." >&2
+    echo "Unit tests failed." >&2
     echo "-------------------------------------" >&2
 fi
 

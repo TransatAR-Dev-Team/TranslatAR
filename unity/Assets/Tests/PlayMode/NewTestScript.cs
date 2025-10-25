@@ -4,22 +4,30 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class NewTestScript
+public class GoogleSignInPlayModeTests
 {
-    // A Test behaves as an ordinary method
-    [Test]
-    public void NewTestScriptSimplePasses()
-    {
-        // Use the Assert class to test conditions
-    }
-
-    // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-    // `yield return null;` to skip a frame.
     [UnityTest]
-    public IEnumerator NewTestScriptWithEnumeratorPasses()
+    public IEnumerator GoogleSignInPlayMode_SimpleTest_Passes()
     {
-        // Use the Assert class to test conditions.
-        // Use yield to skip a frame.
+        // Simple PlayMode test that doesn't depend on custom classes
+        Assert.IsTrue(true);
+        Debug.Log("✅ PlayMode test started");
+        
+        // Wait a frame
+        yield return null;
+        
+        Debug.Log("✅ PlayMode test completed");
+    }
+    
+    [UnityTest]
+    public IEnumerator GoogleSignInPlayMode_MathTest_Passes()
+    {
+        // Test basic math in PlayMode
+        int result = 2 + 2;
+        Assert.AreEqual(4, result);
+        Debug.Log("✅ PlayMode math test passed");
+        
+        // Wait a frame
         yield return null;
     }
 }

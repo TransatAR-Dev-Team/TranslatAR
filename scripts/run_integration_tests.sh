@@ -20,11 +20,11 @@ docker compose -f docker-compose.test.integration.yml down --remove-orphans > /d
 # --- Step 4: Check the result and print the final summary message ---
 if [[ $RC -eq 0 ]]; then
     echo "-------------------------------------"
-    echo "✅ All integration tests passed!"
+    echo "All integration tests passed!"
     echo "-------------------------------------"
 else
     echo "-------------------------------------" >&2
-    echo "❌ Integration tests failed." >&2
+    echo "Integration tests failed." >&2
     echo "-------------------------------------" >&2
 fi
 

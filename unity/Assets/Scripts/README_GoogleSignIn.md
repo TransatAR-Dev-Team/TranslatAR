@@ -76,11 +76,7 @@ else
 
 ## **Testing**
 
-### **Manual Testing:**
-1. **Start the demo scene**
-2. **Click "Sign In with Google"**
-3. **Complete OAuth in browser**
-4. **Verify user profile display**
+
 
 ### **Demo Scene Setup:**
 Use `UnityGoogleSignInDemo.cs` to test:

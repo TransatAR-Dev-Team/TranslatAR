@@ -45,9 +45,9 @@ public class UnityGoogleSignInDemo : MonoBehaviour
         Debug.Log("Setting up Unity Google Sign-In Demo");
         
         // Validate configuration
-        if (authManager.clientId == "YOUR_GOOGLE_CLIENT_ID")
+        if (authManager.config == null || authManager.config.clientId == "YOUR_GOOGLE_CLIENT_ID")
         {
-            Debug.LogWarning("Please configure your Google Client ID in the GoogleSignInManager!");
+            Debug.LogWarning("Please configure your Google Client ID in the GoogleSignInConfig!");
         }
         
         // Setup UI

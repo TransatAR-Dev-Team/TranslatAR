@@ -24,11 +24,11 @@ COMPOSE_FILES=("-f" "docker-compose.yml")
 # --- Detect NVIDIA GPU and layer GPU config if available ---
 # The `command -v` is a robust, cross-platform way to check if a command exists.
 if command -v nvidia-smi &> /dev/null; then
-    echo "✅ NVIDIA GPU detected. Applying GPU-specific configuration."
+    echo "NVIDIA GPU detected. Applying GPU-specific configuration."
     # Add the GPU compose file to our array of files.
     COMPOSE_FILES+=("-f" "docker-compose.gpu.yml")
 else
-    echo "ℹ️  No NVIDIA GPU detected. Running in CPU-only mode."
+    echo "No NVIDIA GPU detected. Running in CPU-only mode."
 fi
 
 # --- Execute the final command ---

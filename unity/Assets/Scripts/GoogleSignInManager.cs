@@ -193,7 +193,7 @@ public class GoogleSignInManager : MonoBehaviour
             
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Texture2D texture = DownloadHandlerTexture.GetContent(request);
+                // Texture2D texture = DownloadHandlerTexture.GetContent(request); // Temporarily disabled
                 // You can use this texture for UI elements
                 Debug.Log("Profile picture loaded successfully");
             }

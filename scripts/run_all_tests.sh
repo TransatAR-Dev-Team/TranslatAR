@@ -45,7 +45,7 @@ if [[ "$IS_SUPPORTED_OS" == true ]]; then
     "$UNITY_TEST_SCRIPT"
 else
     # For unsupported platforms like native Linux, print a warning but do not fail.
-    echo "⚠️  WARNING: Skipping Unity tests. Unsupported platform '$(uname -s)'."
+    echo "WARNING: Skipping Unity tests. Unsupported platform '$(uname -s)'."
     echo "   Unity tests can only be run on macOS or Windows (via Git Bash or WSL)."
 fi
 
@@ -54,8 +54,8 @@ fi
 echo ""
 echo "================================="
 if [[ "$IS_SUPPORTED_OS" == false ]]; then
-    echo "✅ ALL BACKEND TEST SUITES PASSED (UNITY SKIPPED)!"
+    echo "ALL BACKEND TEST SUITES PASSED (UNITY SKIPPED)!"
 else
-    echo "✅ ALL TEST SUITES PASSED!"
+    echo "ALL TEST SUITES PASSED!"
 fi
 echo "================================="

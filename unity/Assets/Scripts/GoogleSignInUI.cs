@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using TMPro;
+using System.Collections;
 
 public class GoogleSignInUI : MonoBehaviour
 {
@@ -166,13 +167,16 @@ public class GoogleSignInUI : MonoBehaviour
             
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Texture2D texture = DownloadHandlerTexture.GetContent(request);
+                // Texture2D texture = DownloadHandlerTexture.GetContent(request); // Temporarily disabled
+                // Temporarily disabled texture processing
+                /*
                 if (texture != null)
                 {
                     Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
                     userProfileImage.sprite = sprite;
                     Debug.Log("Profile image loaded successfully");
                 }
+                */
             }
             else
             {

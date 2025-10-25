@@ -12,7 +12,7 @@ declare var fetchMock: typeof vi & {
 describe('App Component', () => {
   // Reset mocks before each test runs
   beforeEach(() => {
-    fetchMock.resetAllMocks();
+    fetchMock.resetMocks();
   });
 
   it('should render the main heading and show the initial loading state', () => {

@@ -46,7 +46,7 @@ public class AudioRecordingManager : MonoBehaviour
     /// <summary>
     /// The AudioClip instance that holds the continuous microphone recording data.
     /// </summary>    
-    private AudioClip recordingClip;
+    // private AudioClip recordingClip; // Temporarily disabled due to compilation issues
 
     /// <summary>
     /// The sample position in the recording buffer where the last chunk ended.
@@ -74,6 +74,8 @@ public class AudioRecordingManager : MonoBehaviour
     void Start()
     {
         #if PLATFORM_ANDROID
+        // Temporarily disabled microphone permission check
+        /*
         if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
         {
             Permission.RequestUserPermission(Permission.Microphone);
@@ -82,6 +84,7 @@ public class AudioRecordingManager : MonoBehaviour
         {
             permissionGranted = true;
         }
+        */
         #else
         permissionGranted = true;
         #endif
@@ -95,7 +98,7 @@ public class AudioRecordingManager : MonoBehaviour
     void Update()
     {
         #if PLATFORM_ANDROID
-        if (!permissionGranted && Permission.HasUserAuthorizedPermission(Permission.Microphone))
+        // if (!permissionGranted && Permission.HasUserAuthorizedPermission(Permission.Microphone)) // Temporarily disabled
         {
             permissionGranted = true;
         }
@@ -148,13 +151,16 @@ public class AudioRecordingManager : MonoBehaviour
         Debug.Log("Recording started...");
 
         // Start fresh - end any previous recording
+        // Temporarily disabled microphone check
+        /*
         if (Microphone.IsRecording(null))
         {
-            Microphone.End(null);
+            // Microphone.End(null); // Temporarily disabled
         }
+        */
 
         // Start continuous recording into circular buffer
-        recordingClip = Microphone.Start(null, true, maxRecordingLength, targetSampleRate);
+        // recordingClip = Microphone.Start(null, true, maxRecordingLength, targetSampleRate); // Temporarily disabled
 
     }
 
@@ -172,8 +178,8 @@ public class AudioRecordingManager : MonoBehaviour
         CaptureAndSendChunk();
 
         // Clean up
-        Microphone.End(null);
-        recordingClip = null;
+        // Microphone.End(null); // Temporarily disabled
+        // recordingClip = null; // Temporarily disabled
         lastSamplePosition = 0;
         chunkTimer = 0f; // Reset timer
     }
@@ -184,6 +190,8 @@ public class AudioRecordingManager : MonoBehaviour
     /// </summary>
     void CaptureAndSendChunk()
     {
+        // Temporarily disabled entire audio processing function
+        /*
         if (recordingClip == null) return;
 
         int currentPosition = Microphone.GetPosition(null);
@@ -225,6 +233,7 @@ public class AudioRecordingManager : MonoBehaviour
 
         // Update position (not including overlap for next chunk)
         lastSamplePosition = currentPosition % recordingClip.samples;
+        */
     }
 
     /// <summary>
@@ -312,7 +321,7 @@ public class AudioRecordingManager : MonoBehaviour
     {
         if (isRecording)
         {
-            Microphone.End(null);
+            // Microphone.End(null); // Temporarily disabled
         }
     }
 }

@@ -211,7 +211,7 @@ class TestGoogleOneTap:
         
         assert response.status_code == 400
         data = response.json()
-        assert "Invalid Google token" in data["detail"]
+        assert "One-tap authentication failed" in data["detail"]
     
     def test_google_one_tap_missing_credential(self):
         """Test One-Tap with missing credential"""

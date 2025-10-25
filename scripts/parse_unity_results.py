@@ -13,11 +13,11 @@ def parse_and_summarize(xml_file_path):
         tree = ET.parse(xml_file_path)
         root = tree.getroot()
     except FileNotFoundError:
-        print(f"\n❌ ERROR: Results file not found at '{xml_file_path}'. Unity may have crashed.", file=sys.stderr)
+        print(f"\nERROR: Results file not found at '{xml_file_path}'. Unity may have crashed.", file=sys.stderr)
         print("\nMaybe there are compilation erorrs? Try opening the project in Unity Editor.\n", file=sys.stderr)
         return 1
     except ET.ParseError:
-        print(f"\n❌ ERROR: Failed to parse XML file at '{xml_file_path}'. The file is likely empty or corrupt.", file=sys.stderr)
+        print(f"\nERROR: Failed to parse XML file at '{xml_file_path}'. The file is likely empty or corrupt.", file=sys.stderr)
         return 1
 
     test_run = root.find("test-suite")
@@ -25,7 +25,7 @@ def parse_and_summarize(xml_file_path):
         if root.tag == "test-run": # Fallback for certain error conditions
             test_run = root
         else:
-            print(f"\n❌ ERROR: Could not find '<test-suite>' or '<test-run>' element in '{xml_file_path}'.", file=sys.stderr)
+            print(f"\nERROR: Could not find '<test-suite>' or '<test-run>' element in '{xml_file_path}'.", file=sys.stderr)
             return 1
 
     # Extract summary attributes
@@ -49,12 +49,12 @@ def parse_and_summarize(xml_file_path):
                 stack_trace_element = test_case.find(".//stack-trace")
                 stack_trace = stack_trace_element.text.strip() if stack_trace_element is not None and stack_trace_element.text else "No stack trace provided (check for compile errors)."
                 
-                print(f"\n❌ Test: {name}", file=sys.stderr)
+                print(f"\nTest: {name}", file=sys.stderr)
                 print(f"   Message: {failure_message}", file=sys.stderr)
                 print(f"   Stack Trace:\n{stack_trace}\n", file=sys.stderr)
         return 1
     
-    print("✅ All tests passed!")
+    print("All tests passed!")
     return 0
 
 if __name__ == "__main__":

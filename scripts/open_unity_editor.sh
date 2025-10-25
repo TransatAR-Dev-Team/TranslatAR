@@ -25,22 +25,22 @@ elif [[ "$OS_NAME" == mingw* || "$OS_NAME" == cygwin* || "$OS_NAME" == msys* ]];
     # Windows (Git Bash, etc.)
     UNITY_EXECUTABLE="/c/Program Files/Unity/Hub/Editor/$UNITY_VERSION/Editor/Unity.exe"
 else
-    echo "❌ ERROR: Unsupported platform '$(uname -s)'." >&2
+    echo "ERROR: Unsupported platform '$(uname -s)'." >&2
     echo "   This command can only be run on macOS or Windows (via Git Bash or WSL)." >&2
     exit 1
 fi
 
 # --- Verification ---
 if [ ! -f "$UNITY_EXECUTABLE" ]; then
-    echo "❌ ERROR: Unity Editor not found at the expected path:" >&2
+    echo "ERROR: Unity Editor not found at the expected path:" >&2
     echo "   $UNITY_EXECUTABLE" >&2
     echo "   Please ensure Unity version $UNITY_VERSION is installed in the default location via Unity Hub." >&2
     exit 1
 fi
 
 # --- Launch Editor ---
-echo "✅ Found Unity Editor: $UNITY_EXECUTABLE"
-echo "🚀 Opening project: $PROJECT_PATH_NATIVE"
+echo "Found Unity Editor: $UNITY_EXECUTABLE"
+echo "Opening project: $PROJECT_PATH_NATIVE"
 echo "   Please wait, the editor may take a moment to launch..."
 
 # Launch the editor as a separate, non-blocking process.

@@ -141,11 +141,11 @@ fi
 # --- Final Summary ---
 if [[ $FINAL_RC -eq 0 ]]; then
     echo "-------------------------------------"
-    echo "✅ All Unity tests passed!"
+    echo "All Unity tests passed!"
     echo "-------------------------------------"
 else
     echo "-------------------------------------" >&2
-    echo "❌ Unity test suite failed." >&2
+    echo "Unity test suite failed." >&2
     echo "-------------------------------------" >&2
 fi
 

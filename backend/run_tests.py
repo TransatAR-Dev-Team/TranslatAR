@@ -42,7 +42,7 @@ def run_tests():
         print("STDERR:", integration_result.stderr)
     
     # Run all tests together
-    print("\n🚀 Running All Tests...")
+    print("\nRunning All Tests...")
     print("-" * 30)
     all_tests_result = subprocess.run([
         sys.executable, "-m", "pytest", 
@@ -55,11 +55,11 @@ def run_tests():
         print("STDERR:", all_tests_result.stderr)
     
     # Summary
-    print("\n📊 Test Summary")
+    print("\nTest Summary")
     print("=" * 50)
-    print(f"Unit Tests: {'✅ PASSED' if unit_result.returncode == 0 else '❌ FAILED'}")
-    print(f"Integration Tests: {'✅ PASSED' if integration_result.returncode == 0 else '❌ FAILED'}")
-    print(f"All Tests: {'✅ PASSED' if all_tests_result.returncode == 0 else '❌ FAILED'}")
+    print(f"Unit Tests: {'PASSED' if unit_result.returncode == 0 else 'FAILED'}")
+    print(f"Integration Tests: {'PASSED' if integration_result.returncode == 0 else 'FAILED'}")
+    print(f"All Tests: {'PASSED' if all_tests_result.returncode == 0 else 'FAILED'}")
     
     return all_tests_result.returncode == 0
 
