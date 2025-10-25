@@ -10,8 +10,8 @@ using UnityEngine.Android;
 /// Manages microphone audio recording, chunking, and transmission to the WebSocket backend.
 /// Handles permission requests, silence detection, and continuous recording with overlap.
 /// 
-/// NOTE: Audio functionality is temporarily disabled due to compilation issues.
-/// This class maintains the interface but all audio operations are commented out.
+/// NOTE: Audio functionality is disabled due to missing audio dependencies.
+/// This class maintains the interface but audio operations are stubbed out.
 /// </summary>
 public class AudioRecordingManager : MonoBehaviour
 {
@@ -66,10 +66,10 @@ public class AudioRecordingManager : MonoBehaviour
     void Start()
     {
         #if PLATFORM_ANDROID
-        // Temporarily disabled microphone permission check
-        // All microphone operations are disabled due to compilation issues
+        // Microphone permission check disabled due to missing audio dependencies
+        permissionGranted = false;
         #else
-        permissionGranted = true;
+        permissionGranted = false; // Disabled due to missing audio dependencies
         #endif
 
         overlapSamples = (int)(chunkOverlapSeconds * targetSampleRate);
@@ -81,10 +81,7 @@ public class AudioRecordingManager : MonoBehaviour
     void Update()
     {
         #if PLATFORM_ANDROID
-        // if (!permissionGranted && Permission.HasUserAuthorizedPermission(Permission.Microphone)) // Temporarily disabled
-        {
-            permissionGranted = true;
-        }
+        // Microphone permission check disabled due to missing audio dependencies
         #endif
 
         // Handle recording state
@@ -95,8 +92,7 @@ public class AudioRecordingManager : MonoBehaviour
             // Send chunk at regular intervals
             if (chunkTimer >= chunkDurationSeconds)
             {
-                // Temporarily disabled audio processing
-                // CaptureAndSendChunk();
+                // Audio processing disabled due to missing dependencies
                 chunkTimer = 0f;
             }
         }
@@ -104,12 +100,13 @@ public class AudioRecordingManager : MonoBehaviour
 
     /// <summary>
     /// Starts microphone recording with continuous chunking.
+    /// NOTE: Audio functionality is disabled due to missing dependencies.
     /// </summary>
     public void StartRecording()
     {
         if (!permissionGranted)
         {
-            Debug.LogWarning("Microphone permission not granted");
+            Debug.LogWarning("Audio recording is disabled due to missing audio dependencies");
             return;
         }
 
@@ -122,14 +119,12 @@ public class AudioRecordingManager : MonoBehaviour
         isRecording = true;
         chunkTimer = 0f;
 
-        Debug.Log("Recording started...");
-
-        // Temporarily disabled microphone operations
-        // All microphone operations are disabled due to compilation issues
+        Debug.Log("Audio recording is disabled due to missing audio dependencies");
     }
 
     /// <summary>
     /// Stops microphone recording, sends any remaining audio chunk, and cleans up resources.
+    /// NOTE: Audio functionality is disabled due to missing dependencies.
     /// </summary>
     public void StopRecording()
     {
@@ -141,11 +136,7 @@ public class AudioRecordingManager : MonoBehaviour
 
         isRecording = false;
 
-        // Send any remaining audio if it has speech
-        // CaptureAndSendChunk(); // Temporarily disabled
-
-        // Clean up
-        // All microphone operations are disabled due to compilation issues
+        // Audio processing disabled due to missing dependencies
         lastSamplePosition = 0;
         chunkTimer = 0f; // Reset timer
     }
@@ -153,34 +144,30 @@ public class AudioRecordingManager : MonoBehaviour
     /// <summary>
     /// Captures the current audio chunk from the recording buffer, checks for sufficient volume,
     /// converts to WAV format, and sends it to the WebSocket backend.
-    /// 
-    /// NOTE: This method is temporarily disabled due to compilation issues.
+    /// NOTE: Audio functionality is disabled due to missing dependencies.
     /// </summary>
     void CaptureAndSendChunk()
     {
-        // Temporarily disabled entire audio processing function
-        // All microphone operations are disabled due to compilation issues
+        // Audio processing disabled due to missing dependencies
+        Debug.Log("Audio processing is disabled due to missing audio dependencies");
     }
 
     /// <summary>
     /// Analyzes audio samples to determine if they contain sufficient volume to be considered speech.
     /// Uses both RMS and peak amplitude thresholds.
-    /// 
-    /// NOTE: This method is temporarily disabled due to compilation issues.
+    /// NOTE: Audio functionality is disabled due to missing dependencies.
     /// </summary>
     /// <param name="samples">Audio samples to analyze</param>
     /// <returns>True if samples contain sufficient volume for speech</returns>
     bool HasSufficientVolume(float[] samples)
     {
-        // Temporarily disabled volume analysis
-        // All microphone operations are disabled due to compilation issues
-        return true; // Temporarily return true to avoid breaking the flow
+        // Audio analysis disabled due to missing dependencies
+        return false; // Return false since audio is disabled
     }
 
     /// <summary>
     /// Converts audio samples to WAV format with proper headers.
-    /// 
-    /// NOTE: This method is temporarily disabled due to compilation issues.
+    /// NOTE: Audio functionality is disabled due to missing dependencies.
     /// </summary>
     /// <param name="samples">Audio samples to convert</param>
     /// <param name="sampleRate">Sample rate in Hz</param>
@@ -188,9 +175,8 @@ public class AudioRecordingManager : MonoBehaviour
     /// <returns>WAV file data as byte array</returns>
     byte[] ConvertSamplesToWav(float[] samples, int sampleRate, int channels)
     {
-        // Temporarily disabled WAV conversion
-        // All microphone operations are disabled due to compilation issues
-        return new byte[0]; // Temporarily return empty array
+        // Audio conversion disabled due to missing dependencies
+        return new byte[0]; // Return empty array since audio is disabled
     }
 
     /// <summary>
@@ -204,10 +190,11 @@ public class AudioRecordingManager : MonoBehaviour
 
     /// <summary>
     /// Gets the microphone permission status.
+    /// NOTE: Always returns false due to missing audio dependencies.
     /// </summary>
     /// <returns>True if microphone permission is granted</returns>
     public bool HasMicrophonePermission()
     {
-        return permissionGranted;
+        return false; // Always false due to missing audio dependencies
     }
 }
