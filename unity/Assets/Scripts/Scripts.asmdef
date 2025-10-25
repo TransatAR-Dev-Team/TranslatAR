@@ -6,6 +6,9 @@
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "autoReferenced": true
+    "autoReferenced": true,
+    "precompiledReferences": [
+        "websocket-sharp.dll"
+    ]
 }
 

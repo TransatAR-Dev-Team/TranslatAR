@@ -42,7 +42,8 @@ public class WebSocketManager : MonoBehaviour
     /// <summary>
     /// The WebSocket connection instance used to communicate with the backend server.
     /// </summary>
-    private WebSocket ws;
+    private IWebSocketClient ws;
+    
     /// <summary>
     /// A flag indicating whether the websocket endpoint is connected.
     /// </summary>
@@ -51,6 +52,9 @@ public class WebSocketManager : MonoBehaviour
     // Queue for main thread execution
     private Queue<Action> mainThreadActions = new Queue<Action>();
     private object queueLock = new object();
+
+    // Factory for creating WebSocket clients (allows injection for testing)
+    private Func<string, IWebSocketClient> webSocketFactory;
 
     // Singleton pattern
     public static WebSocketManager Instance { get; private set; }
@@ -64,11 +68,21 @@ public class WebSocketManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            Initialize(); // Use default factory for production
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    /// <summary>
+    /// Initializes the WebSocket factory. Can be called with a custom factory for testing.
+    /// </summary>
+    /// <param name="factory">Optional factory function for creating IWebSocketClient instances.</param>
+    public void Initialize(Func<string, IWebSocketClient> factory = null)
+    {
+        webSocketFactory = factory ?? ((url) => new WebSocketClientAdapter(url));
     }
 
     /// <summary>
@@ -97,11 +111,11 @@ public class WebSocketManager : MonoBehaviour
     /// <summary>
     /// Establishes the WebSocket connection and configures event handlers for open, message, error, and close events.
     /// </summary>
-    void ConnectWebSocket()
+    public void ConnectWebSocket()
     {
         try
         {
-            ws = new WebSocket(websocketUrl);
+            ws = webSocketFactory(websocketUrl);
 
             ws.OnOpen += (sender, e) =>
             {
@@ -177,25 +191,8 @@ public class WebSocketManager : MonoBehaviour
 
         try
         {
-            // Create metadata JSON
-            string metadata = JsonUtility.ToJson(new MetadataPayload
-            {
-                source_lang = sourceLanguage,
-                target_lang = targetLanguage,
-                sample_rate = AudioSettings.outputSampleRate,
-                channels = 1
-            });
-
-            byte[] metadataBytes = Encoding.UTF8.GetBytes(metadata);
-            byte[] metadataLength = BitConverter.GetBytes(metadataBytes.Length);
-
-            // Combine: [4 bytes length][metadata][audio]
-            byte[] fullMessage = new byte[4 + metadataBytes.Length + audioData.Length];
-            Buffer.BlockCopy(metadataLength, 0, fullMessage, 0, 4);
-            Buffer.BlockCopy(metadataBytes, 0, fullMessage, 4, metadataBytes.Length);
-            Buffer.BlockCopy(audioData, 0, fullMessage, 4 + metadataBytes.Length, audioData.Length);
-
-            ws.Send(fullMessage);
+            byte[] packagedData = PackageAudioData(audioData);
+            ws.Send(packagedData);
             Debug.Log($"Sent audio chunk: {audioData.Length} bytes");
         }
         catch (Exception e)
@@ -205,11 +202,40 @@ public class WebSocketManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Packages audio data with metadata for transmission.
+    /// Returns: [4-byte length][JSON metadata][raw audio bytes]
+    /// </summary>
+    /// <param name="audioData">The raw audio data bytes.</param>
+    /// <returns>The fully packaged byte array ready for transmission.</returns>
+    public byte[] PackageAudioData(byte[] audioData)
+    {
+        // Create metadata JSON
+        string metadata = JsonUtility.ToJson(new MetadataPayload
+        {
+            source_lang = sourceLanguage,
+            target_lang = targetLanguage,
+            sample_rate = AudioSettings.outputSampleRate,
+            channels = 1
+        });
+
+        byte[] metadataBytes = Encoding.UTF8.GetBytes(metadata);
+        byte[] metadataLength = BitConverter.GetBytes(metadataBytes.Length);
+
+        // Combine: [4 bytes length][metadata][audio]
+        byte[] fullMessage = new byte[4 + metadataBytes.Length + audioData.Length];
+        Buffer.BlockCopy(metadataLength, 0, fullMessage, 0, 4);
+        Buffer.BlockCopy(metadataBytes, 0, fullMessage, 4, metadataBytes.Length);
+        Buffer.BlockCopy(audioData, 0, fullMessage, 4 + metadataBytes.Length, audioData.Length);
+
+        return fullMessage;
+    }
+
+    /// <summary>
     /// Parses the JSON transcription response from the backend and updates the subtitle display.
     /// Prioritizes translated text over original text if both are present.
     /// </summary>
     /// <param name="json">The JSON string containing transcription results.</param>
-    void HandleTranscriptionResponse(string json)
+    public void HandleTranscriptionResponse(string json)
     {
         try
         {
@@ -234,7 +260,7 @@ public class WebSocketManager : MonoBehaviour
     /// Updates the subtitle UI text component with the provided text.
     /// </summary>
     /// <param name="text">The text to display in the subtitle area.</param>
-    void UpdateSubtitle(string text)
+    public void UpdateSubtitle(string text)
     {
         if (subtitleText != null)
         {
