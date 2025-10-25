@@ -1,18 +1,20 @@
+import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 import App from './App';
 
-// We need to declare fetchMock for TypeScript
-declare var fetchMock: typeof vi & { 
-  mockResponseOnce: (body: string, init?: ResponseInit) => void;
-  mockReject: (error: Error) => void;
-};
+// Mock fetch globally
+Object.defineProperty(window, 'fetch', {
+  value: vi.fn(),
+  writable: true,
+});
 
 
 describe('App Component', () => {
   // Reset mocks before each test runs
   beforeEach(() => {
-    fetchMock.resetMocks();
+    vi.clearAllMocks();
   });
 
   it('should render the main heading and show the initial loading state', () => {
@@ -27,7 +29,10 @@ describe('App Component', () => {
       { _id: '1', original_text: 'Hello', translated_text: 'Hola', source_lang: 'en', target_lang: 'es', timestamp: new Date().toISOString() },
       { _id: '2', original_text: 'Goodbye', translated_text: 'Adiós', source_lang: 'en', target_lang: 'es', timestamp: new Date().toISOString() },
     ];
-    fetchMock.mockResponseOnce(JSON.stringify({ history: mockHistory }));
+    (window.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ history: mockHistory }),
+    });
 
     render(<App />);
 
@@ -44,7 +49,7 @@ describe('App Component', () => {
 
   it('should display an error message if the fetch fails', async () => {
     // Mock a network error
-    fetchMock.mockReject(new Error('API is unavailable'));
+    (window.fetch as any).mockRejectedValueOnce(new Error('API is unavailable'));
 
     render(<App />);
     
