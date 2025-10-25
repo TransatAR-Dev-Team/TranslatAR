@@ -125,16 +125,7 @@ public class AudioRecordingManager : MonoBehaviour
         Debug.Log("Recording started...");
 
         // Temporarily disabled microphone operations
-        /*
-        // Start fresh - end any previous recording
-        if (Microphone.IsRecording(null))
-        {
-            Microphone.End(null);
-        }
-
-        // Start continuous recording into circular buffer
-        recordingClip = Microphone.Start(null, true, maxRecordingLength, targetSampleRate);
-        */
+        // All microphone operations are disabled due to compilation issues
     }
 
     /// <summary>
@@ -154,8 +145,7 @@ public class AudioRecordingManager : MonoBehaviour
         // CaptureAndSendChunk(); // Temporarily disabled
 
         // Clean up
-        // Microphone.End(null); // Temporarily disabled
-        // recordingClip = null; // Temporarily disabled
+        // All microphone operations are disabled due to compilation issues
         lastSamplePosition = 0;
         chunkTimer = 0f; // Reset timer
     }
@@ -169,49 +159,7 @@ public class AudioRecordingManager : MonoBehaviour
     void CaptureAndSendChunk()
     {
         // Temporarily disabled entire audio processing function
-        /*
-        if (recordingClip == null) return;
-
-        int currentPosition = Microphone.GetPosition(null);
-
-        // Handle wraparound in circular buffer
-        if (currentPosition < lastSamplePosition)
-        {
-            currentPosition += recordingClip.samples;
-        }
-
-        int samplesAvailable = currentPosition - lastSamplePosition;
-
-        if (samplesAvailable < targetSampleRate * 2.0f) // At least 2 seconds
-        {
-            return;
-        }
-
-        // Include overlap from previous chunk to avoid word cutting
-        int startPosition = Mathf.Max(0, (lastSamplePosition - overlapSamples) % recordingClip.samples);
-        int totalSamples = samplesAvailable + overlapSamples;
-
-        float[] samples = new float[totalSamples * recordingClip.channels];
-        recordingClip.GetData(samples, startPosition);
-
-        if (!HasSufficientVolume(samples))
-        {
-            Debug.Log("Skipping silent chunk");
-            lastSamplePosition = currentPosition % recordingClip.samples;
-            return;
-        }
-
-        // Convert to WAV
-        byte[] wavData = ConvertSamplesToWav(samples, targetSampleRate, recordingClip.channels);
-
-        if (WebSocketManager.Instance != null)
-        {
-            WebSocketManager.Instance.SendAudioChunk(wavData);
-        }
-
-        // Update position (not including overlap for next chunk)
-        lastSamplePosition = currentPosition % recordingClip.samples;
-        */
+        // All microphone operations are disabled due to compilation issues
     }
 
     /// <summary>
@@ -225,28 +173,7 @@ public class AudioRecordingManager : MonoBehaviour
     bool HasSufficientVolume(float[] samples)
     {
         // Temporarily disabled volume analysis
-        /*
-        if (samples == null || samples.Length == 0)
-            return false;
-
-        float rms = 0f;
-        float peak = 0f;
-
-        foreach (float sample in samples)
-        {
-            rms += sample * sample;
-            peak = Mathf.Max(peak, Mathf.Abs(sample));
-        }
-
-        rms = Mathf.Sqrt(rms / samples.Length);
-
-        if (enableDebugLogging)
-        {
-            Debug.Log($"Audio analysis - RMS: {rms:F4}, Peak: {peak:F4}");
-        }
-
-        return rms >= speechThreshold && peak >= peakThreshold;
-        */
+        // All microphone operations are disabled due to compilation issues
         return true; // Temporarily return true to avoid breaking the flow
     }
 
@@ -262,44 +189,7 @@ public class AudioRecordingManager : MonoBehaviour
     byte[] ConvertSamplesToWav(float[] samples, int sampleRate, int channels)
     {
         // Temporarily disabled WAV conversion
-        /*
-        if (samples == null || samples.Length == 0)
-            return new byte[0];
-
-        int sampleCount = samples.Length;
-        int byteRate = sampleRate * channels * 2; // 16-bit samples
-        int blockAlign = channels * 2;
-        int dataSize = sampleCount * 2;
-        int fileSize = 36 + dataSize;
-
-        using (MemoryStream stream = new MemoryStream())
-        using (BinaryWriter writer = new BinaryWriter(stream))
-        {
-            // WAV header
-            writer.Write("RIFF".ToCharArray());
-            writer.Write(fileSize);
-            writer.Write("WAVE".ToCharArray());
-            writer.Write("fmt ".ToCharArray());
-            writer.Write(16); // fmt chunk size
-            writer.Write((short)1); // PCM format
-            writer.Write((short)channels);
-            writer.Write(sampleRate);
-            writer.Write(byteRate);
-            writer.Write((short)blockAlign);
-            writer.Write((short)16); // bits per sample
-            writer.Write("data".ToCharArray());
-            writer.Write(dataSize);
-
-            // Audio data
-            foreach (float sample in samples)
-            {
-                short sampleValue = (short)(sample * short.MaxValue);
-                writer.Write(sampleValue);
-            }
-
-            return stream.ToArray();
-        }
-        */
+        // All microphone operations are disabled due to compilation issues
         return new byte[0]; // Temporarily return empty array
     }
 
