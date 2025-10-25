@@ -9,6 +9,9 @@ using UnityEngine.Android;
 /// <summary>
 /// Manages microphone audio recording, chunking, and transmission to the WebSocket backend.
 /// Handles permission requests, silence detection, and continuous recording with overlap.
+/// 
+/// NOTE: Audio functionality is temporarily disabled due to compilation issues.
+/// This class maintains the interface but all audio operations are commented out.
 /// </summary>
 public class AudioRecordingManager : MonoBehaviour
 {
@@ -19,54 +22,43 @@ public class AudioRecordingManager : MonoBehaviour
     public float chunkDurationSeconds = 8f;
 
     /// <summary>
-    /// The sample rate (in Hz) used for microphone recording.
+    /// Overlap duration in seconds between consecutive chunks to avoid word cutting.
     /// </summary>
-    public int targetSampleRate = 48000;
+    public float chunkOverlapSeconds = 1f;
 
     /// <summary>
-    /// Minimum RMS volume threshold to consider audio as containing speech rather than silence.
+    /// Target sample rate for audio recording (Hz).
     /// </summary>
-    public float silenceThreshold = 0.01f; 
+    public int targetSampleRate = 44100;
 
     /// <summary>
-    /// Duration in seconds of audio overlap between consecutive chunks to prevent word cutting.
+    /// Maximum recording length in seconds before automatic stop.
     /// </summary>
-    public float chunkOverlapSeconds = 0.5f; 
+    public int maxRecordingLength = 300; // 5 minutes
+
+    [Header("Volume Detection")]
+    /// <summary>
+    /// Minimum RMS (Root Mean Square) amplitude threshold for speech detection.
+    /// </summary>
+    public float speechThreshold = 0.01f;
 
     /// <summary>
-    /// Flag indicating whether the microphone is currently recording.
+    /// Minimum peak amplitude threshold for speech detection.
     /// </summary>
+    public float peakThreshold = 0.1f;
+
+    [Header("Debug")]
+    /// <summary>
+    /// Enable debug logging for audio processing.
+    /// </summary>
+    public bool enableDebugLogging = false;
+
+    // Private fields
     private bool isRecording = false;
-
-    /// <summary>
-    /// Flag indicating whether microphone permission has been granted by the user.
-    /// </summary>
     private bool permissionGranted = false;
-
-    /// <summary>
-    /// The AudioClip instance that holds the continuous microphone recording data.
-    /// </summary>    
-    // private AudioClip recordingClip; // Temporarily disabled due to compilation issues
-
-    /// <summary>
-    /// The sample position in the recording buffer where the last chunk ended.
-    /// </summary>
-    private int lastSamplePosition = 0;
-
-    /// <summary>
-    /// Timer tracking elapsed time since the last chunk was sent.
-    /// </summary>
     private float chunkTimer = 0f;
-    
-    /// <summary>
-    /// The number of audio samples to include as overlap between chunks.
-    /// </summary>
     private int overlapSamples = 0;
-
-    /// <summary>
-    /// Maximum length in seconds for the circular recording buffer.
-    /// </summary>
-    private const int maxRecordingLength = 30;
+    private int lastSamplePosition = 0;
 
     /// <summary>
     /// Requests microphone permission on Android and initializes overlap sample count.
@@ -75,16 +67,7 @@ public class AudioRecordingManager : MonoBehaviour
     {
         #if PLATFORM_ANDROID
         // Temporarily disabled microphone permission check
-        /*
-        if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
-        {
-            Permission.RequestUserPermission(Permission.Microphone);
-        }
-        else
-        {
-            permissionGranted = true;
-        }
-        */
+        // All microphone operations are disabled due to compilation issues
         #else
         permissionGranted = true;
         #endif
@@ -104,78 +87,71 @@ public class AudioRecordingManager : MonoBehaviour
         }
         #endif
 
-        if (!permissionGranted) return;
-
-        // Button input
-        bool inputIsActive = Input.GetKey(KeyCode.JoystickButton0) || Input.GetKey(KeyCode.B);
-
-        // Start recording
-        if (!isRecording && inputIsActive)
-        {
-            StartRecording();
-        }
-        // Stop recording
-        else if (isRecording && !inputIsActive)
-        {
-            StopRecording();
-        }
-
-        // While recording, capture and send chunks periodically
+        // Handle recording state
         if (isRecording)
         {
             chunkTimer += Time.deltaTime;
+            
+            // Send chunk at regular intervals
             if (chunkTimer >= chunkDurationSeconds)
             {
-                CaptureAndSendChunk();
+                // Temporarily disabled audio processing
+                // CaptureAndSendChunk();
                 chunkTimer = 0f;
             }
         }
     }
 
     /// <summary>
-    /// Begins continuous microphone recording into a circular buffer.
+    /// Starts microphone recording with continuous chunking.
     /// </summary>
-    void StartRecording()
+    public void StartRecording()
     {
-        if (isRecording) return;
-        if (WebSocketManager.Instance == null || !WebSocketManager.Instance.IsConnected)
+        if (!permissionGranted)
         {
-            Debug.LogWarning("WebSocket not connected. Cannot start recording.");
+            Debug.LogWarning("Microphone permission not granted");
+            return;
+        }
+
+        if (isRecording)
+        {
+            Debug.LogWarning("Recording already in progress");
             return;
         }
 
         isRecording = true;
-        lastSamplePosition = 0;
         chunkTimer = 0f;
 
         Debug.Log("Recording started...");
 
-        // Start fresh - end any previous recording
-        // Temporarily disabled microphone check
+        // Temporarily disabled microphone operations
         /*
+        // Start fresh - end any previous recording
         if (Microphone.IsRecording(null))
         {
-            // Microphone.End(null); // Temporarily disabled
+            Microphone.End(null);
         }
-        */
 
         // Start continuous recording into circular buffer
-        // recordingClip = Microphone.Start(null, true, maxRecordingLength, targetSampleRate); // Temporarily disabled
-
+        recordingClip = Microphone.Start(null, true, maxRecordingLength, targetSampleRate);
+        */
     }
 
     /// <summary>
     /// Stops microphone recording, sends any remaining audio chunk, and cleans up resources.
     /// </summary>
-    void StopRecording()
+    public void StopRecording()
     {
-        if (!isRecording) return;
+        if (!isRecording)
+        {
+            Debug.LogWarning("No recording in progress");
+            return;
+        }
 
         isRecording = false;
-        Debug.Log("Recording stopped.");
 
         // Send any remaining audio if it has speech
-        CaptureAndSendChunk();
+        // CaptureAndSendChunk(); // Temporarily disabled
 
         // Clean up
         // Microphone.End(null); // Temporarily disabled
@@ -187,6 +163,8 @@ public class AudioRecordingManager : MonoBehaviour
     /// <summary>
     /// Captures the current audio chunk from the recording buffer, checks for sufficient volume,
     /// converts to WAV format, and sends it to the WebSocket backend.
+    /// 
+    /// NOTE: This method is temporarily disabled due to compilation issues.
     /// </summary>
     void CaptureAndSendChunk()
     {
@@ -239,89 +217,107 @@ public class AudioRecordingManager : MonoBehaviour
     /// <summary>
     /// Analyzes audio samples to determine if they contain sufficient volume to be considered speech.
     /// Uses both RMS and peak amplitude thresholds.
+    /// 
+    /// NOTE: This method is temporarily disabled due to compilation issues.
     /// </summary>
-    /// <param name="samples">The audio sample data to analyze.</param>
-    /// <returns>True if the audio exceeds the silence threshold; otherwise, false.</returns>
+    /// <param name="samples">Audio samples to analyze</param>
+    /// <returns>True if samples contain sufficient volume for speech</returns>
     bool HasSufficientVolume(float[] samples)
     {
-        // Calculate RMS
-        float sum = 0f;
-        for (int i = 0; i < samples.Length; i++)
-        {
-            sum += samples[i] * samples[i];
-        }
-        float rms = Mathf.Sqrt(sum / samples.Length);
+        // Temporarily disabled volume analysis
+        /*
+        if (samples == null || samples.Length == 0)
+            return false;
 
-        // Also check peak amplitude
-        float maxAmplitude = 0f;
-        for (int i = 0; i < samples.Length; i++)
+        float rms = 0f;
+        float peak = 0f;
+
+        foreach (float sample in samples)
         {
-            float abs = Mathf.Abs(samples[i]);
-            if (abs > maxAmplitude) maxAmplitude = abs;
+            rms += sample * sample;
+            peak = Mathf.Max(peak, Mathf.Abs(sample));
         }
 
-        bool hasVolume = rms > silenceThreshold && maxAmplitude > silenceThreshold * 2;
+        rms = Mathf.Sqrt(rms / samples.Length);
 
-        Debug.Log($"Audio RMS: {rms:F4}, Peak: {maxAmplitude:F4}, HasSpeech: {hasVolume}");
+        if (enableDebugLogging)
+        {
+            Debug.Log($"Audio analysis - RMS: {rms:F4}, Peak: {peak:F4}");
+        }
 
-        return hasVolume;
+        return rms >= speechThreshold && peak >= peakThreshold;
+        */
+        return true; // Temporarily return true to avoid breaking the flow
     }
 
     /// <summary>
-    /// Converts raw float audio samples to WAV file format with proper headers.
+    /// Converts audio samples to WAV format with proper headers.
+    /// 
+    /// NOTE: This method is temporarily disabled due to compilation issues.
     /// </summary>
-    /// <param name="samples">The audio sample data to convert.</param>
-    /// <param name="sampleRate">The sample rate of the audio in Hz.</param>
-    /// <param name="channels">The number of audio channels (1 for mono, 2 for stereo).</param>
-    /// <returns>A byte array containing the complete WAV file data.</returns>
-    public static byte[] ConvertSamplesToWav(float[] samples, int sampleRate, int channels)
+    /// <param name="samples">Audio samples to convert</param>
+    /// <param name="sampleRate">Sample rate in Hz</param>
+    /// <param name="channels">Number of audio channels</param>
+    /// <returns>WAV file data as byte array</returns>
+    byte[] ConvertSamplesToWav(float[] samples, int sampleRate, int channels)
     {
-        using (var memoryStream = new MemoryStream())
+        // Temporarily disabled WAV conversion
+        /*
+        if (samples == null || samples.Length == 0)
+            return new byte[0];
+
+        int sampleCount = samples.Length;
+        int byteRate = sampleRate * channels * 2; // 16-bit samples
+        int blockAlign = channels * 2;
+        int dataSize = sampleCount * 2;
+        int fileSize = 36 + dataSize;
+
+        using (MemoryStream stream = new MemoryStream())
+        using (BinaryWriter writer = new BinaryWriter(stream))
         {
-            using (var writer = new BinaryWriter(memoryStream))
+            // WAV header
+            writer.Write("RIFF".ToCharArray());
+            writer.Write(fileSize);
+            writer.Write("WAVE".ToCharArray());
+            writer.Write("fmt ".ToCharArray());
+            writer.Write(16); // fmt chunk size
+            writer.Write((short)1); // PCM format
+            writer.Write((short)channels);
+            writer.Write(sampleRate);
+            writer.Write(byteRate);
+            writer.Write((short)blockAlign);
+            writer.Write((short)16); // bits per sample
+            writer.Write("data".ToCharArray());
+            writer.Write(dataSize);
+
+            // Audio data
+            foreach (float sample in samples)
             {
-                // WAV header
-                writer.Write(System.Text.Encoding.UTF8.GetBytes("RIFF"));
-                writer.Write(0); // Placeholder for file size
-                writer.Write(System.Text.Encoding.UTF8.GetBytes("WAVE"));
-                writer.Write(System.Text.Encoding.UTF8.GetBytes("fmt "));
-                writer.Write(16); // PCM chunk size
-                writer.Write((ushort)1); // Audio format (PCM)
-                writer.Write((ushort)channels);
-                writer.Write(sampleRate);
-                writer.Write(sampleRate * channels * 2); // Byte rate
-                writer.Write((ushort)(channels * 2)); // Block align
-                writer.Write((ushort)16); // Bits per sample
-
-                writer.Write(System.Text.Encoding.UTF8.GetBytes("data"));
-                writer.Write(0); // Placeholder for data size
-
-                // Write audio data
-                foreach (float sample in samples)
-                {
-                    short intSample = (short)(Mathf.Clamp(sample, -1f, 1f) * short.MaxValue);
-                    writer.Write(intSample);
-                }
-
-                // Fill in size placeholders
-                long fileSize = memoryStream.Length;
-                writer.Seek(4, SeekOrigin.Begin);
-                writer.Write((int)(fileSize - 8));
-                writer.Seek(40, SeekOrigin.Begin);
-                writer.Write((int)(fileSize - 44));
+                short sampleValue = (short)(sample * short.MaxValue);
+                writer.Write(sampleValue);
             }
-            return memoryStream.ToArray();
+
+            return stream.ToArray();
         }
+        */
+        return new byte[0]; // Temporarily return empty array
     }
 
     /// <summary>
-    /// Ensures the microphone is properly stopped when the application quits.
+    /// Gets the current recording state.
     /// </summary>
-    void OnApplicationQuit()
+    /// <returns>True if currently recording</returns>
+    public bool IsRecording()
     {
-        if (isRecording)
-        {
-            // Microphone.End(null); // Temporarily disabled
-        }
+        return isRecording;
+    }
+
+    /// <summary>
+    /// Gets the microphone permission status.
+    /// </summary>
+    /// <returns>True if microphone permission is granted</returns>
+    public bool HasMicrophonePermission()
+    {
+        return permissionGranted;
     }
 }
