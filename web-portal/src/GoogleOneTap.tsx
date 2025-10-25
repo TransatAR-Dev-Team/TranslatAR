@@ -26,9 +26,20 @@ const GoogleOneTap: React.FC<GoogleOneTapProps> = ({ className = '' }) => {
   useEffect(() => {
     if (user || isLoading) return;
 
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.disableAutoSelect();
-    }
+    // Load Google One Tap script
+    const loadGoogleScript = () => {
+      if (window.google?.accounts?.id) {
+        initializeOneTap();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeOneTap;
+      document.head.appendChild(script);
+    };
 
     const initializeOneTap = () => {
       if (!window.google?.accounts?.id) {
@@ -37,7 +48,7 @@ const GoogleOneTap: React.FC<GoogleOneTapProps> = ({ className = '' }) => {
       }
 
       window.google.accounts.id.initialize({
-        client_id: 'YOUR_GOOGLE_CLIENT_ID', // Placeholder for security
+        client_id: '519146593722-p6jhtaq9pnpnrms9su7kr8b7kc0mb35j.apps.googleusercontent.com',
         callback: handleCredentialResponse,
         auto_select: false,
         cancel_on_tap_outside: false,
@@ -79,7 +90,7 @@ const GoogleOneTap: React.FC<GoogleOneTapProps> = ({ className = '' }) => {
       }
     };
 
-    setTimeout(initializeOneTap, 500);
+    loadGoogleScript();
   }, [user, isLoading, handleOneTapSuccess]);
 
   if (user || isLoading) {
