@@ -8,7 +8,7 @@ public class GoogleOAuthSimpleTest
     {
         // Test that the basic environment is working
         Assert.IsTrue(true);
-        Debug.Log("✅ Google OAuth environment test passed!");
+        Debug.Log("Google OAuth environment test passed!");
     }
     
     [Test]
@@ -22,7 +22,7 @@ public class GoogleOAuthSimpleTest
         Assert.IsNotEmpty(redirectUri);
         Assert.IsTrue(redirectUri.Contains("localhost"));
         
-        Debug.Log("✅ Google OAuth string validation test passed!");
+        Debug.Log("Google OAuth string validation test passed!");
     }
     
     [Test]
@@ -39,7 +39,7 @@ public class GoogleOAuthSimpleTest
         Assert.IsTrue(authUrl.Contains("accounts.google.com"));
         Assert.IsTrue(authUrl.Contains("client_id"));
         
-        Debug.Log("✅ Google OAuth URL generation test passed!");
+        Debug.Log("Google OAuth URL generation test passed!");
     }
     
     [Test]
@@ -52,6 +52,6 @@ public class GoogleOAuthSimpleTest
         Assert.IsTrue(mockResponse.Contains("access_token"));
         Assert.IsTrue(mockResponse.Contains("Bearer"));
         
-        Debug.Log("✅ Google OAuth response parsing test passed!");
+        Debug.Log("Google OAuth response parsing test passed!");
     }
 }

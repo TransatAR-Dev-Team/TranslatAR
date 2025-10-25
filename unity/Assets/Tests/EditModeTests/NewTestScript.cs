@@ -11,7 +11,7 @@ public class SimpleEditModeTests
     {
         // Basic test that should always pass
         Assert.IsTrue(true);
-        Debug.Log("✅ Simple EditMode test passed!");
+        Debug.Log("Simple EditMode test passed!");
     }
     
     [Test]
@@ -20,7 +20,7 @@ public class SimpleEditModeTests
         // Test basic math
         int result = 2 + 2;
         Assert.AreEqual(4, result);
-        Debug.Log("✅ Math test passed!");
+        Debug.Log("Math test passed!");
     }
     
     [Test]
@@ -30,6 +30,6 @@ public class SimpleEditModeTests
         string testString = "Unity Test";
         Assert.IsNotEmpty(testString);
         Assert.IsTrue(testString.Contains("Unity"));
-        Debug.Log("✅ String test passed!");
+        Debug.Log("String test passed!");
     }
 }

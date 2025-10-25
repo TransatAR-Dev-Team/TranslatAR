@@ -11,12 +11,12 @@ public class GoogleSignInPlayModeTests
     {
         // Simple PlayMode test that doesn't depend on custom classes
         Assert.IsTrue(true);
-        Debug.Log("✅ PlayMode test started");
+        Debug.Log("PlayMode test started");
         
         // Wait a frame
         yield return null;
         
-        Debug.Log("✅ PlayMode test completed");
+        Debug.Log("PlayMode test completed");
     }
     
     [UnityTest]
@@ -25,7 +25,7 @@ public class GoogleSignInPlayModeTests
         // Test basic math in PlayMode
         int result = 2 + 2;
         Assert.AreEqual(4, result);
-        Debug.Log("✅ PlayMode math test passed");
+        Debug.Log("PlayMode math test passed");
         
         // Wait a frame
         yield return null;

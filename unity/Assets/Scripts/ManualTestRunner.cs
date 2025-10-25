@@ -25,11 +25,11 @@ public class ManualTestRunner : MonoBehaviour
         try
         {
             Assert.IsTrue(true, "Simple assertion should pass");
-            Debug.Log("✅ Simple assertion test PASSED");
+            Debug.Log("Simple assertion test PASSED");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"❌ Simple assertion test FAILED: {e.Message}");
+            Debug.LogError($"Simple assertion test FAILED: {e.Message}");
         }
     }
     
@@ -43,13 +43,13 @@ public class ManualTestRunner : MonoBehaviour
             Assert.IsNotNull(manager, "GoogleSignInManager should be created");
             Assert.IsFalse(manager.IsAuthenticated(), "Manager should not be authenticated initially");
             
-            Debug.Log("✅ GoogleSignInManager creation test PASSED");
+            Debug.Log("GoogleSignInManager creation test PASSED");
             
             Object.DestroyImmediate(testObject);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"❌ GoogleSignInManager creation test FAILED: {e.Message}");
+            Debug.LogError($"GoogleSignInManager creation test FAILED: {e.Message}");
         }
     }
     
@@ -63,13 +63,13 @@ public class ManualTestRunner : MonoBehaviour
             Assert.IsNotEmpty(config.clientId, "Client ID should not be empty");
             Assert.IsNotEmpty(config.redirectUri, "Redirect URI should not be empty");
             
-            Debug.Log("✅ GoogleSignInConfig creation test PASSED");
+            Debug.Log("GoogleSignInConfig creation test PASSED");
             
             Object.DestroyImmediate(config);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"❌ GoogleSignInConfig creation test FAILED: {e.Message}");
+            Debug.LogError($"GoogleSignInConfig creation test FAILED: {e.Message}");
         }
     }
 }

@@ -8,7 +8,7 @@ public class GoogleOAuthTest
     {
         // Basic test that should always pass
         Assert.IsTrue(true);
-        Debug.Log("✅ Google OAuth test passed!");
+        Debug.Log("Google OAuth test passed!");
     }
     
     [Test]
@@ -17,7 +17,7 @@ public class GoogleOAuthTest
         // Test basic math
         int result = 1 + 1;
         Assert.AreEqual(2, result);
-        Debug.Log("✅ Math test passed!");
+        Debug.Log("Math test passed!");
     }
     
     [Test]
@@ -27,6 +27,6 @@ public class GoogleOAuthTest
         string testString = "Google OAuth";
         Assert.IsNotEmpty(testString);
         Assert.IsTrue(testString.Contains("Google"));
-        Debug.Log("✅ String test passed!");
+        Debug.Log("String test passed!");
     }
 }

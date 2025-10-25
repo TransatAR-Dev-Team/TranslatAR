@@ -8,7 +8,7 @@ public class GoogleOAuthBasicTest
     {
         // Test basic Unity functionality
         Assert.IsTrue(true);
-        Debug.Log("✅ Google OAuth basic test passed!");
+        Debug.Log("Google OAuth basic test passed!");
     }
     
     [Test]
@@ -22,7 +22,7 @@ public class GoogleOAuthBasicTest
         Assert.IsNotEmpty(redirectUri);
         Assert.IsTrue(redirectUri.Contains("localhost"));
         
-        Debug.Log("✅ Google OAuth string operations test passed!");
+        Debug.Log("Google OAuth string operations test passed!");
     }
     
     [Test]
@@ -39,6 +39,6 @@ public class GoogleOAuthBasicTest
         Assert.IsTrue(authUrl.Contains("accounts.google.com"));
         Assert.IsTrue(authUrl.Contains("client_id"));
         
-        Debug.Log("✅ Google OAuth URL generation test passed!");
+        Debug.Log("Google OAuth URL generation test passed!");
     }
 }

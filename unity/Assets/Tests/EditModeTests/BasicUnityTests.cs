@@ -8,7 +8,7 @@ public class BasicUnityTests
     {
         // Test basic Unity functionality
         Assert.IsTrue(true);
-        Debug.Log("✅ Basic Unity test passed!");
+        Debug.Log("Basic Unity test passed!");
     }
     
     [Test]
@@ -20,7 +20,7 @@ public class BasicUnityTests
         Assert.AreEqual("TestObject", testObject.name);
         
         Object.DestroyImmediate(testObject);
-        Debug.Log("✅ GameObject test passed!");
+        Debug.Log("GameObject test passed!");
     }
     
     [Test]
@@ -30,6 +30,6 @@ public class BasicUnityTests
         Vector3 v1 = new Vector3(1, 2, 3);
         Vector3 v2 = new Vector3(1, 2, 3);
         Assert.AreEqual(v1, v2);
-        Debug.Log("✅ Vector3 test passed!");
+        Debug.Log("Vector3 test passed!");
     }
 }

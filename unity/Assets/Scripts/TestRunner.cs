@@ -25,7 +25,7 @@ public class TestRunner : MonoBehaviour
     
     private void TestEnvironmentSetup()
     {
-        Debug.Log("✅ Test 1: Environment Setup - PASSED");
+        Debug.Log("Test 1: Environment Setup - PASSED");
     }
     
     private void TestStringValidation()
@@ -35,11 +35,11 @@ public class TestRunner : MonoBehaviour
         
         if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(redirectUri))
         {
-            Debug.Log("✅ Test 2: String Validation - PASSED");
+            Debug.Log("Test 2: String Validation - PASSED");
         }
         else
         {
-            Debug.Log("❌ Test 2: String Validation - FAILED");
+            Debug.Log("Test 2: String Validation - FAILED");
         }
     }
     
@@ -53,11 +53,11 @@ public class TestRunner : MonoBehaviour
         
         if (!string.IsNullOrEmpty(authUrl) && authUrl.Contains("accounts.google.com"))
         {
-            Debug.Log("✅ Test 3: URL Generation - PASSED");
+            Debug.Log("Test 3: URL Generation - PASSED");
         }
         else
         {
-            Debug.Log("❌ Test 3: URL Generation - FAILED");
+            Debug.Log("Test 3: URL Generation - FAILED");
         }
     }
     
@@ -67,11 +67,11 @@ public class TestRunner : MonoBehaviour
         
         if (!string.IsNullOrEmpty(mockResponse) && mockResponse.Contains("access_token"))
         {
-            Debug.Log("✅ Test 4: Response Parsing - PASSED");
+            Debug.Log("Test 4: Response Parsing - PASSED");
         }
         else
         {
-            Debug.Log("❌ Test 4: Response Parsing - FAILED");
+            Debug.Log("Test 4: Response Parsing - FAILED");
         }
     }
 }
