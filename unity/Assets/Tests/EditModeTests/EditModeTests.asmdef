@@ -1,12 +1,16 @@
 {
     "name": "EditModeTests",
     "references": [
-        "GameRuntime"
+        "GameRuntime",
+        "Unity.TextMeshPro"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],
     "includePlatforms": [
         "Editor"
+    ],
+    "precompiledReferences": [
+        "websocket-sharp.dll"
     ]
 }
