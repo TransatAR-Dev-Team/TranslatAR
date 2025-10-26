@@ -95,12 +95,12 @@ async def process_audio_and_translate(
     source_lang: str = Form("en"),
     target_lang: str = Form("es"),
     conversation_id: str = Form(None),
-    user_id: str = Form(None)
+    username: str = Form(None)
 ):
     if conversation_id is "":
         conversation_id = str(uuid.uuid4()) 
-    if user_id is "":
-        user_id = "anonymous"
+    if username is "":
+        username = "anonymous"
     async with httpx.AsyncClient(timeout=60.0) as client:
         # Step 1: STT call
         try:
@@ -140,7 +140,7 @@ async def process_audio_and_translate(
         try:
             translation_log = {
                 "conversation_id": conversation_id,
-                "user_id": user_id,
+                "username": username,
                 "original_text": original_text,
                 "translated_text": translated_text,
                 "source_lang": source_lang,
@@ -157,15 +157,14 @@ async def process_audio_and_translate(
             conversation_id=conversation_id
         )
     
-@router.get("/history")
-async def get_history(user_id: str | None = None, conversation_id: str | None = None):
+@router.get("/history/{username}")
+async def get_history(username: str | None = None, conversation_id: str | None = None):
     """
     Retrieves the translation records from the database.
     """
     try:
-        query = {}
-        if user_id:
-            query["user_id"] = user_id
+        query = {"username":username}
+        
         if conversation_id:
             query["conversation_id"] = conversation_id
         

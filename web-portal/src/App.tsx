@@ -7,6 +7,8 @@ import GoogleLoginButton from "./components/GoogleLoginButton/GoogleLoginButton"
 
 interface HistoryItem {
   _id: string;
+  user_name: string;
+  conversation_id: string;
   original_text: string;
   translated_text: string;
   source_lang: string;
@@ -60,12 +62,16 @@ function App() {
 
   useEffect(() => {
     // Load both history and settings on component mount
+    localStorage.setItem('username', "john"); // For testing purposes
     loadHistory();
     loadSettings();
+    
   }, []);
 
   const loadHistory = async () => {
     setIsLoading(true);
+    const username = localStorage.getItem('username')
+    if(!username) return;
     try {
       const response = await fetch("/api/history");
       if (!response.ok) throw new Error("Network response was not ok");
