@@ -13,7 +13,9 @@ COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies
 # --no-root is used because this isn't a library to be installed, just a test environment
-RUN poetry install --no-interaction --no-ansi --no-root
+# If pyproject changed, ensure lockfile is refreshed to avoid mismatch errors
+RUN poetry lock --no-interaction --no-ansi || true \
+    && poetry install --no-interaction --no-ansi --no-root
 
 # Copy the rest of the test code
 COPY . .
