@@ -88,8 +88,10 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
    ```sh
    cp .env.example .env
    ```
-   
-   - Edit the `.env` file and fill in your Google OAuth credentials
+   - Edit `.env` and fill in:
+   - `GOOGLE_CLIENT_ID`: your OAuth client ID from Google Cloud Console
+   - `JWT_SECRET`: any strong random key
+   - `DATABASE_URL`: usually `mongodb://localhost:27017/translatar_db`
    - Follow the detailed backend setup guide in [Setup guide](backend/README.md)
      - If you skip this step, the authentication endpoints will not work, but all other features will function normally.
      - If you are in dev team, you will find your key in the google sheet
