@@ -91,7 +91,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Activate Automated Code Quality Checks. This command installs the pre-commit hooks into your local git configuration. It will automatically format and lint your code every time you commit. **This is a required step for all contributors.**
+2. Activate Automated Code Quality Checks. This command installs the pre-commit hooks into your local git configuration. It will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone.
 
     ```sh
     pre-commit install
