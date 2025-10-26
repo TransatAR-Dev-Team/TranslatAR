@@ -10,13 +10,16 @@ RUN poetry config virtualenvs.create false
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN poetry install --no-interaction --no-ansi  --only main
+# Ensure lockfile reflects pyproject changes (e.g., added websockets)
+RUN poetry lock --no-interaction --no-ansi || true \
+    && poetry install --no-interaction --no-ansi --only main
 
 # Test stage builds on 'base' and adds development dependencies
 FROM base AS test
 COPY . .
-# Install dev dependencies
-RUN poetry install --no-interaction --no-ansi
+# Install dev dependencies (refresh lock in case sources changed)
+RUN poetry lock --no-interaction --no-ansi || true \
+    && poetry install --no-interaction --no-ansi
 CMD ["pytest", "-v"]
 
 # Production stage copies code into the 'base' image

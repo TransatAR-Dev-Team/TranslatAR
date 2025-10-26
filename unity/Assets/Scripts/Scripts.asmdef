@@ -1,0 +1,14 @@
+{
+    "name": "GameRuntime",
+    "references": [
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "autoReferenced": true,
+    "precompiledReferences": [
+        "websocket-sharp.dll"
+    ]
+}
+
