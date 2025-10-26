@@ -36,8 +36,8 @@ app.add_middleware(
 # --- WebSocket Router ---
 app.include_router(websocket_router)
 
-# --- Auth Router ---
-app.include_router(auth_router, prefix="/auth")
+# --- Auth Router (with /api prefix) ---
+app.include_router(auth_router, prefix="/api/auth")
 
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
@@ -45,7 +45,24 @@ db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
 
-# --- Initialize Database Client for Auth ---
+# --- Startup Event: Initialize Database Client for Auth ---
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database client (async Motor)"""
+    db_client = DatabaseClient(MONGO_DATABASE_URL)
+    app.state.db = db_client
+    print("Database client initialized for authentication")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close database connection"""
+    if hasattr(app.state, 'db'):
+        app.state.db.client.close()
+        print("Database client closed")
+
+# --- Initialize Database Client for compatibility ---
+# This is set for routes that don't use the startup event
+# The startup event will override this
 db_client = DatabaseClient(MONGO_DATABASE_URL)
 app.state.db = db_client
 

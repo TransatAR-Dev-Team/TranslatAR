@@ -1,130 +1,216 @@
-from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import RedirectResponse
-from urllib.parse import urlencode
-import os
-import httpx
-import jwt
-import time
+"""
+Google OAuth Authentication Controller (Client-Side Flow)
+Reference: https://github.com/ekourtakis/RetroInsta
+
+This implements a client-side OAuth flow where:
+1. Frontend uses Google Identity Services to get an ID Token
+2. Frontend sends ID Token to this backend endpoint
+3. Backend verifies the ID Token with Google
+4. Backend creates/updates user in database
+5. Backend returns application's own JWT
+"""
+from fastapi import APIRouter, HTTPException, Request, Header
 from typing import Optional
+from pydantic import BaseModel
+from security import JWTManager, GoogleIDTokenVerifier
+import logging
+import os
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-# JWT dependency for protected routes
-def get_current_user(authorization: Optional[str] = None):
-    """Verify JWT token and return user info."""
+# --- Request/Response Models ---
+class GoogleLoginRequest(BaseModel):
+    idToken: str
+
+class GoogleLoginResponse(BaseModel):
+    success: bool = True
+    data: dict
+    message: Optional[str] = None
+
+class UserResponse(BaseModel):
+    success: bool = True
+    data: dict
+    message: Optional[str] = None
+
+class TokenVerifyResponse(BaseModel):
+    success: bool = True
+    data: dict
+    message: Optional[str] = None
+
+class AuthConfigResponse(BaseModel):
+    client_id: str
+
+
+def get_current_user_from_header(authorization: str) -> dict:
+    """
+    Verify JWT token from Authorization header and return user info
+    
+    Args:
+        authorization: Authorization header (format: Bearer <token>)
+    
+    Returns:
+        Decoded user info
+    """
     if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
     
+    # Extract Bearer token
+    parts = authorization.split(" ")
+    if len(parts) != 2 or parts[0] != "Bearer":
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
+    token = parts[1]
+    return JWTManager.verify_token(token)
+
+
+@router.post("/google/login", response_model=GoogleLoginResponse)
+async def google_login(login_request: GoogleLoginRequest, http_request: Request):
+    """
+    Handle Google OAuth login (client-side flow)
+    
+    Frontend sends ID Token obtained from Google Identity Services
+    Backend verifies token and creates/updates user
+    Returns application's own JWT
+    
+    Request body: { "idToken": "..." }
+    Returns: { "success": true, "data": { "token": "...", "user": {...} }, "message": null }
+    """
     try:
-        # Extract token from "Bearer <token>"
-        token = authorization.split(" ")[1] if " " in authorization else authorization
-        decoded = jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"])
-        return decoded
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-@router.get("/google")
-def google_login():
-    """Create Google OAuth Login URL"""
-    params = {
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI"),
-        "response_type": "code",
-        "scope": "openid email profile",
-        "access_type": "offline",
-        "prompt": "consent"
-    }
-    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
-    return {"auth_url": url}
-
-
-@router.get("/google/callback")
-async def google_callback(request: Request, code: str):
-    """Handle Google OAuth Callback"""
-    token_data = {
-        "code": code,
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-        "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI"),
-        "grant_type": "authorization_code"
-    }
-
-    async with httpx.AsyncClient() as client:
-        # Exchange code for access token
-        r = await client.post("https://oauth2.googleapis.com/token", data=token_data)
-        token_info = r.json()
-        access_token = token_info.get("access_token")
-
-        if not access_token:
-            raise HTTPException(status_code=400, detail="Failed to obtain access token")
-
-        # Get user info from Google
-        user_info_response = await client.get(
-            "https://www.googleapis.com/oauth2/v1/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"}
+        # Verify Google ID Token
+        user_claims = await GoogleIDTokenVerifier.verify_id_token(login_request.idToken)
+        
+        # Extract user info
+        google_id = user_claims.get("sub")  # Google's unique user ID
+        email = user_claims.get("email", "")
+        name = user_claims.get("name", "")
+        picture = user_claims.get("picture", "")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Token missing email")
+        
+        # Get database client
+        db = http_request.app.state.db
+        
+        # Find or create user
+        user = await db.create_or_update_user({
+            "google_id": google_id,
+            "email": email,
+            "name": name,
+            "picture": picture
+        })
+        
+        # Create application JWT
+        app_token = JWTManager.create_token(
+            user_id=str(user["_id"]),
+            email=email,
+            name=name
         )
-        user_info = user_info_response.json()
-
-    if "email" not in user_info:
-        raise HTTPException(status_code=400, detail="Invalid Google login")
-
-    # Save user to database
-    db = request.app.state.db
-    user = db.create_or_update_user(user_info)
-
-    # Create JWT token
-    payload = {
-        "user_id": str(user["_id"]),
-        "email": user_info["email"],
-        "name": user_info.get("name", ""),
-        "exp": time.time() + 86400  # 24 hours
-    }
-    token = jwt.encode(payload, os.getenv("JWT_SECRET"), algorithm="HS256")
-
-    # Return token and user info
-    return {
-        "jwt": token,
-        "user": {
-            "id": str(user["_id"]),
-            "email": user_info["email"],
-            "name": user_info.get("name", ""),
-            "picture": user_info.get("picture", "")
-        }
-    }
+        
+        # Return standardized response
+        return GoogleLoginResponse(
+            success=True,
+            data={
+                "token": app_token,
+                "user": {
+                    "id": str(user["_id"]),
+                    "email": email,
+                    "name": name,
+                    "picture": picture
+                }
+            },
+            message=None
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
 
-@router.get("/verify")
-def verify_token(token: str):
-    """Test JWT Token Validity"""
+@router.get("/verify", response_model=TokenVerifyResponse)
+async def verify_token(authorization: str = Header(None)):
+    """
+    Verify JWT Token validity
+    
+    Headers:
+        Authorization: Bearer <token>
+    
+    Returns: { "success": true, "data": { "valid": true, "decoded": {...} }, "message": null }
+    """
     try:
-        decoded = jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"])
-        return {"valid": True, "decoded": decoded}
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        
+        # Extract and verify token
+        user_data = get_current_user_from_header(authorization)
+        
+        return TokenVerifyResponse(
+            success=True,
+            data={
+                "valid": True,
+                "decoded": user_data
+            },
+            message=None
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token verification error: {e}")
+        raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
 
 
-@router.get("/me")
-def get_current_user_info(request: Request, authorization: str):
-    """Get current user information from JWT token"""
-    user_data = get_current_user(authorization)
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(request: Request):
+    """
+    Get current user information (from JWT token)
     
-    # Get full user info from database
-    db = request.app.state.db
-    user = db.get_user_by_id(user_data["user_id"])
+    Headers:
+        Authorization: Bearer <token>
     
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {
-        "id": str(user["_id"]),
-        "email": user["email"],
-        "name": user.get("name", ""),
-        "picture": user.get("picture", ""),
-        "settings": user.get("settings", {})
-    }
+    Returns: { "success": true, "data": { ...user info... }, "message": null }
+    """
+    try:
+        # Extract authorization header
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        
+        # Verify token
+        user_data = get_current_user_from_header(auth_header)
+        
+        # Get full user info from database
+        db = request.app.state.db
+        user = await db.get_user_by_id(user_data["user_id"])
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Return standardized response
+        return UserResponse(
+            success=True,
+            data={
+                "id": str(user["_id"]),
+                "email": user["email"],
+                "name": user.get("name", ""),
+                "picture": user.get("picture", ""),
+                "settings": user.get("settings", {})
+            },
+            message=None
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting user info: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get user info: {str(e)}")
 
+
+@router.get("/config", response_model=AuthConfigResponse)
+def get_auth_config():
+    """Get authentication configuration (Google Client ID for frontend)"""
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    if not google_client_id:
+        raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID not configured")
+    return AuthConfigResponse(client_id=google_client_id)
