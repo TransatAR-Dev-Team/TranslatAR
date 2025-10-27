@@ -62,7 +62,7 @@ function App() {
 
   useEffect(() => {
     // Load both history and settings on component mount
-    localStorage.setItem('username', "john"); // For testing purposes
+    localStorage.setItem('username', "john"); // For testing purposes john is hardcoded as the username
     loadHistory();
     loadSettings();
     
