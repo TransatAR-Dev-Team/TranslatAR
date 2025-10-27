@@ -42,13 +42,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARSER_SCRIPT="$SCRIPT_DIR/parse_unity_results.py"
 
 # --- OS-Specific Setup ---
-UNITY_EXECUTABLE=""
+UNITY_EXECUTABLE="${UNITY_EXECUTABLE:-}"
 PROJECT_PATH_FOR_UNITY="$PROJECT_PATH_NATIVE"
 ARTIFACTS_PATH_FOR_UNITY="$PROJECT_PATH_NATIVE/Logs/TestResults"
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 
 if [[ "$OS_NAME" == "darwin" ]]; then
-    UNITY_EXECUTABLE="/Applications/Unity/Hub/Editor/$UNITY_VERSION/Unity.app/Contents/MacOS/Unity"
+    # If UNITY_EXECUTABLE not provided, try the requested version, otherwise auto-detect latest installed
+    if [[ -z "$UNITY_EXECUTABLE" ]]; then
+        CANDIDATE="/Applications/Unity/Hub/Editor/$UNITY_VERSION/Unity.app/Contents/MacOS/Unity"
+        if [[ -f "$CANDIDATE" ]]; then
+            UNITY_EXECUTABLE="$CANDIDATE"
+        else
+            # Auto-detect latest installed editor
+            DETECTED=$(ls -1d /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity 2>/dev/null | sort -Vr | head -n1 || true)
+            if [[ -n "$DETECTED" && -f "$DETECTED" ]]; then
+                echo "Unity version $UNITY_VERSION not found. Auto-detected: $DETECTED"
+                UNITY_EXECUTABLE="$DETECTED"
+            fi
+        fi
+    fi
 elif [[ "$OS_NAME" == "linux" ]] && [ -f "/proc/version" ] && grep -q -i "microsoft" /proc/version; then
     UNITY_EXECUTABLE="/mnt/c/Program Files/Unity/Hub/Editor/$UNITY_VERSION/Editor/Unity.exe"
     PROJECT_PATH_FOR_UNITY=$(wslpath -w "$PROJECT_PATH_NATIVE")
@@ -63,8 +76,9 @@ else
     exit 1
 fi
 
-if [ ! -f "$UNITY_EXECUTABLE" ]; then
-    echo "Unity Editor executable not found at the expected path: $UNITY_EXECUTABLE" >&2
+if [ -z "$UNITY_EXECUTABLE" ] || [ ! -f "$UNITY_EXECUTABLE" ]; then
+    echo "Unity Editor executable not found. Set UNITY_EXECUTABLE env var to your editor path or adjust UNITY_VERSION." >&2
+    echo "Tried path: /Applications/Unity/Hub/Editor/$UNITY_VERSION/Unity.app/Contents/MacOS/Unity" >&2
     exit 1
 fi
 
@@ -93,6 +107,9 @@ echo "Cleaning up previous Edit Mode test results..."
 rm -f "$RESULTS_PATH_EDITMODE_NATIVE"
 
 # Run Unity silently in the background
+echo "Using Unity: $UNITY_EXECUTABLE"
+echo "Project: $PROJECT_PATH_FOR_UNITY"
+
 "$UNITY_EXECUTABLE" \
   -batchmode -nographics \
   -projectPath "$PROJECT_PATH_FOR_UNITY" \
@@ -102,6 +119,12 @@ rm -f "$RESULTS_PATH_EDITMODE_NATIVE"
 UNITY_PID=$!
 wait $UNITY_PID || true
 unset UNITY_PID
+
+if [[ ! -f "$RESULTS_PATH_EDITMODE_NATIVE" ]]; then
+    echo "❌ ERROR: Results file not found at '$RESULTS_PATH_EDITMODE_NATIVE'" >&2
+    echo "Unity log (last 200 lines):" >&2
+    tail -n 200 "$LOG_PATH_EDITMODE_NATIVE" 2>/dev/null || true
+fi
 
 python3 "$PARSER_SCRIPT" "$RESULTS_PATH_EDITMODE_NATIVE"
 RC_EDITMODE=$?

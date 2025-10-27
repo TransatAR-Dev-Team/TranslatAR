@@ -39,9 +39,11 @@ function App() {
     target_sample_rate: 48000,
     silence_threshold: 0.01,
     chunk_overlap_seconds: 0.5,
-    websocket_url: 'ws://localhost:8000/ws'
+    websocket_url: 'ws://localhost:8000/ws',
   });
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+
+  // TODO: add isSettingsLoading variable
+  const [, setIsSettingsLoading] = useState(true);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -68,8 +70,8 @@ function App() {
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      setError("Failed to load translation history.");
+      console.error('Error fetching data:', error);
+      setError('Failed to load translation history.');
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +85,8 @@ function App() {
       const data = await response.json();
       setSettings(data.settings);
     } catch (error) {
-      console.error("Error fetching settings:", error);
-      setSettingsError("Failed to load settings.");
+      console.error('Error fetching settings:', error);
+      setSettingsError('Failed to load settings.');
     } finally {
       setIsSettingsLoading(false);
     }
@@ -103,14 +105,14 @@ function App() {
       setSettings(data.settings);
       setShowSettings(false);
     } catch (error) {
-      console.error("Error saving settings:", error);
-      setSettingsError("Failed to save settings.");
+      console.error('Error saving settings:', error);
+      setSettingsError('Failed to save settings.');
     }
   };
 
   const handleSummarize = async () => {
     if (!textToSummarize.trim()) {
-      setSummaryError("Please enter some text to summarize.");
+      setSummaryError('Please enter some text to summarize.');
       return;
     }
 
@@ -131,15 +133,13 @@ function App() {
 
       const data = await response.json();
       setSummary(data.summary);
-
     } catch (error) {
-      console.error("Error summarizing text:", error);
-      setSummaryError("Failed to generate summary. Please try again.");
+      console.error('Error summarizing text:', error);
+      setSummaryError('Failed to generate summary. Please try again.');
     } finally {
       setIsSummarizing(false);
     }
   };
-
   const groupedHistory = history.reduce((acc: Record<string, HistoryItem[]>, item) => {
     if (!acc[item.conversation_id]) {
       acc[item.conversation_id] = [];
@@ -163,7 +163,9 @@ function App() {
         </div>
 
         <div className="bg-slate-800 rounded-lg p-6 shadow-lg mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-left">Summarize Text</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-left">
+            Summarize Text
+          </h2>
           <textarea
             className="w-full bg-slate-700 p-3 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={6}
@@ -173,7 +175,9 @@ function App() {
           />
 
           <div className="flex items-center mt-4 space-x-4">
-            <label htmlFor="summary-length" className="font-semibold">Summary Length:</label>
+            <label htmlFor="summary-length" className="font-semibold">
+              Summary Length:
+            </label>
             <select
               id="summary-length"
               value={summaryLength}
@@ -204,7 +208,9 @@ function App() {
         </div>
 
         <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4 text-left">Translation History</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-left">
+            Translation History
+          </h2>
 
           {isLoading && <p>Loading history...</p>}
           {error && <p className="text-red-400">{error}</p>}
@@ -212,15 +218,22 @@ function App() {
           {!isLoading && !error && (
             <div className="text-left max-h-[500px] overflow-y-auto space-y-4 p-2 bg-slate-700 rounded-md">
               {history.length === 0 ? (
-                <p className="text-gray-400">No translations found in the database.</p>
+                <p className="text-gray-400">
+                  No translations found in the database.
+                </p>
               ) : (
                 history.map((item) => (
-                  <div key={item._id} className="border-b border-slate-700 pb-2">
+                  <div
+                    key={item._id}
+                    className="border-b border-slate-700 pb-2"
+                  >
                     <p className="text-gray-400">
-                      {item.original_text} <span className="text-xs">({item.source_lang})</span>
+                      {item.original_text}{' '}
+                      <span className="text-xs">({item.source_lang})</span>
                     </p>
                     <p className="text-lg">
-                      {item.translated_text} <span className="text-xs">({item.target_lang})</span>
+                      {item.translated_text}{' '}
+                      <span className="text-xs">({item.target_lang})</span>
                     </p>
                   </div>
                 ))
@@ -252,10 +265,17 @@ function App() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Source Language</label>
+                <label className="block text-sm font-medium mb-2">
+                  Source Language
+                </label>
                 <select
                   value={settings.source_language}
-                  onChange={(e) => setSettings({...settings, source_language: e.target.value})}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      source_language: e.target.value,
+                    })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="en">English</option>
@@ -272,10 +292,17 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Target Language</label>
+                <label className="block text-sm font-medium mb-2">
+                  Target Language
+                </label>
                 <select
                   value={settings.target_language}
-                  onChange={(e) => setSettings({...settings, target_language: e.target.value})}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      target_language: e.target.value,
+                    })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="en">English</option>
@@ -292,11 +319,18 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Chunk Duration (seconds)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Chunk Duration (seconds)
+                </label>
                 <input
                   type="number"
                   value={settings.chunk_duration_seconds}
-                  onChange={(e) => setSettings({...settings, chunk_duration_seconds: parseFloat(e.target.value) || 8.0})}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      chunk_duration_seconds: parseFloat(e.target.value) || 8.0,
+                    })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   step="0.5"
                   min="1"
@@ -305,11 +339,18 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Sample Rate (Hz)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Sample Rate (Hz)
+                </label>
                 <input
                   type="number"
                   value={settings.target_sample_rate}
-                  onChange={(e) => setSettings({...settings, target_sample_rate: parseInt(e.target.value) || 48000})}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      target_sample_rate: parseInt(e.target.value) || 48000,
+                    })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   step="1000"
                   min="8000"
@@ -318,11 +359,18 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Silence Threshold</label>
+                <label className="block text-sm font-medium mb-2">
+                  Silence Threshold
+                </label>
                 <input
                   type="number"
                   value={settings.silence_threshold}
-                  onChange={(e) => setSettings({...settings, silence_threshold: parseFloat(e.target.value) || 0.01})}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      silence_threshold: parseFloat(e.target.value) || 0.01,
+                    })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   step="0.001"
                   min="0.001"
@@ -331,11 +379,18 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Chunk Overlap (seconds)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Chunk Overlap (seconds)
+                </label>
                 <input
                   type="number"
                   value={settings.chunk_overlap_seconds}
-                  onChange={(e) => setSettings({...settings, chunk_overlap_seconds: parseFloat(e.target.value) || 0.5})}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      chunk_overlap_seconds: parseFloat(e.target.value) || 0.5,
+                    })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   step="0.1"
                   min="0.1"
@@ -344,11 +399,15 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">WebSocket URL</label>
+                <label className="block text-sm font-medium mb-2">
+                  WebSocket URL
+                </label>
                 <input
                   type="text"
                   value={settings.websocket_url}
-                  onChange={(e) => setSettings({...settings, websocket_url: e.target.value})}
+                  onChange={(e) =>
+                    setSettings({ ...settings, websocket_url: e.target.value })
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="ws://localhost:8000/ws"
                 />
