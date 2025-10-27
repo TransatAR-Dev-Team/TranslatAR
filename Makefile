@@ -17,9 +17,7 @@ up: ## Start all services (auto-detects GPU).
 down: ## Stop and remove all services.
 	@./scripts/start.sh down --remove-orphans
 
-restart: ## Stop and restart all services.
-	@$(MAKE) down
-	@$(MAKE) up
+restart: down up ## Stop and restart all services. Alias for `down` + `up`.
 
 logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
 	@./scripts/start.sh logs $(ARGS)
@@ -39,6 +37,14 @@ test-integration: ## Run backend integration tests.
 
 test-unity: ## Run Unity tests (macOS/Windows only).
 	@./scripts/run_unity_tests.sh
+
+validate: format lint ## Validate code. Alias for `format` + `lint`.
+
+format: ## Format all source code with Black, Ruff Formatter, and Prettier.
+	@./scripts/format.sh
+
+lint: ## Lint all source code with Ruff and ESLint.
+	@./scripts/lint.sh
 
 help: ## Show this help message.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

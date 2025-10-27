@@ -1,4 +1,5 @@
 import pytest
+
 import websocket as ws_mod
 
 
@@ -58,5 +59,3 @@ async def test_process_audio_chunk_stt_error(monkeypatch):
     ws = StubWS()
     await ws_mod.process_audio_chunk(ws, b"x", "en", "es")
     assert ws.sent and "Error:" in ws.sent[0]["translated_text"]
-
-
