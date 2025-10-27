@@ -2,21 +2,30 @@
 
 ## Prerequisites
 
-- About 50 GB of free space.
-- [Docker Desktop](https://docs.docker.com/desktop/) installed and running.
-- **A Bash-compatible terminal.**
-  - **macOS/Linux:** Use the default Terminal.
-  - **Windows:** Use **Git Bash** (included with [Git for Windows](https://git-scm.com/download/win)) or [WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
-- **`make` command-line tool.**
-  - **macOS:** `make` is pre-installed. You may need to install Xcode Command Line Tools by running `xcode-select --install`.
-  - **Windows:** `make` is available through various packages. The easiest way is to install it via [Chocolatey](https://chocolatey.org/): `choco install make`.
-  - **Linux (Debian/Ubuntu):** `sudo apt update && sudo apt install make -y`
-- [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The [Unity Set Up Guide](#unity-frontend) will instruct you on how to install Unity version `2022.3.62f1`.
-- For running the Unity frontend, a Windows PC or Apple Silicon Mac is required.
+### Core Tools
+
+- **Docker Desktop**: For running the services. [Download here](https://docs.docker.com/desktop/).
+- **make**: A command-line tool for running project commands.
+    -   **macOS:** Pre-installed. May require `xcode-select --install`.
+    -   **Windows:** Install via Chocolatey: `choco install make`.
+    -   **Linux (Debian/Ubuntu):** `sudo apt install make`.
 
 - **(Optional) For GPU acceleration:**
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus).
-  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.  
+  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed.
+
+### Local Development & Code Quality
+
+While Docker can run the project, local development (running tests, formatters, and managing dependencies) requires the following:
+
+- **Python**: Both versions **3.10** and **3.11** are required for the different microservices. instructions on installing different Python versions are available in our [Python Service Developer Guide](./docs/developer_guide.python_services.md#prerequisites).
+- **Node.js**: Required for the `web-portal`. [Download here](https://nodejs.org/en/download).
+- **Poetry**: The dependency manager for Python services. [Installation guide](https://python-poetry.org/docs/#installation).
+- [**pre-commit**](https://pre-commit.com/): For managing automated code quality hooks. Install with `pipx install pre-commit`.
+
+### Unity
+
+-   [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The guide below will instruct you on installing the correct Unity Editor version.
 
 ## Common Commands
 
@@ -26,7 +35,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | `make up`               | Build and start all services in Docker (auto-detects GPU).                          |
 | `make down`             | Stop and remove all services.                                                       |
-| `make restart`          | A shortcut to stop and restart all services.                                        |
+| `make restart`          | Restart all services. Alias for `make down` + `make up`.                            |
 | `make logs`             | Show logs of all running services.                                                  |
 | `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                  |
 | `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows). |
@@ -34,6 +43,9 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | `make test-unit`        | Run only the unit tests for all backend services.                                   |
 | `make test-integration` | Run only the backend integration tests.                                             |
 | `make test-unity`       | Run only the Unity tests (requires macOS or Windows).                               |
+| `make validate`         | Alias for `make format` + `make lint`.                                              |
+| `make format`           | Format all Python and web portal source code.                                       |
+| `make lint`             | Lint all Python and web portal source code.                                         |
 | `make help` or `make`   | Show help message (same info as this table).                                        |
 
 ## Further Documentation
@@ -77,6 +89,12 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
     ```sh
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
+    ```
+
+2. Activate Automated Code Quality Checks. This command installs the pre-commit hooks into your local git configuration. It will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone.
+
+    ```sh
+    pre-commit install
     ```
 
 2. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
@@ -253,3 +271,32 @@ Instructions for each service can be found at the links below:
 - [Web Portal (`web-portal`)](./web-portal/README.md#local-testing)
 - [Python Services (`backend`, etc.)](./docs/developer_guide.python_services.md#local-testing)
 - [Unity (`unity`)](./unity/README.md#testing)
+
+## Code Quality
+
+To ensure code consistency and quality, this project uses a combination of formatters and linters.
+
+- **Python Services**: Formatted with **Black** and linted with **Ruff**.
+- **Web Portal**: Formatted with **Prettier** and linted with **ESLint**.
+
+You can run these tools across the entire project using a single command:
+
+**To format then lint all code:**
+
+```sh
+make format-lint
+```
+
+**To format all code:**
+
+```sh
+make format
+```
+
+**To lint all code and automatically fix issues:**
+
+```sh
+make lint
+```
+
+For instructions on running these tools within a specific service, see the developer guides for [Python](./docs/developer_guide.python_services.md#formatting-and-linting) and the [Web Portal](./web-portal/README.md#formatting-and-linting).

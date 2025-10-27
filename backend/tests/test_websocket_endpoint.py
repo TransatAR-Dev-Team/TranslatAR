@@ -1,7 +1,9 @@
 import json
+
 from fastapi.testclient import TestClient
-from main import app
+
 import websocket as ws_mod
+from main import app
 
 
 def _pack(meta: dict, audio: bytes) -> bytes:
@@ -24,5 +26,3 @@ def test_ws_route_parses_and_calls_processor(monkeypatch):
 
     assert called["audio"] == b"123"
     assert msg == {"original_text": "a", "translated_text": "b"}
-
-
