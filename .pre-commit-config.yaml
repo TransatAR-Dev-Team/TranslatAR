@@ -47,3 +47,11 @@ repos:
         files: ^web-portal/.*\.[tj]sx?$
         # Tell eslint where to run from so it can find its config and plugins
         entry: bash -c 'cd web-portal && eslint --fix "$@"' --
+
+# # == Security ==
+-   repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+    -   id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: poetry\.lock
