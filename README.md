@@ -91,21 +91,22 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Activate Automated Code Quality Checks. This command installs the pre-commit hooks into your local git configuration. It will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone.
+2. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. This may take several minutes.
 
     ```sh
     pre-commit install
+    pre-commit run
     ```
 
-2. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
+3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
     ```sh
     make up
     ```
 
-3. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
+4. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
-4. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
+5. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
     ```sh
     docker exec -it ollama ollama pull phi3:mini
@@ -300,3 +301,27 @@ make lint
 ```
 
 For instructions on running these tools within a specific service, see the developer guides for [Python](./docs/developer_guide.python_services.md#formatting-and-linting) and the [Web Portal](./web-portal/README.md#formatting-and-linting).
+
+## `pre-commit` hooks
+
+This repository is configured to use `pre-commit` to run checks on each file you commit. These checks include:
+
+- Formatting and linting
+- Secret detection
+- General file formatting
+
+The hooks are configured with [`.pre-commit-config.yaml`](.pre-commit-config.yaml)
+
+### Run hooks without making a commit
+
+Run on all files:
+
+```sh
+pre-commit run --all-files
+```
+
+Run on only staged files:
+
+```sh
+pre-commit run
+```
