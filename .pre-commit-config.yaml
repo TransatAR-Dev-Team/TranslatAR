@@ -8,6 +8,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 
+
 # == Python Formatting & Linting ==
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.5
@@ -41,6 +42,7 @@ repos:
     -   id: eslint
         args: [--fix, --config, web-portal/eslint.config.js]
         files: ^web-portal/.*\.[tj]sx?$
+
 
 # # == Security ==
 -   repo: https://github.com/Yelp/detect-secrets

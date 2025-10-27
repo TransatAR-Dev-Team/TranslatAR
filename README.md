@@ -22,6 +22,7 @@ While Docker can run the project, local development (running tests, formatters, 
 - **Node.js**: Required for the `web-portal`. [Download here](https://nodejs.org/en/download).
 - **Poetry**: The dependency manager for Python services. [Installation guide](https://python-poetry.org/docs/#installation).
 - [**pre-commit**](https://pre-commit.com/): For managing automated code quality hooks. Install with `pipx install pre-commit`.
+    - [`pipx` installation instructions](https://pipx.pypa.io/stable/installation/).
 
 ### Unity
 
@@ -91,12 +92,14 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. This may take several minutes.
+2. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. Download the hooks takes several minutes.
 
     ```sh
     pre-commit install
     pre-commit run
     ```
+
+    `pre-commit` will now run its hooks whenever you make a commit. Read more [here](#code-quality).
 
 3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
@@ -275,53 +278,71 @@ Instructions for each service can be found at the links below:
 
 ## Code Quality
 
-To ensure code consistency and quality, this project uses a combination of formatters and linters.
+To ensure code consistency and quality, this project uses `pre-commit` to run checks and automatically make changes on each file you commit. These checks include formatters and linters such as:
 
 - **Python Services**: Formatted with **Black** and linted with **Ruff**.
 - **Web Portal**: Formatted with **Prettier** and linted with **ESLint**.
+- **Security**: Secret detection to prevent committing credentials.
+- **General**: Checks for whitespace, file endings, and other common issues.
 
-You can run these tools across the entire project using a single command:
+The full configuration can be found in the [`.pre-commit-config.yaml`](./.pre-commit-config.yaml) file.
 
-**To format then lint all code:**
+### When a commit is rejected
 
+If your `git commit` is blocked, it means the hooks caught an issue. There are two scenarios.
+
+1.  **The hooks have made automatic changes to your files.**
+
+    A formatter has fixed your code for you. Stage the changes and try to commit again.
+
+    ```sh
+    git add .
+    git commit
+    ```
+
+2.  **The errors need a manual fix.**
+
+    Read the error messages carefully. It will tell you the file, line number, and what is wrong. Fix the error, stage the files, and commit again.
+
+    > **Important:** If a secret is detected, **you must remove it.** Do not add it to the baseline file unless you are 100% certain that it is a false positive.
+
+### Running Checks Manually
+
+You can run these checks at any time without creating a commit.
+
+**Using `pre-commit`:**
+
+
+To run on only staged files:
 ```sh
-make format-lint
+pre-commit run
 ```
 
-**To format all code:**
-
+To run on any modified files (staged or not)
 ```sh
-make format
+pre-commit run --files $(git ls-files -m)
 ```
 
-**To lint all code and automatically fix issues:**
-
-```sh
-make lint
-```
-
-For instructions on running these tools within a specific service, see the developer guides for [Python](./docs/developer_guide.python_services.md#formatting-and-linting) and the [Web Portal](./web-portal/README.md#formatting-and-linting).
-
-## `pre-commit` hooks
-
-This repository is configured to use `pre-commit` to run checks on each file you commit. These checks include:
-
-- Formatting and linting
-- Secret detection
-- General file formatting
-
-The hooks are configured with [`.pre-commit-config.yaml`](.pre-commit-config.yaml)
-
-### Run hooks without making a commit
-
-Run on all files:
-
+To run on all files:
 ```sh
 pre-commit run --all-files
 ```
 
-Run on only staged files:
+**Using `Make`:**
 
+To format and lint all code:
 ```sh
-pre-commit run
+make validate
 ```
+
+To format all code:
+```sh
+make format
+```
+
+To lint all code:
+```sh
+make lint
+```
+
+For instructions on running  tools within a specific service, see the developer guides for [Python services](./docs/developer_guide.python_services.md#formatting-and-linting) and the [Web Portal](./web-portal/README.md#formatting-and-linting).
