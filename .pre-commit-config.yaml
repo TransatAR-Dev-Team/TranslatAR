@@ -33,19 +33,14 @@ repos:
     rev: v4.0.0-alpha.8
     hooks:
     -   id: prettier
-        # Prettier will use the .prettierrc.json config in the web-portal directory
         files: ^web-portal/
-        # Tell prettier where to run from so it can find its plugins (like for tailwind)
-        entry: bash -c 'cd web-portal && prettier --write "$@"' --
 
 -   repo: https://github.com/pre-commit/mirrors-eslint
     rev: v9.7.0
     hooks:
     -   id: eslint
-        args: [--fix]
+        args: [--fix, --config, web-portal/eslint.config.js]
         files: ^web-portal/.*\.[tj]sx?$
-        # Tell eslint where to run from so it can find its config and plugins
-        entry: bash -c 'cd web-portal && eslint --fix "$@"' --
 
 # # == Security ==
 -   repo: https://github.com/Yelp/detect-secrets
