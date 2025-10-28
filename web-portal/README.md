@@ -18,6 +18,39 @@ This directory contains the frontend web portal for the TranslatAR project. It's
 
 See more detail in `README.md` in the root of the project for instructions on building and runnning the entire project.
 
+## Google Sign-In Setup
+
+The web portal includes Google Sign-In functionality. To enable this feature:
+
+1. **Create a Google Cloud Project:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+
+2. **Enable Google Sign-In API:**
+   - Go to "APIs & Services" > "Library"
+   - Search for "Google Sign-In API" and enable it
+
+3. **Create OAuth Credentials:**
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Select "Web application"
+   - Add authorized JavaScript origins:
+     - `http://localhost:5173` (for local development)
+     - Your production domain (for production)
+   - Copy the generated Client ID
+
+4. **Set Environment Variable:**
+   - Create a `.env` file in the `web-portal` directory
+   - Add your Google Client ID:
+     ```
+     VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+     ```
+   - **Important:** Never commit the `.env` file to version control
+
+5. **Restart the Development Server:**
+   - Stop the current server (`Ctrl+C`)
+   - Run `npm run dev` again to load the new environment variable
+
 ## Local Testing
 
 This project uses Vitest for unit and component testing.
