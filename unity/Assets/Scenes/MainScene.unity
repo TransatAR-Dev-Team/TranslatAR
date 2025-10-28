@@ -1675,6 +1675,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 198255926}
+  keepUpright: 0
+  smoothTurn: 0
+  menuCanvas: {fileID: 198255930}
 --- !u!1 &1089425699
 GameObject:
   m_ObjectHideFlags: 0
