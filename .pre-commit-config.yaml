@@ -5,8 +5,11 @@ repos:
     rev: v4.6.0
     hooks:
     -   id: trailing-whitespace
+        exclude: \.(unity|asset|meta)$
     -   id: end-of-file-fixer
+        exclude: \.(unity|asset|meta)$
     -   id: check-yaml
+        exclude: \.(unity|asset|meta)$
 
 
 # == Python Formatting & Linting ==
