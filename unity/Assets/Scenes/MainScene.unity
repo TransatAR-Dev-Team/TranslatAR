@@ -1626,6 +1626,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1087110835}
   - component: {fileID: 1087110834}
+  - component: {fileID: 1087110836}
   m_Layer: 0
   m_Name: LanguageUIManager
   m_TagString: Untagged
@@ -1646,19 +1647,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   languageUI: {fileID: 198255925}
-  toggleAction:
-    m_UseReference: 1
-    m_Action:
-      m_Name: Toggle
-      m_Type: 0
-      m_ExpectedControlType: 
-      m_Id: 0ddbc408-c819-4ca2-aa93-93e79cf0dbc5
-      m_Processors: 
-      m_Interactions: 
-      m_SingletonActionBindings: []
-      m_Flags: 0
-    m_Reference: {fileID: 3529180805800016535, guid: e0e5f8e0e7728fc458f4e2df998425bb,
-      type: 3}
 --- !u!4 &1087110835
 Transform:
   m_ObjectHideFlags: 0
@@ -1674,6 +1662,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1087110836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087110833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8372572d72c3de419370436bf3e1776, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 198255926}
 --- !u!1 &1089425699
 GameObject:
   m_ObjectHideFlags: 0
