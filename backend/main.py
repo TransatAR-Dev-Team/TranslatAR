@@ -157,8 +157,11 @@ async def process_audio_and_translate(
             conversation_id=conversation_id
         )
     
-@router.get("/history/{username}")
-async def get_history(username: str | None = None, conversation_id: str | None = None):
+@router.post("/history/")
+async def get_history(
+    username: str = Form(...),
+    conversation_id: str | None = Form(None)
+):
     """
     Retrieves the translation records from the database.
     """
