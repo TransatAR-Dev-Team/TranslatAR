@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import {  useEffect, useRef, useState } from 'react';
 
 interface HistoryItem {
   _id: string;
+  conversation_id: string;
+  username?: string;
   original_text: string;
   translated_text: string;
   source_lang: string;
@@ -20,9 +22,11 @@ interface Settings {
 }
 
 function App() {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<Record<string, HistoryItem[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
   const [textToSummarize, setTextToSummarize] = useState<string>('');
   const [summary, setSummary] = useState<string>('');
@@ -45,11 +49,23 @@ function App() {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
+   
+  const [expandedConversations, setExpandedConversations] = useState<{ [id: string]: boolean }>({});
+
+
   useEffect(() => {
-    // Load both history and settings on component mount
     loadHistory();
     loadSettings();
   }, []);
+
+  const groupByConversation = (history: HistoryItem[]) => {
+    const grouped: { [key: string]: HistoryItem[] } = {};
+    for (const item of history) {
+      if (!grouped[item.conversation_id]) grouped[item.conversation_id] = [];
+      grouped[item.conversation_id].push(item);
+    }
+    return grouped;
+  };
 
   const loadHistory = async () => {
     setIsLoading(true);
@@ -57,7 +73,14 @@ function App() {
       const response = await fetch('/api/history');
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
-      setHistory(data.history);
+
+      const grouped = groupByConversation(data.history);
+      setHistory(grouped);
+
+      // Open the latest conversation by default
+      const latest = Object.keys(grouped)[0] || null;
+      setActiveConversation(latest);
+
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to load translation history.');
@@ -197,32 +220,78 @@ function App() {
           {error && <p className="text-red-400">{error}</p>}
 
           {!isLoading && !error && (
-            <div className="text-left space-y-4 max-h-96 overflow-y-auto">
-              {history.length === 0 ? (
-                <p className="text-gray-400">
-                  No translations found in the database.
-                </p>
+            <div className="text-left max-h-[600px] overflow-y-auto w-full max-w-3xl p-4 bg-slate-700 rounded-md">
+              {Object.keys(history).length === 0 ? (
+                <p className="text-gray-400">No translations found in the database.</p>
               ) : (
-                history.map((item) => (
-                  <div
-                    key={item._id}
-                    className="border-b border-slate-700 pb-2"
+            <div className="flex flex-col">
+                  {/* Conversation Tabs */}
+            <div className="sticky top-0 z-20 bg-slate-800 py-2 border-b border-slate-600 flex items-center gap-2">
+              {/* Left Scroll Button */}
+              <button
+                onClick={() => {
+                  const container = document.getElementById("conversationTabs");
+                  if (container) container.scrollLeft -= 150;
+                }}
+                className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+              >
+                ←
+              </button>
+
+              {/* Tab Buttons */}
+              <div
+                id="conversationTabs"
+                className="flex space-x-2 overflow-x-auto no-scrollbar flex-1"
+              >
+                {Object.keys(history).map((conversationId, index) => (
+                  <button
+                    id={`tab-${conversationId}`}
+                    key={conversationId}
+                    onClick={() => {setActiveConversation(conversationId)}}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition relative ${
+                      activeConversation === conversationId
+                        ? "bg-blue-500 text-white"
+                        : "bg-slate-600 text-gray-300 hover:bg-slate-500"
+                    }`}
                   >
+                     Conversation {index + 1}
+                  </button>
+                ))}
+              </div>
+
+              {/* Right Scroll Button */}
+              <button
+                onClick={() => {
+                  const container = document.getElementById("conversationTabs");
+                  if (container) container.scrollLeft += 150;
+                }}
+                className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+              >
+                →
+              </button>
+            </div>
+
+            {/*Active Conversation Display */}
+            <div className="max-h-[600px] overflow-y-auto p-4 bg-slate-700 rounded-md mt-4">
+              {activeConversation ? (
+                history[activeConversation].map((item) => (
+                  <div key={item._id} className="border-b border-slate-600 pb-2">
                     <p className="text-gray-400">
-                      {item.original_text}{' '}
-                      <span className="text-xs">({item.source_lang})</span>
+                      {item.original_text} <span className="text-xs">({item.source_lang})</span>
                     </p>
                     <p className="text-lg">
-                      {item.translated_text}{' '}
-                      <span className="text-xs">({item.target_lang})</span>
+                      {item.translated_text} <span className="text-xs">({item.target_lang})</span>
                     </p>
                   </div>
                 ))
+              ) : (
+                <p className="text-gray-400">Select a conversation to view messages.</p>
               )}
             </div>
+          </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
@@ -412,7 +481,9 @@ function App() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </div>
+  </main>
   );
 }
 
