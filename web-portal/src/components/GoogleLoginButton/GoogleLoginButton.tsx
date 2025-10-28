@@ -1,5 +1,7 @@
-import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
-import { jwtDecode, JwtPayload } from 'jwt-decode';
+import type { CredentialResponse } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
+import type { JwtPayload } from 'jwt-decode';
 
 interface GoogleIdTokenPayload extends JwtPayload {
   email?: string;
@@ -53,3 +55,4 @@ export default function GoogleLoginButton({ onLoginSuccess, onLoginError }: Goog
     />
   );
 }
+

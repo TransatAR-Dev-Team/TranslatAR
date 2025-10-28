@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import type { GoogleIdTokenPayload } from './models/GoogleIdTokenPayload';
+import type { User } from './models/User';
+import { loginWithGoogleApi } from './api/auth';
+import GoogleLoginButton from './components/GoogleLoginButton/GoogleLoginButton';
 
 interface HistoryItem {
   _id: string;
@@ -19,10 +24,18 @@ interface Settings {
   websocket_url: string;
 }
 
+const LOCAL_STORAGE_USER_ID_KEY = 'user_id';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+if (!googleClientId) {
+  console.error("Error. VITE_GOOGLE_CLIENT_ID env variable not set.");
+}
+
 function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [appUser, setAppUser] = useState<User | null>(null);
 
   const [textToSummarize, setTextToSummarize] = useState<string>('');
   const [summary, setSummary] = useState<string>('');
@@ -39,7 +52,6 @@ function App() {
     chunk_overlap_seconds: 0.5,
     websocket_url: 'ws://localhost:8000/ws'
   });
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -65,7 +77,6 @@ function App() {
   };
 
   const loadSettings = async () => {
-    setIsSettingsLoading(true);
     try {
       const response = await fetch('/api/settings');
       if (!response.ok) throw new Error('Network response was not ok');
@@ -74,8 +85,6 @@ function App() {
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
-    } finally {
-      setIsSettingsLoading(false);
     }
   };
 
@@ -129,18 +138,81 @@ function App() {
     }
   };
 
+  // Login state handlers
+  const handleLogout = useCallback(() => {
+    console.log("User logged out");
+    setAppUser(null);
+    localStorage.removeItem(LOCAL_STORAGE_USER_ID_KEY);
+  }, []);
+  
+  const handleLoginError = useCallback(() => {
+    console.log("Logging user out.");
+    setAppUser(null);
+  }, []);
+  
+  const handleLoginSuccess = useCallback(async (decodedToken: GoogleIdTokenPayload) => {
+    console.log("Attempting Google login...");
+    const googleId = decodedToken.sub;
+    const email = decodedToken.email;
+
+    console.log("Token Data:", { googleID: googleId, email });
+
+    if (!googleId || !email) {
+      alert("Missing required user information!");
+      return;
+    }
+
+    try {
+      const loginPayload = { googleId, email };
+      const fetchedUser = await loginWithGoogleApi(loginPayload);
+
+      if (!fetchedUser?._id) {
+        console.error("Login Error: Invalid user data received from backend.");
+        throw new Error("Invalid user data received after login.");
+      }
+
+      localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, fetchedUser._id);
+      setAppUser(fetchedUser);
+      console.log(`User logged in: ${fetchedUser.email}`);
+    } catch (error) {
+      console.error("Login failed:", error);
+      handleLoginError();
+    }
+  }, [handleLoginError]);
+
 
   return (
-    <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
+    <GoogleOAuthProvider clientId={googleClientId || ''}>
+      <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
       <div className="w-full max-w-2xl">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">TranslatAR Web Portal</h1>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
-          >
-            Settings
-          </button>
+          <div className="flex items-center space-x-4">
+            {appUser ? (
+              // Logged in state
+              <>
+                <span className="text-gray-300">Welcome, {appUser.email}</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              // Logged out state
+              <GoogleLoginButton
+                onLoginSuccess={handleLoginSuccess}
+                onLoginError={handleLoginError}
+              />
+            )}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              Settings
+            </button>
+          </div>
         </div>
 
         <div className="bg-slate-800 rounded-lg p-6 shadow-lg mb-8">
@@ -353,7 +425,8 @@ function App() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </GoogleOAuthProvider>
   );
 }
 
