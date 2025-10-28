@@ -97,9 +97,9 @@ async def process_audio_and_translate(
     conversation_id: str = Form(None),
     username: str = Form(None)
 ):
-    if conversation_id is "":
+    if conversation_id is None:
         conversation_id = str(uuid.uuid4()) 
-    if username is "":
+    if username is None:
         username = "anonymous"
     async with httpx.AsyncClient(timeout=60.0) as client:
         # Step 1: STT call
