@@ -244,10 +244,6 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 591063342}
-    - targetCorrespondingSourceObject: {fileID: 400002, guid: 126d619cf4daa52469682f85c1378b4a,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 198255926}
     - targetCorrespondingSourceObject: {fileID: 482130, guid: 126d619cf4daa52469682f85c1378b4a,
         type: 3}
       insertIndex: -1
@@ -437,17 +433,17 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 198255925}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.6}
-  m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
+  m_LocalPosition: {x: 0, y: 0, z: 2}
+  m_LocalScale: {x: 0.0025, y: 0.0025, z: 0.0025}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1637312140}
   - {fileID: 670279847}
-  m_Father: {fileID: 1999154894}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: -0.05}
+  m_AnchoredPosition: {x: 0, y: 0.8}
   m_SizeDelta: {x: 800, y: 450}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &198255927
@@ -1620,6 +1616,64 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 125368349}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1087110833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1087110835}
+  - component: {fileID: 1087110834}
+  m_Layer: 0
+  m_Name: LanguageUIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1087110834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087110833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d8921929ebff83458da3bd95bc1478f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  languageUI: {fileID: 198255925}
+  toggleAction:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Toggle
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 0ddbc408-c819-4ca2-aa93-93e79cf0dbc5
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 3529180805800016535, guid: e0e5f8e0e7728fc458f4e2df998425bb,
+      type: 3}
+--- !u!4 &1087110835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087110833}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.1897044, y: 1.3424231, z: -9.502655}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1089425699
 GameObject:
   m_ObjectHideFlags: 0
@@ -2901,6 +2955,8 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 125368349}
+  - {fileID: 198255926}
   - {fileID: 1644137992}
   - {fileID: 1595725571}
   - {fileID: 1885403217}
+  - {fileID: 1087110835}
