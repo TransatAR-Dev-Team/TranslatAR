@@ -20,16 +20,15 @@ public class LanguageUIToggle : MonoBehaviour
 
     void Update()
     {
-        // detect input keys
-        if (Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.JoystickButton1))
+        // input detection
+        bool controllerToggle = OVRInput.GetDown(OVRInput.Button.Two);
+        bool keyboardToggle = Input.GetKeyDown(KeyCode.N);
+
+        if (controllerToggle || keyboardToggle)
         {
             isVisible = !isVisible;
             languageUI.SetActive(isVisible);
-
-            if (isVisible)
-                Debug.Log("[LanguageUIToggle] Menu opened");
-            else
-                Debug.Log("[LanguageUIToggle] Menu closed");
+            Debug.Log(isVisible ? "[LanguageUIToggle] Menu opened" : "[LanguageUIToggle] Menu closed");
         }
     }
 }
