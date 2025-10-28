@@ -1,4 +1,4 @@
-import { act, use, useEffect, useRef, useState } from 'react';
+import {  useEffect, useRef, useState } from 'react';
 
 interface HistoryItem {
   _id: string;
@@ -153,14 +153,6 @@ function App() {
     }
   };
 
-  const toggleConversation = (conversationId: string) => {
-    setExpandedConversations((prev) => ({
-      ...prev,
-      [conversationId]: !prev[conversationId],
-    }));
-  };
-
-
   return (
     <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
       <div className="w-full max-w-2xl">
@@ -232,92 +224,74 @@ function App() {
               {Object.keys(history).length === 0 ? (
                 <p className="text-gray-400">No translations found in the database.</p>
               ) : (
-                <>
+            <div className="flex flex-col">
                   {/* Conversation Tabs */}
-                  <div className="sticky top-0 z-20 bg-slate-800 py-2 border-b border-slate-600 flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        const container = document.getElementById("conversationTabs");
-                        if (container) container.scrollLeft -= 150;
-                      }}
-                      className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
-                    >
-                      ←
-                    </button>
-                    <div
-                      id="conversationTabs"
-                      className="flex space-x-2 overflow-x-auto no-scrollbar flex-1"
-                    >
-                    {Object.keys(history).map((conversationId) => (
-                      <button
-                        id={`tab-${conversationId}`}
-                        key={conversationId}
-                        onClick={() => {
-                          setActiveConversation(conversationId);
-                          const container = document.getElementById("conversationTabs");
-                          const tab = document.getElementById(`tab-${conversationId}`);
-                          if (container && tab) {
-                            const containerRect = container.getBoundingClientRect();
-                            const tabRect = tab.getBoundingClientRect();
-                            container.scrollBy({
-                              left: tabRect.left - containerRect.left - containerRect.width / 2 + tabRect.width / 2,
-                              behavior: 'smooth',
-                            })
-                          }
-                        }}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition relative ${
-                          activeConversation === conversationId
-                            ? "bg-blue-500 text-white"
-                            : "bg-slate-600 text-gray-300 hover:bg-slate-500"
-                        }`}
-                      >
-                        Conversation {conversationId.slice(0, 6)}...
-                        {activeConversation === conversationId && (
-                          <span className="absolute bottom-0 left-0 w-full h-1 bg-blue-300 rounded-full animate-pulse"></span>
-                        )}
+            <div className="sticky top-0 z-20 bg-slate-800 py-2 border-b border-slate-600 flex items-center gap-2">
+              {/* Left Scroll Button */}
+              <button
+                onClick={() => {
+                  const container = document.getElementById("conversationTabs");
+                  if (container) container.scrollLeft -= 150;
+                }}
+                className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+              >
+                ←
+              </button>
 
-                      </button>
-                    ))}
-                    </div>
+              {/* Tab Buttons */}
+              <div
+                id="conversationTabs"
+                className="flex space-x-2 overflow-x-auto no-scrollbar flex-1"
+              >
+                {Object.keys(history).map((conversationId, index) => (
                   <button
-                    onClick={() => {
-                      const container = document.getElementById("conversationTabs");
-                      if (container) container.scrollLeft += 150;
-                    }}
-                    className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+                    id={`tab-${conversationId}`}
+                    key={conversationId}
+                    onClick={() => {setActiveConversation(conversationId)}}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition relative ${
+                      activeConversation === conversationId
+                        ? "bg-blue-500 text-white"
+                        : "bg-slate-600 text-gray-300 hover:bg-slate-500"
+                    }`}
                   >
-                    →
+                     Conversation {index + 1}
                   </button>
-                </div>
+                ))}
+              </div>
 
-                  {/*Active Conversation Display */}
-                  {activeConversation ? (
-                    <div className="space-y-3">
-                      {history[activeConversation].map((item) => (
-                        <div
-                          key={item._id}
-                          className="border-b border-slate-600 pb-2"
-                        >
-                          <p className="text-gray-400">
-                            {item.original_text}{" "}
-                            <span className="text-xs">({item.source_lang})</span>
-                          </p>
-                          <p className="text-lg">
-                            {item.translated_text}{" "}
-                            <span className="text-xs">({item.target_lang})</span>
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400">Select a conversation to view messages.</p>
-                  )}
-                </>
+              {/* Right Scroll Button */}
+              <button
+                onClick={() => {
+                  const container = document.getElementById("conversationTabs");
+                  if (container) container.scrollLeft += 150;
+                }}
+                className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+              >
+                →
+              </button>
+            </div>
+
+            {/*Active Conversation Display */}
+            <div className="max-h-[600px] overflow-y-auto p-4 bg-slate-700 rounded-md mt-4">
+              {activeConversation ? (
+                history[activeConversation].map((item) => (
+                  <div key={item._id} className="border-b border-slate-600 pb-2">
+                    <p className="text-gray-400">
+                      {item.original_text} <span className="text-xs">({item.source_lang})</span>
+                    </p>
+                    <p className="text-lg">
+                      {item.translated_text} <span className="text-xs">({item.target_lang})</span>
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400">Select a conversation to view messages.</p>
               )}
             </div>
+          </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
@@ -507,7 +481,9 @@ function App() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </div>
+  </main>
   );
 }
 
