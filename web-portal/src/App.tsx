@@ -1,4 +1,4 @@
-import { use, useEffect, useRef, useState } from 'react';
+import { act, use, useEffect, useRef, useState } from 'react';
 
 interface HistoryItem {
   _id: string;
@@ -234,21 +234,61 @@ function App() {
               ) : (
                 <>
                   {/* Conversation Tabs */}
-                  <div className="flex flex-wrap gap-2 mb-4 border-b border-slate-600 pb-2">
+                  <div className="sticky top-0 z-20 bg-slate-800 py-2 border-b border-slate-600 flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const container = document.getElementById("conversationTabs");
+                        if (container) container.scrollLeft -= 150;
+                      }}
+                      className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+                    >
+                      ←
+                    </button>
+                    <div
+                      id="conversationTabs"
+                      className="flex space-x-2 overflow-x-auto no-scrollbar flex-1"
+                    >
                     {Object.keys(history).map((conversationId) => (
                       <button
+                        id={`tab-${conversationId}`}
                         key={conversationId}
-                        onClick={() => setActiveConversation(conversationId)}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition ${
+                        onClick={() => {
+                          setActiveConversation(conversationId);
+                          const container = document.getElementById("conversationTabs");
+                          const tab = document.getElementById(`tab-${conversationId}`);
+                          if (container && tab) {
+                            const containerRect = container.getBoundingClientRect();
+                            const tabRect = tab.getBoundingClientRect();
+                            container.scrollBy({
+                              left: tabRect.left - containerRect.left - containerRect.width / 2 + tabRect.width / 2,
+                              behavior: 'smooth',
+                            })
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition relative ${
                           activeConversation === conversationId
                             ? "bg-blue-500 text-white"
                             : "bg-slate-600 text-gray-300 hover:bg-slate-500"
                         }`}
                       >
                         Conversation {conversationId.slice(0, 6)}...
+                        {activeConversation === conversationId && (
+                          <span className="absolute bottom-0 left-0 w-full h-1 bg-blue-300 rounded-full animate-pulse"></span>
+                        )}
+
                       </button>
                     ))}
-                  </div>
+                    </div>
+                  <button
+                    onClick={() => {
+                      const container = document.getElementById("conversationTabs");
+                      if (container) container.scrollLeft += 150;
+                    }}
+                    className="bg-slate-600 hover:bg-slate-500 text-white rounded-full px-2 py-1"
+                  >
+                    →
+                  </button>
+                </div>
 
                   {/*Active Conversation Display */}
                   {activeConversation ? (
@@ -276,9 +316,6 @@ function App() {
               )}
             </div>
           )}
-
-          
-          
         </div>
       </div>
 
