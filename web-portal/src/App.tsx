@@ -49,7 +49,7 @@ function App() {
 
   useEffect(() => {
     // Load both history and settings on component mount
-    localStorage.setItem('username', "john"); // For testing purposes john is hardcoded as the username
+    localStorage.setItem('username', 'john'); // For testing purposes john is hardcoded as the username
     loadHistory();
     loadSettings();
     
@@ -60,7 +60,12 @@ function App() {
     const username = localStorage.getItem('username')
     if(!username) return;
     try {
-      const response = await fetch(`/api/history/${username}`);
+      const formData = new FormData();
+      formData.append('username', username);
+      const response = await fetch('/api/history/', {
+        method: 'POST',
+        body: formData,
+      });
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setHistory(data.history);
