@@ -12,6 +12,12 @@ __pycache__/
 # Dev Containers
 .devcontainer
 
+# Secrets
+*.pem
+*.key
+*.crt
+certs/
+
 # Logs
 logs
 *.log
