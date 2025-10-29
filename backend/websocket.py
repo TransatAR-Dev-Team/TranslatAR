@@ -4,7 +4,6 @@ import os
 from datetime import UTC, datetime
 
 import httpx
-import motor.motor_asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
@@ -12,12 +11,6 @@ router = APIRouter()
 # Service URLs from environment
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
-MONGO_DATABASE_URL = os.getenv("DATABASE_URL", "mongodb://mongodb:27017")
-
-# Database connection
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
-db = client.translatar_db
-translations_collection = db.get_collection("translations")
 
 
 @router.websocket("/ws")
@@ -94,6 +87,8 @@ async def process_audio_chunk(
 
             # Step 3: Save to database
             try:
+                db = websocket.app.state.db
+                translations_collection = db.get_collection("translations")
                 translation_log = {
                     "original_text": original_text,
                     "translated_text": translated_text,
