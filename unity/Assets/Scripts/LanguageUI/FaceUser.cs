@@ -11,7 +11,7 @@ public class FaceUser : MonoBehaviour
     public bool keepUpright = false; // with this the UI will be flat, otherwise it'll have a more VR type of tilt. Can set accordingly to user.
 
     [Tooltip("Smooth rotation speed (degrees per second). You can play with the numbers.")]
-    public float smoothTurn = 0f; // would reccomend 0 or it gets too slow. 
+    public float smoothTurn = 0f; // would reccomend 0 or it gets too slow.
 
     [Header("Menu Canvas")]
     [Tooltip("Assign the Canvas (LanguageUI, SettingsUI, etc.) that should face the user.")]
