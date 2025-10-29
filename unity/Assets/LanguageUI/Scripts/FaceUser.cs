@@ -8,7 +8,7 @@ public class FaceUser : MonoBehaviour
 
     [Header("Options")]
     [Tooltip("Keeps the UI upright.")]
-    public bool keepUpright = false; // with this the UI will be flat, otherwise it'll have a more VR type of tilt. Can set accordingly to user. 
+    public bool keepUpright = false; // with this the UI will be flat, otherwise it'll have a more VR type of tilt. Can set accordingly to user.
 
     [Tooltip("Smooth rotation speed (degrees per second). You can play with the numbers.")]
     public float smoothTurn = 0f; // would reccomend 0 or it gets too slow. 
@@ -17,11 +17,17 @@ public class FaceUser : MonoBehaviour
     [Tooltip("Assign the Canvas (LanguageUI, SettingsUI, etc.) that should face the user.")]
     [SerializeField] private Canvas menuCanvas;
 
-    void Start()
+    // --- NEW PUBLIC INITIALIZER for testing and runtime reuse ---
+    public void Initialize()
     {
-        // if no target assigned, default to main camera
         if (!target && Camera.main)
             target = Camera.main.transform;
+    }
+
+    void Start()
+    {
+        // Call shared initializer
+        Initialize();
     }
 
     void LateUpdate()
