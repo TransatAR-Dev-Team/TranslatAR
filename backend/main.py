@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pymongo.errors import ConnectionFailure
 
+from routes.auth import router as auth_router
 from websocket import router as websocket_router
 
 # --- Configuration ---
@@ -33,11 +34,15 @@ app.add_middleware(
 # --- WebSocket Router ---
 app.include_router(websocket_router)
 
+# --- Auth Router ---
+router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
 db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
+app.state.db = db
 
 
 # --- Pydantic Models ---
@@ -234,7 +239,6 @@ async def health_check():
     Checks the health of the service, including the database connection.
     """
     try:
-        # The 'ping' command is cheap and does not require auth.
         await client.admin.command("ping")
         return {"status": "ok", "database_status": "connected"}
     except ConnectionFailure as e:
