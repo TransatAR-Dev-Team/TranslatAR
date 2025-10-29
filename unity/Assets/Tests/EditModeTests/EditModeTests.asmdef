@@ -1,16 +1,27 @@
 {
     "name": "EditModeTests",
+    "rootNamespace": "",
     "references": [
         "GameRuntime",
-        "Unity.TextMeshPro"
-    ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
+        "Unity.TextMeshPro",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "LanguageUI"
     ],
     "includePlatforms": [
         "Editor"
     ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
     "precompiledReferences": [
-        "websocket-sharp.dll"
-    ]
+        "websocket-sharp.dll",
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
