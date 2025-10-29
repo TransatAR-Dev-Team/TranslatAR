@@ -1,8 +1,10 @@
 import asyncio
 import json
 import os
+from datetime import UTC, datetime
 
 import httpx
+import motor.motor_asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
@@ -10,6 +12,12 @@ router = APIRouter()
 # Service URLs from environment
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
+MONGO_DATABASE_URL = os.getenv("DATABASE_URL", "mongodb://mongodb:27017")
+
+# Database connection
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
+db = client.translatar_db
+translations_collection = db.get_collection("translations")
 
 
 @router.websocket("/ws")
@@ -51,7 +59,7 @@ async def process_audio_chunk(
     websocket: WebSocket, audio_data: bytes, source_lang: str, target_lang: str
 ):
     """
-    Process audio chunk: transcribe and translate
+    Process audio chunk: transcribe, translate, and save to database
     """
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -64,7 +72,6 @@ async def process_audio_chunk(
 
             if not original_text or original_text.strip() == "":
                 print("No transcription detected in chunk")
-                # Send explicit empty result to simplify client logic
                 await websocket.send_json({"original_text": "", "translated_text": ""})
                 return
 
@@ -85,7 +92,21 @@ async def process_audio_chunk(
 
             print(f"Translated: {translated_text}")
 
-            # Step 3: Send result back to Unity
+            # Step 3: Save to database
+            try:
+                translation_log = {
+                    "original_text": original_text,
+                    "translated_text": translated_text,
+                    "source_lang": source_lang,
+                    "target_lang": target_lang,
+                    "timestamp": datetime.now(UTC),
+                }
+                await translations_collection.insert_one(translation_log)
+                print("Saved translation to database")
+            except Exception as e:
+                print(f"WARNING: Failed to save translation to database: {e}")
+
+            # Step 4: Send result back to Unity
             response = {
                 "original_text": original_text,
                 "translated_text": translated_text,
