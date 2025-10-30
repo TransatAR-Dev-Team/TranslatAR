@@ -1,6 +1,7 @@
 # ruff: noqa: B008
 
 import os
+import uuid
 from datetime import UTC, datetime
 
 import httpx
@@ -49,6 +50,7 @@ app.state.db = db
 class TranslationResponse(BaseModel):
     original_text: str
     translated_text: str
+    conversation_id: str
 
 
 class SummarizationRequest(BaseModel):
@@ -93,7 +95,13 @@ async def process_audio_and_translate(
     audio_file: UploadFile = File(...),
     source_lang: str = Form("en"),
     target_lang: str = Form("es"),
+    conversation_id: str = Form(None),
+    googleId: str = Form(...),
+    username: str | None = Form(None)
 ):
+    conversation_id = conversation_id or str(uuid.uuid4()) 
+    if username is None:
+        username = "anonymous"
     async with httpx.AsyncClient(timeout=60.0) as client:
         # Step 1: STT call
         try:
@@ -132,6 +140,9 @@ async def process_audio_and_translate(
         # Step 3: Save to the DB
         try:
             translation_log = {
+                "conversation_id": conversation_id,
+                "googleId": googleId,
+                "username": username,
                 "original_text": original_text,
                 "translated_text": translated_text,
                 "source_lang": source_lang,
@@ -142,17 +153,35 @@ async def process_audio_and_translate(
         except Exception as e:
             print(f"CRITICAL: Failed to save translation to database: {e}")
 
-        return TranslationResponse(original_text=original_text, translated_text=translated_text)
-
-
-@router.get("/history")
-async def get_history():
+        return TranslationResponse(
+            original_text=original_text,
+            translated_text=translated_text,
+            conversation_id=conversation_id
+        )
+    
+@router.post("/history/")
+async def get_history(
+    googleId: str | None = Form(None),
+    conversation_id: str | None = Form(None)
+):
     """
     Retrieves the translation records from the database.
     """
     try:
-        history_cursor = translations_collection.find({}).sort("timestamp", -1).limit(50)
-
+        if not googleId:
+            return {"history": []}
+        
+        query = {"googleId":googleId}
+        
+        if conversation_id:
+            query["conversation_id"] = conversation_id
+        
+        
+        history_cursor = (
+            translations_collection.find(query)
+            .sort("timestamp", -1)
+            .limit(50)
+        )
         history_list = []
         async for doc in history_cursor:
             doc["_id"] = str(doc["_id"])

@@ -7,6 +7,8 @@ import GoogleLoginButton from "./components/GoogleLoginButton/GoogleLoginButton"
 
 interface HistoryItem {
   _id: string;
+  user_name: string;
+  conversation_id: string;
   original_text: string;
   translated_text: string;
   source_lang: string;
@@ -27,6 +29,8 @@ interface Settings {
 const LOCAL_STORAGE_USER_ID_KEY = "user_id";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+console.log("Google Client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
 if (!googleClientId) {
   console.error("Error. VITE_GOOGLE_CLIENT_ID env variable not set.");
 }
@@ -62,13 +66,26 @@ function App() {
     // Load both history and settings on component mount
     loadHistory();
     loadSettings();
+    
   }, []);
 
   const loadHistory = async () => {
     setIsLoading(true);
+    const googleId = localStorage.getItem('googleId')
+    if(!googleId || googleId === '') {
+      setHistory([]);
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await fetch("/api/history");
-      if (!response.ok) throw new Error("Network response was not ok");
+      const formData = new FormData();
+      formData.append('googleId', googleId);
+      formData.append('conversation_id', "");
+      const response = await fetch('/api/history/', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
@@ -147,6 +164,8 @@ function App() {
     console.log("User logged out");
     setAppUser(null);
     localStorage.removeItem(LOCAL_STORAGE_USER_ID_KEY);
+    localStorage.removeItem('googleId');
+    loadHistory();
   }, []);
 
   const handleLoginError = useCallback(() => {
@@ -179,8 +198,10 @@ function App() {
         }
 
         localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, fetchedUser._id);
+        localStorage.setItem('googleId', googleId);
         setAppUser(fetchedUser);
         console.log(`User logged in: ${fetchedUser.email}`);
+        await loadHistory();
       } catch (error) {
         console.error("Login failed:", error);
         handleLoginError();
@@ -205,9 +226,7 @@ function App() {
                   <button
                     onClick={handleLogout}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
-                  >
-                    Logout
-                  </button>
+                  >Logout</button>
                 </>
               ) : (
                 // Logged out state
