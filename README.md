@@ -47,6 +47,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | `make validate`         | Alias for `make format` + `make lint`.                                              |
 | `make format`           | Format all Python and web portal source code.                                       |
 | `make lint`             | Lint all Python and web portal source code.                                         |
+| `make clean`            | Remove temp files, caches, build artifacts, and legacy SDKs.                        |
 | `make help` or `make`   | Show help message (same info as this table).                                        |
 
 ## Further Documentation

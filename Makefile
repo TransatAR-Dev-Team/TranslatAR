@@ -24,7 +24,8 @@ logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
 
 unity-editor: ## Open the Unity project in the editor (macOS/Windows only).
 	@./scripts/open_unity_editor.sh
-	@./scripts/open_unity_editor.sh
+
+open-unity: unity-editor ## Alias of `unity-editor`.
 
 test: ## Run all applicable test suites (Unit, Integration, Unity).
 	@./scripts/run_all_tests.sh
@@ -45,6 +46,9 @@ format: ## Format all source code with Black, Ruff Formatter, and Prettier.
 
 lint: ## Lint all source code with Ruff and ESLint.
 	@./scripts/lint.sh
+
+clean: ## Remove temp files, caches, build artifacts, and legacy SDKs.
+	@./scripts/clean.sh
 
 help: ## Show this help message.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
