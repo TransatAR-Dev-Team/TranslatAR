@@ -64,7 +64,6 @@ function App() {
 
   useEffect(() => {
     // Load both history and settings on component mount
-    localStorage.setItem('username', 'john'); // For testing purposes john is hardcoded as the username
     loadHistory();
     loadSettings();
     
@@ -73,10 +72,15 @@ function App() {
   const loadHistory = async () => {
     setIsLoading(true);
     const googleId = localStorage.getItem('googleId')
-    if(!googleId) return;
+    if(!googleId || googleId === '') {
+      setHistory([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       const formData = new FormData();
       formData.append('googleId', googleId);
+      formData.append('conversation_id', "");
       const response = await fetch('/api/history/', {
         method: 'POST',
         body: formData,
@@ -160,6 +164,8 @@ function App() {
     console.log("User logged out");
     setAppUser(null);
     localStorage.removeItem(LOCAL_STORAGE_USER_ID_KEY);
+    localStorage.removeItem('googleId');
+    loadHistory();
   }, []);
 
   const handleLoginError = useCallback(() => {
@@ -195,6 +201,7 @@ function App() {
         localStorage.setItem('googleId', googleId);
         setAppUser(fetchedUser);
         console.log(`User logged in: ${fetchedUser.email}`);
+        await loadHistory();
       } catch (error) {
         console.error("Login failed:", error);
         handleLoginError();
@@ -219,9 +226,7 @@ function App() {
                   <button
                     onClick={handleLogout}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
-                  >
-                    Logout
-                  </button>
+                  >Logout</button>
                 </>
               ) : (
                 // Logged out state
