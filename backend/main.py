@@ -95,10 +95,10 @@ async def process_audio_and_translate(
     source_lang: str = Form("en"),
     target_lang: str = Form("es"),
     conversation_id: str = Form(None),
-    username: str = Form(None)
+    googleId: str = Form(...),
+    username: str | None = Form(None)
 ):
-    if conversation_id is None:
-        conversation_id = str(uuid.uuid4()) 
+    conversation_id = conversation_id or str(uuid.uuid4()) 
     if username is None:
         username = "anonymous"
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -140,6 +140,7 @@ async def process_audio_and_translate(
         try:
             translation_log = {
                 "conversation_id": conversation_id,
+                "googleId": googleId,
                 "username": username,
                 "original_text": original_text,
                 "translated_text": translated_text,
@@ -159,14 +160,14 @@ async def process_audio_and_translate(
     
 @router.post("/history/")
 async def get_history(
-    username: str = Form(...),
+    googleId: str = Form(...),
     conversation_id: str | None = Form(None)
 ):
     """
     Retrieves the translation records from the database.
     """
     try:
-        query = {"username":username}
+        query = {"googleId":googleId}
         
         if conversation_id:
             query["conversation_id"] = conversation_id

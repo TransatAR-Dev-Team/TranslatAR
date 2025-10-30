@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import uuid
 from datetime import UTC, datetime
 
 import httpx
@@ -17,6 +18,9 @@ TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001"
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     print("Unity client connected!")
+
+
+    websocket.state.conversation_id = str(uuid.uuid4())
 
     try:
         while True:
@@ -38,7 +42,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # Process audio in background to not block WebSocket
             asyncio.create_task(
-                process_audio_chunk(websocket, audio_data, source_lang, target_lang)
+                process_audio_chunk(websocket, audio_data, source_lang, target_lang, websocket.state.conversation_id, googleId)
             )
 
     except WebSocketDisconnect:
@@ -49,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def process_audio_chunk(
-    websocket: WebSocket, audio_data: bytes, source_lang: str, target_lang: str
+    websocket: WebSocket, audio_data: bytes, source_lang: str, target_lang: str, conversation_id: str, googleId: str
 ):
     """
     Process audio chunk: transcribe, translate, and save to database
@@ -90,6 +94,8 @@ async def process_audio_chunk(
                 db = websocket.app.state.db
                 translations_collection = db.get_collection("translations")
                 translation_log = {
+                    "conversation_id": conversation_id,
+                    "googleId": googleId,
                     "original_text": original_text,
                     "translated_text": translated_text,
                     "source_lang": source_lang,
@@ -105,6 +111,7 @@ async def process_audio_chunk(
             response = {
                 "original_text": original_text,
                 "translated_text": translated_text,
+                "conversation_id": conversation_id
             }
 
             await websocket.send_json(response)

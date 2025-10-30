@@ -29,6 +29,8 @@ interface Settings {
 const LOCAL_STORAGE_USER_ID_KEY = "user_id";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+console.log("Google Client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
 if (!googleClientId) {
   console.error("Error. VITE_GOOGLE_CLIENT_ID env variable not set.");
 }
@@ -70,11 +72,11 @@ function App() {
 
   const loadHistory = async () => {
     setIsLoading(true);
-    const username = localStorage.getItem('username')
-    if(!username) return;
+    const googleId = localStorage.getItem('googleId')
+    if(!googleId) return;
     try {
       const formData = new FormData();
-      formData.append('username', username);
+      formData.append('googleId', googleId);
       const response = await fetch('/api/history/', {
         method: 'POST',
         body: formData,
@@ -190,6 +192,7 @@ function App() {
         }
 
         localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, fetchedUser._id);
+        localStorage.setItem('googleId', googleId);
         setAppUser(fetchedUser);
         console.log(`User logged in: ${fetchedUser.email}`);
       } catch (error) {
