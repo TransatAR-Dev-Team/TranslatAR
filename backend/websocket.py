@@ -19,7 +19,8 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     print("Unity client connected!")
 
-
+    websocket.state.googleId = "PUTGOOGLEIDHERE"  ###MUST BE REPLACED TO WORK!!!
+    
     websocket.state.conversation_id = str(uuid.uuid4())
 
     try:
@@ -40,9 +41,10 @@ async def websocket_endpoint(websocket: WebSocket):
             print(f"Received audio chunk: {len(audio_data)} bytes")
             print(f"Languages: {source_lang} -> {target_lang}")
 
+        
             # Process audio in background to not block WebSocket
             asyncio.create_task(
-                process_audio_chunk(websocket, audio_data, source_lang, target_lang, websocket.state.conversation_id, googleId)
+                process_audio_chunk(websocket, audio_data, source_lang, target_lang, websocket.state.conversation_id, websocket.state.googleId)
             )
 
     except WebSocketDisconnect:
