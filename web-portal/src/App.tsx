@@ -62,6 +62,17 @@ function App() {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem(LOCAL_STORAGE_USER_ID_KEY);
+    const storedEmail = localStorage.getItem("userEmail");
+
+    if (storedUserId && storedEmail) {
+      setAppUser({ _id: storedUserId, email: storedEmail });
+    }
+  }, []);
+
+
   useEffect(() => {
     // Load both history and settings on component mount
     loadHistory();
@@ -199,6 +210,9 @@ function App() {
 
         localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, fetchedUser._id);
         localStorage.setItem('googleId', googleId);
+        localStorage.setItem("userEmail", fetchedUser.email);
+
+
         setAppUser(fetchedUser);
         console.log(`User logged in: ${fetchedUser.email}`);
         await loadHistory();
