@@ -159,4 +159,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 # Don’t track local Unity installs at repo root
 /2022.*/
- /6000.*/
+*/6000.*/
+/6000.2.8f1/
