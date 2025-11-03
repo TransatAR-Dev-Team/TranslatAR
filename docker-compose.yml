@@ -65,7 +65,7 @@ services:
       - "5001:5000"
     # Pre-load only a few common languages to save RAM and speed up startup.
     # Add any other language codes you need (e.g., "ja", "zh", "ru").
-    command: ["--load-only", "en,es,fr,de"]
+    command: ["--load-only", "en,es,fr,de,ja,ko,zh"]
 
   summarization:
     container_name: summarization

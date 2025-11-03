@@ -6,7 +6,8 @@
         "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "Oculus.VR",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner" ,
+        "GameRuntime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
