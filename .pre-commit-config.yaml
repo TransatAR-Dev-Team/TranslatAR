@@ -53,4 +53,4 @@ repos:
     hooks:
     -   id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: 'poetry\.lock|\.meta$'
+        exclude: 'poetry\.lock|\.meta$|\.unity$|\.prefab$|\.mat$|\.anim$|\.asset$|\.csproj$'
