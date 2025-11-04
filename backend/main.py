@@ -159,38 +159,35 @@ async def process_audio_and_translate(
         )
     
 @router.post("/history/")
-async def get_history(
-    googleId: str | None = Form(None),
-    conversation_id: str | None = Form(None)
-):
+async def get_history(googleId: str | None = Form(None), conversation_id: str | None = Form(None)):
     """
     Retrieves the translation records from the database.
     """
     try:
+        if googleId is not None and not isinstance(googleId, str):
+            raise HTTPException(status_code=422, detail="googleId must be a string")
         if not googleId:
             return {"history": []}
-        
-        query = {"googleId":googleId}
-        
+
+        query = {"googleId": googleId}
+
         if conversation_id:
             query["conversation_id"] = conversation_id
-        
-        
-        history_cursor = (
-            translations_collection.find(query)
-            .sort("timestamp", -1)
-            .limit(50)
-        )
+
+        history_cursor = translations_collection.find(query).sort("timestamp", -1).limit(50)
         history_list = []
         async for doc in history_cursor:
             doc["_id"] = str(doc["_id"])
             history_list.append(doc)
 
         return {"history": history_list}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve history from database: {e}"
         ) from e
+
 
 
 @router.post("/summarize", response_model=SummarizationResponse)

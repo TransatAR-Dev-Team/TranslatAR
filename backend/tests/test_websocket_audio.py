@@ -67,9 +67,15 @@ async def test_process_audio_chunk_success(monkeypatch):
 
     monkeypatch.setattr(ws_mod.httpx, "AsyncClient", lambda timeout=30.0: Client())
     ws = StubWS()
-    await ws_mod.process_audio_chunk(ws, b"wav", "en", "es")
+    await ws_mod.process_audio_chunk(ws, b"wav", "en", "es", "dummy_convo", "dummy_user")
 
-    assert ws.sent == [{"original_text": "hello", "translated_text": "hola"}]
+    assert ws.sent == [
+        {
+            "original_text": "hello",
+            "translated_text": "hola",
+            "conversation_id": "dummy_convo",
+        }
+    ]
 
     # Assert the database insertion was called correctly
     saved_doc = ws.mock_collection.inserted_doc
@@ -78,6 +84,8 @@ async def test_process_audio_chunk_success(monkeypatch):
     assert saved_doc["translated_text"] == "hola"
     assert saved_doc["source_lang"] == "en"
     assert saved_doc["target_lang"] == "es"
+    assert saved_doc["conversation_id"] == "dummy_convo"
+    assert saved_doc["googleId"] == "dummy_user"
     # Verify a timestamp was added
     assert "timestamp" in saved_doc
 
@@ -96,7 +104,7 @@ async def test_process_audio_chunk_stt_error(monkeypatch):
 
     monkeypatch.setattr(ws_mod.httpx, "AsyncClient", lambda timeout=3.0: BadClient())
     ws = StubWS()
-    await ws_mod.process_audio_chunk(ws, b"x", "en", "es")
+    await ws_mod.process_audio_chunk(ws, b"wav", "en", "es", "dummy_convo", "dummy_user")
     assert ws.sent and "Error:" in ws.sent[0]["translated_text"]
 
     # Assert that nothing was saved to the DB on error
