@@ -6,9 +6,9 @@
 
 - **Docker Desktop**: For running the services. [Download here](https://docs.docker.com/desktop/).
 - **make**: A command-line tool for running project commands.
-    -   **macOS:** Pre-installed. May require `xcode-select --install`.
-    -   **Windows:** Install via Chocolatey: `choco install make`.
-    -   **Linux (Debian/Ubuntu):** `sudo apt install make`.
+  - **macOS:** Pre-installed. May require `xcode-select --install`.
+  - **Windows:** Install via Chocolatey: `choco install make`.
+  - **Linux (Debian/Ubuntu):** `sudo apt install make`.
 
 - **(Optional) For GPU acceleration:**
   - A [CUDA-capable NVIDIA GPU](https://developer.nvidia.com/cuda-gpus).
@@ -22,11 +22,11 @@ While Docker can run the project, local development (running tests, formatters, 
 - **Node.js**: Required for the `web-portal`. [Download here](https://nodejs.org/en/download).
 - **Poetry**: The dependency manager for Python services. [Installation guide](https://python-poetry.org/docs/#installation).
 - [**pre-commit**](https://pre-commit.com/): For managing automated code quality hooks. Install with `pipx install pre-commit`.
-    - [`pipx` installation instructions](https://pipx.pypa.io/stable/installation/).
+  - [`pipx` installation instructions](https://pipx.pypa.io/stable/installation/).
 
 ### Unity
 
--   [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The guide below will instruct you on installing the correct Unity Editor version.
+- [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html). The guide below will instruct you on installing the correct Unity Editor version.
 
 ## Common Commands
 
@@ -49,19 +49,23 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | `make lint`             | Lint all Python and web portal source code.                                         |
 | `make help` or `make`   | Show help message (same info as this table).                                        |
 
+## Quick Links
+
+Web Portal: <http://localhost:5173>
+
 ## Further Documentation
 
--   **Service-Specific READMEs:** Each microservice has its own `README.md` with information about its tech stack, dependency management, and local testing procedures.
-    -   [Backend Service](./backend/README.md)
-    -   [Web Portal](./web-portal/README.md)
-    -   [Speech-to-Text Service](./stt-service/README.md)
-    -   [Translation Service](./translation-service/README.md)
-    -   [Summarization Service](./summarization-service/README.md)
-    -   [Unity Frontend](./unity/README.md)
+- **Service-Specific READMEs:** Each microservice has its own `README.md` with information about its tech stack, dependency management, and local testing procedures.
+  - [Backend Service](./backend/README.md)
+  - [Web Portal](./web-portal/README.md)
+  - [Speech-to-Text Service](./stt-service/README.md)
+  - [Translation Service](./translation-service/README.md)
+  - [Summarization Service](./summarization-service/README.md)
+  - [Unity Frontend](./unity/README.md)
 
--   **Developer Guides:**
-    -   [Python Services Development Guide](./docs/developer_guide.python_services.md)
-    -   [VS Code Dev Containers Guide](./docs/dev_container.md)
+- **Developer Guides:**
+  - [Python Services Development Guide](./docs/developer_guide.python_services.md)
+  - [VS Code Dev Containers Guide](./docs/dev_container.md)
 
 - **Live API Documentation (FastAPI):** The FastAPI Python services automatically generate interactive API documentation. Once the services are running (`make up`), you can access them at:
   - **Backend Service**:
@@ -291,7 +295,7 @@ The full configuration can be found in the [`.pre-commit-config.yaml`](./.pre-co
 
 If your `git commit` is blocked, it means the hooks caught an issue. There are two scenarios.
 
-1.  **The hooks have made automatic changes to your files.**
+1. **The hooks have made automatic changes to your files.**
 
     A formatter has fixed your code for you. Stage the changes and try to commit again.
 
@@ -300,7 +304,7 @@ If your `git commit` is blocked, it means the hooks caught an issue. There are t
     git commit
     ```
 
-2.  **The errors need a manual fix.**
+2. **The errors need a manual fix.**
 
     Read the error messages carefully. It will tell you the file, line number, and what is wrong. Fix the error, stage the files, and commit again.
 
@@ -312,18 +316,20 @@ You can run these checks at any time without creating a commit.
 
 **Using `pre-commit`:**
 
-
 To run on only staged files:
+
 ```sh
 pre-commit run
 ```
 
 To run on any modified files (staged or not)
+
 ```sh
 pre-commit run --files $(git ls-files -m)
 ```
 
 To run on all files:
+
 ```sh
 pre-commit run --all-files
 ```
@@ -331,16 +337,19 @@ pre-commit run --all-files
 **Using `Make`:**
 
 To format and lint all code:
+
 ```sh
 make validate
 ```
 
 To format all code:
+
 ```sh
 make format
 ```
 
 To lint all code:
+
 ```sh
 make lint
 ```
