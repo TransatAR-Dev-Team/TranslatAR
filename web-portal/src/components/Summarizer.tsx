@@ -1,0 +1,82 @@
+import { useState } from "react";
+
+export default function Summarizer() {
+  const [textToSummarize, setTextToSummarize] = useState<string>("");
+  const [summary, setSummary] = useState<string>("");
+  const [summaryLength, setSummaryLength] = useState<string>("medium");
+  const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const handleSummarize = async () => {
+    if (!textToSummarize.trim()) {
+      setSummaryError("Please enter some text to summarize.");
+      return;
+    }
+
+    setIsSummarizing(true);
+    setSummaryError(null);
+    setSummary("");
+
+    try {
+      const response = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textToSummarize, length: summaryLength }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (error) {
+      console.error("Error summarizing text:", error);
+      setSummaryError("Failed to generate summary. Please try again.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-800 rounded-lg p-6 shadow-lg mb-8">
+      <h2 className="text-2xl font-semibold mb-4 text-left">Summarize Text</h2>
+      <textarea
+        className="w-full bg-slate-700 p-3 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        rows={6}
+        value={textToSummarize}
+        onChange={(e) => setTextToSummarize(e.target.value)}
+        placeholder="Paste or type text here to summarize..."
+      />
+      <div className="flex items-center mt-4 space-x-4">
+        <label htmlFor="summary-length" className="font-semibold">
+          Summary Length:
+        </label>
+        <select
+          id="summary-length"
+          value={summaryLength}
+          onChange={(e) => setSummaryLength(e.target.value)}
+          className="bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="short">Short</option>
+          <option value="medium">Medium</option>
+          <option value="long">Long</option>
+        </select>
+      </div>
+      <button
+        onClick={handleSummarize}
+        disabled={isSummarizing}
+        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-md transition-colors duration-200"
+      >
+        {isSummarizing ? "Summarizing..." : "Summarize"}
+      </button>
+      {summaryError && <p className="text-red-400 mt-4">{summaryError}</p>}
+      {summary && (
+        <div className="mt-4 bg-slate-700 p-4 rounded-md">
+          <h3 className="font-semibold mb-2">Summary:</h3>
+          <p>{summary}</p>
+        </div>
+      )}
+    </div>
+  );
+}
