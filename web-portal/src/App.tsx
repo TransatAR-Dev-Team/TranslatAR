@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import type { GoogleIdTokenPayload } from "./models/GoogleIdTokenPayload";
+import type { CredentialResponse } from "@react-oauth/google";
 import type { User } from "./models/User";
 import { loginWithGoogleApi } from "./api/auth";
 import GoogleLoginButton from "./components/GoogleLoginButton/GoogleLoginButton";
+import type { GoogleIdTokenPayload } from "./models/GoogleIdTokenPayload";
+import { jwtDecode } from "jwt-decode";
 
 interface HistoryItem {
   _id: string;
@@ -24,7 +26,7 @@ interface Settings {
   websocket_url: string;
 }
 
-const LOCAL_STORAGE_USER_ID_KEY = "user_id";
+const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 if (!googleClientId) {
@@ -59,7 +61,11 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    // Load both history and settings on component mount
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+    if (token) {
+      const decoded: { sub: string } = jwtDecode(token);
+      setAppUser({ _id: decoded.sub, email: "Logged In" } as User);
+    }
     loadHistory();
     loadSettings();
   }, []);
@@ -68,7 +74,9 @@ function App() {
     setIsLoading(true);
     try {
       const response = await fetch("/api/history");
+
       if (!response.ok) throw new Error("Network response was not ok");
+
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
@@ -120,7 +128,6 @@ function App() {
     setIsSummarizing(true);
     setSummaryError(null);
     setSummary("");
-
     try {
       const response = await fetch("/api/summarize", {
         method: "POST",
@@ -133,6 +140,7 @@ function App() {
       }
 
       const data = await response.json();
+
       setSummary(data.summary);
     } catch (error) {
       console.error("Error summarizing text:", error);
@@ -142,47 +150,46 @@ function App() {
     }
   };
 
-  // Login state handlers
   const handleLogout = useCallback(() => {
     console.log("User logged out");
     setAppUser(null);
-    localStorage.removeItem(LOCAL_STORAGE_USER_ID_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
   }, []);
 
   const handleLoginError = useCallback(() => {
-    console.log("Logging user out.");
+    console.log("Login failed, logging user out.");
     setAppUser(null);
+    localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
   }, []);
 
   const handleLoginSuccess = useCallback(
-    async (decodedToken: GoogleIdTokenPayload) => {
-      console.log("Attempting Google login...");
-      const googleId = decodedToken.sub;
-      const email = decodedToken.email;
+    async (credentialResponse: CredentialResponse) => {
+      console.log("Google credential received, exchanging for app token...");
+      const googleIdToken = credentialResponse.credential;
 
-      console.log("Token Data:", { googleID: googleId, email });
-
-      if (!googleId || !email) {
-        alert("Missing required user information!");
+      if (!googleIdToken) {
+        alert("Missing required token from Google!");
+        handleLoginError();
         return;
       }
 
       try {
-        const loginPayload = { googleId, email };
-        const fetchedUser = await loginWithGoogleApi(loginPayload);
+        // Send the Google token to our backend
+        const { access_token } = await loginWithGoogleApi(googleIdToken);
 
-        if (!fetchedUser?._id) {
-          console.error(
-            "Login Error: Invalid user data received from backend.",
-          );
-          throw new Error("Invalid user data received after login.");
-        }
+        // Store our application's JWT in localStorage
+        localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
 
-        localStorage.setItem(LOCAL_STORAGE_USER_ID_KEY, fetchedUser._id);
-        setAppUser(fetchedUser);
-        console.log(`User logged in: ${fetchedUser.email}`);
+        // Decode the token to set the user state
+        const decoded: { sub: string } = jwtDecode(access_token);
+        setAppUser({ _id: decoded.sub, email: "Logged In" } as User);
+
+        console.log(`User logged in successfully. App JWT stored.`);
+        // Note: After login, you might want to re-fetch data that requires auth
+        // loadHistory();
       } catch (error) {
         console.error("Login failed:", error);
+        alert("Login failed. Please try again.");
         handleLoginError();
       }
     },

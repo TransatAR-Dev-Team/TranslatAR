@@ -15,11 +15,18 @@ services:
         condition: service_started
       translation:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     environment:
       - DATABASE_URL=mongodb://mongodb:27017
       - STT_URL=http://stt:9000
       - TRANSLATION_URL=http://translation:9001
       - SUMMARIZATION_URL=http://summarization:9002
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
 
@@ -35,6 +42,9 @@ services:
       - /app/node_modules
     environment:
       - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    depends_on:
+      backend:
+        condition: service_healthy
 
   stt:
     container_name: stt

@@ -4,7 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
-from main import SettingsModel, app
+from main import app
+from models.settings import SettingsModel
 
 
 @pytest.fixture
