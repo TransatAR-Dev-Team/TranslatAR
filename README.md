@@ -96,7 +96,15 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. Download the hooks takes several minutes.
+2. Set up `.env` file. Copy the template to the real file:
+
+    ```sh
+    cp .env.example .env
+    ```
+
+    Then follow the instructions in `.env` and add the  missing values.
+
+3. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. Download the hooks takes several minutes.
 
     ```sh
     pre-commit install
@@ -105,15 +113,15 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
     `pre-commit` will now run its hooks whenever you make a commit. Read more [here](#code-quality).
 
-3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
+4. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
     ```sh
     make up
     ```
 
-4. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
+5. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
-5. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
+6. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
     ```sh
     docker exec -it ollama ollama pull phi3:mini
@@ -334,7 +342,7 @@ To run on all files:
 pre-commit run --all-files
 ```
 
-**Using `Make`:**
+**Using `make`:**
 
 To format and lint all code:
 
