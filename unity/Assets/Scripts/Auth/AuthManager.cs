@@ -1,4 +1,3 @@
-// unity/Assets/Scripts/Auth/AuthManager.cs
 using UnityEngine;
 using System.Collections;
 using System;
@@ -14,9 +13,14 @@ public class AuthManager : MonoBehaviour
     public enum AuthState { LoggedOut, AwaitingDeviceLogin, LoggedIn }
     public AuthState CurrentState { get; private set; } = AuthState.LoggedOut;
 
+    public UserProfile CurrentUser { get; private set; }
+
     private AuthBackendService _apiService;
     private Coroutine _pollingCoroutine;
     private const string JwtPlayerPrefsKey = "AppAuthToken";
+
+    [Header("UI References")]
+    [SerializeField] private LoginPanelUI loginPanelUI;
 
     void Awake()
     {
@@ -60,8 +64,11 @@ public class AuthManager : MonoBehaviour
         Debug.Log($"[AuthManager] Received User Code: {response.user_code}");
         CurrentState = AuthState.AwaitingDeviceLogin;
 
-        // TODO: Trigger UI to show the user code and URL
-        Debug.LogWarning($"ACTION REQUIRED: Go to {response.verification_url} and enter code: {response.user_code}");
+        // Update the UI to show the user code and verification URL
+        if (loginPanelUI != null)
+        {
+            loginPanelUI.ShowLoginDetails(response.user_code, response.verification_url);
+        }
 
         // Start polling the backend
         _pollingCoroutine = StartCoroutine(PollLoop(response.device_code, response.interval));
@@ -88,25 +95,40 @@ public class AuthManager : MonoBehaviour
         if (response.status == "completed" && !string.IsNullOrEmpty(response.access_token))
         {
             Debug.Log("[AuthManager] Login complete! Received application JWT.");
-            StopCoroutine(_pollingCoroutine);
-            _pollingCoroutine = null;
+            if (_pollingCoroutine != null)
+            {
+                StopCoroutine(_pollingCoroutine);
+                _pollingCoroutine = null;
+            }
+
+            string appToken = response.access_token;
 
             // Securely save the token and update state
-            PlayerPrefs.SetString(JwtPlayerPrefsKey, response.access_token);
+            PlayerPrefs.SetString(JwtPlayerPrefsKey, appToken);
             PlayerPrefs.Save();
-            CurrentState = AuthState.LoggedIn;
 
-            // TODO: Hide the login UI
-            Debug.LogWarning("TODO: Hide the login panel now.");
-
-            // Fire the global login success event
-            OnLoginSuccess?.Invoke();
+            // Fetch user profile to confirm login
+            StartCoroutine(_apiService.GetMe(appToken, OnProfileReceived, OnAuthError));
         }
         else
         {
-            // Handle other errors like "expired_token"
             OnAuthError($"Login failed with status: {response.status}");
         }
+    }
+
+    private void OnProfileReceived(UserProfile profile)
+    {
+        Debug.Log($"[AuthManager] Welcome, {profile.username} ({profile.email})");
+        CurrentUser = profile;
+        CurrentState = AuthState.LoggedIn;
+
+        // Update the UI with the welcome message
+        if (loginPanelUI != null)
+        {
+            loginPanelUI.ShowWelcomeMessage(profile.username);
+        }
+
+        OnLoginSuccess?.Invoke();
     }
 
     public void Logout()

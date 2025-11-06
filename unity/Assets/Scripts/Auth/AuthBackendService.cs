@@ -1,4 +1,3 @@
-// unity/Assets/Scripts/Auth/AuthBackendService.cs
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
@@ -6,6 +5,15 @@ using System.Collections;
 using System.Text;
 
 // --- Data Structures for JSON Deserialization ---
+[System.Serializable]
+public class UserProfile
+{
+    public string _id;
+    public string googleId;
+    public string email;
+    public string username;
+}
+
 [System.Serializable]
 public class DeviceStartResponse
 {
@@ -104,6 +112,38 @@ public class AuthBackendService : MonoBehaviour
             else
             {
                 onError?.Invoke($"Polling failed. Server responded with: {request.error} - {request.downloadHandler.text}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Coroutine to get the authenticated user's profile.
+    /// </summary>
+    public IEnumerator GetMe(string token, Action<UserProfile> onSuccess, Action<string> onError)
+    {
+        string url = $"{_backendUrl}/api/users/me";
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            // Set the authorization header with our application JWT
+            request.SetRequestHeader("Authorization", $"Bearer {token}");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    UserProfile profile = JsonUtility.FromJson<UserProfile>(request.downloadHandler.text);
+                    onSuccess?.Invoke(profile);
+                }
+                catch (Exception e)
+                {
+                    onError?.Invoke($"Failed to parse user profile: {e.Message}");
+                }
+            }
+            else
+            {
+                onError?.Invoke($"Failed to get user profile. Server responded with: {request.error}");
             }
         }
     }
