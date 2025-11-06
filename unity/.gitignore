@@ -1,3 +1,6 @@
+# Ignore sensitive secrets and configuration files
+Assets/Resources/EnvironmentConfig.asset
+
 # Ignore DLLs that are incorrectly placed in the root by an IDE
 TempAssembly.dll
 
