@@ -7,20 +7,64 @@ public class LoginPanelUI : MonoBehaviour
     [SerializeField] private GameObject panelObject;
     [SerializeField] private TextMeshProUGUI userCodeText;
     [SerializeField] private TextMeshProUGUI instructionsText;
-    [SerializeField] private GameObject loginButton; // Assign your LoginButton in the inspector
+    [SerializeField] private GameObject loginButton;
+    [SerializeField] private GameObject logoutButton;
     [SerializeField] private GameObject loadingSpinner; // Optional: if you add a spinner later
 
     void Start()
     {
-        // Hide the panel initially
-        // panelObject.SetActive(false);
+        // Subscribe to AuthManager events to automatically update the UI
+        AuthManager.OnLoginSuccess += HandleLoginSuccess;
+        AuthManager.OnLogout += ShowLoggedOutState;
 
-        // Subscribe to AuthManager events
+        // Set the initial state of the UI based on the AuthManager's state when we start
+        // This handles the case where the user is already logged in from a previous session.
         if (AuthManager.Instance != null)
         {
-            // We need to modify AuthManager slightly to expose the start event,
-            // or just poll state in Update, but events are cleaner.
-            // For now, let's just rely on the public methods we'll call from AuthManager.
+            if (AuthManager.Instance.CurrentState == AuthManager.AuthState.LoggedIn)
+            {
+                HandleLoginSuccess();
+            }
+            else
+            {
+                ShowLoggedOutState();
+            }
+        }
+        else
+        {
+            // Fallback if AuthManager isn't ready for some reason
+            ShowLoggedOutState();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe to prevent memory leaks
+        AuthManager.OnLoginSuccess -= HandleLoginSuccess;
+        AuthManager.OnLogout -= ShowLoggedOutState;
+    }
+
+    /// <summary>
+    /// Configures the UI for a logged-out user. Shows the login button.
+    /// </summary>
+    public void ShowLoggedOutState()
+    {
+        panelObject.SetActive(true); // Keep the panel visible
+        instructionsText.text = "Please log in to continue.";
+        userCodeText.text = ""; // Clear the code/welcome message
+
+        loginButton.SetActive(true);
+        logoutButton.SetActive(false);
+    }
+
+    /// <summary>
+    /// Called after a successful login to show the welcome message and logout button.
+    /// </summary>
+    private void HandleLoginSuccess()
+    {
+        if (AuthManager.Instance?.CurrentUser != null)
+        {
+            ShowWelcomeMessage(AuthManager.Instance.CurrentUser.username);
         }
     }
 
@@ -30,17 +74,18 @@ public class LoginPanelUI : MonoBehaviour
         userCodeText.text = userCode;
         instructionsText.text = $"Go to <color=#4da6ff>{url}</color>\nand enter the code above.";
 
-        // Hide the login button while showing the code
-        if(loginButton != null) loginButton.SetActive(false);
+        loginButton.SetActive(false);
+        logoutButton.SetActive(false);
     }
 
     public void ShowWelcomeMessage(string username)
     {
-        panelObject.SetActive(true); // Ensure panel is visible
+        panelObject.SetActive(true);
         userCodeText.text = $"Welcome, {username}!";
         instructionsText.text = "You are successfully logged in.";
 
-        if(loginButton != null) loginButton.SetActive(false);
+        loginButton.SetActive(false);
+        logoutButton.SetActive(true);
     }
 
     public void HidePanel()

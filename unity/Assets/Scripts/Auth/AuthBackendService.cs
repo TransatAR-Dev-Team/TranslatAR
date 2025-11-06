@@ -54,8 +54,10 @@ public class AuthBackendService : MonoBehaviour
     public IEnumerator StartDeviceLogin(Action<DeviceStartResponse> onSuccess, Action<string> onError)
     {
         string url = $"{_backendUrl}/api/auth/device/start";
-        using (UnityWebRequest request = UnityWebRequest.PostWwwForm(url, ""))
+
+        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
         {
+            request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
 
             yield return request.SendWebRequest();

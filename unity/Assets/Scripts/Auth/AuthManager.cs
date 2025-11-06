@@ -42,9 +42,13 @@ public class AuthManager : MonoBehaviour
         string savedToken = PlayerPrefs.GetString(JwtPlayerPrefsKey, null);
         if (!string.IsNullOrEmpty(savedToken))
         {
-            Debug.Log("Found saved auth token. User is logged in.");
-            CurrentState = AuthState.LoggedIn;
-            // In a real app, you would verify this token with the backend here.
+            Debug.Log("Found saved auth token. Fetching user profile...");
+            // If we have a token, get the user profile to display the welcome message.
+            StartCoroutine(_apiService.GetMe(savedToken, OnProfileReceived, OnAuthError));
+        }
+        else
+        {
+            CurrentState = AuthState.LoggedOut;
         }
     }
 
