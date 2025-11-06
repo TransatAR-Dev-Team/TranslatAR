@@ -1,6 +1,6 @@
 import type { CredentialResponse } from "@react-oauth/google";
-import type { User } from "../models/User";
-import GoogleLoginButton from "./GoogleLoginButton/GoogleLoginButton";
+import type { User } from "../../models/User";
+import GoogleLoginButton from "../GoogleLoginButton/GoogleLoginButton";
 
 interface HeaderProps {
   appUser: User | null;

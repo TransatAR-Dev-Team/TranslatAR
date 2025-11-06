@@ -10,7 +10,7 @@ export interface Settings {
   websocket_url: string;
 }
 
-interface SettingsModalProps {
+interface SettingsMenuProps {
   initialSettings: Settings;
   onSave: (newSettings: Settings) => void;
   onClose: () => void;
@@ -22,7 +22,7 @@ export default function SettingsMenu({
   onSave,
   onClose,
   error,
-}: SettingsModalProps) {
+}: SettingsMenuProps) {
   const [settings, setSettings] = useState(initialSettings);
 
   useEffect(() => {
@@ -32,10 +32,12 @@ export default function SettingsMenu({
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    // Handle number inputs correctly
+    const isNumberField = type === "number";
     setSettings((prev) => ({
       ...prev,
-      [name]: e.target.type === "number" ? parseFloat(value) : value,
+      [name]: isNumberField ? parseFloat(value) : value,
     }));
   };
 
@@ -59,33 +61,74 @@ export default function SettingsMenu({
         )}
 
         <div className="space-y-4">
-          {/* Form fields */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label
+              htmlFor="source_language"
+              className="block text-sm font-medium mb-2"
+            >
               Source Language
             </label>
             <select
+              id="source_language"
               name="source_language"
               value={settings.source_language}
               onChange={handleInputChange}
-              className="w-full bg-slate-700 p-2 rounded-md text-white"
+              className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="en">English</option>
               <option value="es">Spanish</option>
+              <option value="fr">French</option>
             </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="target_language"
+              className="block text-sm font-medium mb-2"
+            >
+              Target Language
+            </label>
+            <select
+              id="target_language"
+              name="target_language"
+              value={settings.target_language}
+              onChange={handleInputChange}
+              className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="en">English</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="chunk_duration_seconds"
+              className="block text-sm font-medium mb-2"
+            >
+              Chunk Duration (seconds)
+            </label>
+            <input
+              type="number"
+              id="chunk_duration_seconds"
+              name="chunk_duration_seconds"
+              value={settings.chunk_duration_seconds}
+              onChange={handleInputChange}
+              className="w-full bg-slate-700 p-2 rounded-md text-white"
+            />
           </div>
         </div>
 
         <div className="flex justify-end space-x-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-700 rounded-md"
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-md"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(settings)}
-            className="px-4 py-2 bg-blue-600 rounded-md"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
           >
             Save Settings
           </button>

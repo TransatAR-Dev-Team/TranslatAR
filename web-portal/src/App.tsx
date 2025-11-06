@@ -7,10 +7,12 @@ import GoogleLoginButton from "./components/GoogleLoginButton/GoogleLoginButton"
 import type { GoogleIdTokenPayload } from "./models/GoogleIdTokenPayload";
 import { jwtDecode } from "jwt-decode";
 
-import Header from "./components/Header";
-import Summarizer from "./components/Summarizer";
-import HistoryPanel from "./components/HistoryPanel";
-import SettingsModal, { type Settings } from "./components/SettingsMenu";
+import Header from "./components/Header/Header";
+import Summarizer from "./components/Summarizer/Summarizer";
+import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
+import SettingsModal, {
+  type Settings,
+} from "./components/SettingsMenu/SettingsMenu";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
