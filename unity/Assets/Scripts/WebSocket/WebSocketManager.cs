@@ -43,7 +43,7 @@ public class WebSocketManager : MonoBehaviour
     /// The WebSocket connection instance used to communicate with the backend server.
     /// </summary>
     private IWebSocketClient ws;
-    
+
     /// <summary>
     /// A flag indicating whether the websocket endpoint is connected.
     /// </summary>
@@ -92,7 +92,7 @@ public class WebSocketManager : MonoBehaviour
     {
         ConnectWebSocket();
     }
-    
+
     /// <summary>
     /// Processes queued actions from WebSocket callbacks on the main thread each frame.
     /// </summary>
@@ -115,64 +115,44 @@ public class WebSocketManager : MonoBehaviour
     {
         try
         {
+            Debug.Log("Attempting to connect to WebSocket at: " + websocketUrl);
             ws = webSocketFactory(websocketUrl);
 
             ws.OnOpen += (sender, e) =>
             {
                 Debug.Log("WebSocket connected!");
                 isConnected = true;
-
-                // Queue UI update for main thread
-                lock (queueLock)
-                {
-                    mainThreadActions.Enqueue(() =>
-                        UpdateSubtitle("Connected. Press and hold (B) button to record."));
-                }
+                lock (queueLock) { mainThreadActions.Enqueue(() => UpdateSubtitle("Connected.")); }
             };
 
             ws.OnMessage += (sender, e) =>
             {
                 if (e.IsText)
                 {
-                    string message = e.Data;
-                    Debug.Log("Received: " + message);
-
-                    // Queue for main thread
-                    lock (queueLock)
-                    {
-                        mainThreadActions.Enqueue(() => HandleTranscriptionResponse(message));
-                    }
+                    lock (queueLock) { mainThreadActions.Enqueue(() => HandleTranscriptionResponse(e.Data)); }
                 }
             };
 
             ws.OnError += (sender, e) =>
             {
                 Debug.LogError("WebSocket Error: " + e.Message);
-
-                // Queue UI update for main thread
-                lock (queueLock)
-                {
-                    mainThreadActions.Enqueue(() => UpdateSubtitle("Connection error."));
-                }
+                lock (queueLock) { mainThreadActions.Enqueue(() => UpdateSubtitle("Connection error.")); }
             };
 
             ws.OnClose += (sender, e) =>
             {
                 Debug.Log("WebSocket closed!");
                 isConnected = false;
-
-                // Queue UI update for main thread
-                lock (queueLock)
-                {
-                    mainThreadActions.Enqueue(() => UpdateSubtitle("Disconnected."));
-                }
+                lock (queueLock) { mainThreadActions.Enqueue(() => UpdateSubtitle("Disconnected.")); }
             };
 
             ws.Connect();
         }
-        catch (Exception e)
+        catch (System.Exception e)
         {
-            Debug.LogError("Failed to connect WebSocket: " + e.Message);
+            Debug.LogError($"[WebSocketManager] FATAL: Failed to initiate WebSocket connection: {e.Message}");
+            isConnected = false;
+            UpdateSubtitle("Failed to connect to server.");
         }
     }
 
