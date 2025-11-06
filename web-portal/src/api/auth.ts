@@ -57,15 +57,20 @@ export const loginWithGoogleApi = async (
   }
 };
 
-export const getMe = async (token: string): Promise<User> => {
+/**
+ * Fetches the current user's details from the backend using the application's JWT.
+ * @param token - The application's JWT, received from the `loginWithGoogleApi` endpoint.
+ * @returns A promise that resolves to the full User object from the backend.
+ */
+export const getMeApi = async (token: string): Promise<User> => {
+  if (!token) throw new Error("Authentication token is missing.");
+
   const response = await fetch("/api/users/me", {
-    // This endpoint doesn't exist yet
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
+
   if (!response.ok) {
-    throw new Error("Failed to fetch user details");
+    throw new Error("Failed to fetch user details. Token might be invalid.");
   }
   return response.json();
 };

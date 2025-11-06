@@ -13,6 +13,7 @@ from models.settings import SettingsModel, SettingsResponse
 from models.summarization import SummarizationRequest, SummarizationResponse
 from models.translation import TranslationResponse
 from routes.auth import router as auth_router
+from routes.users import router as users_router
 from websocket import router as websocket_router
 
 # --- Configuration ---
@@ -32,6 +33,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# -- Users Router --
+router.include_router(users_router, prefix="/users", tags=["Users"])
 
 # --- WebSocket Router ---
 app.include_router(websocket_router)

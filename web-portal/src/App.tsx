@@ -1,16 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import type { CredentialResponse } from "@react-oauth/google";
+
 import type { User } from "./models/User";
-import { loginWithGoogleApi } from "./api/auth";
-import GoogleLoginButton from "./components/GoogleLoginButton/GoogleLoginButton";
-import type { GoogleIdTokenPayload } from "./models/GoogleIdTokenPayload";
-import { jwtDecode } from "jwt-decode";
+import { loginWithGoogleApi, getMeApi } from "./api/auth";
 
 import Header from "./components/Header/Header";
 import Summarizer from "./components/Summarizer/Summarizer";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
-import SettingsModal, {
+import SettingsMenu, {
   type Settings,
 } from "./components/SettingsMenu/SettingsMenu";
 
@@ -25,35 +23,43 @@ function App() {
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
-
-  const [settings, setSettings] = useState<Settings>({
-    source_language: "en",
-    target_language: "es",
-    chunk_duration_seconds: 8.0,
-    target_sample_rate: 48000,
-    silence_threshold: 0.01,
-    chunk_overlap_seconds: 0.5,
-    websocket_url: "ws://localhost:8000/ws",
-  });
-
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  // --- DATA FETCHING & SIDE EFFECTS ---
-  useEffect(() => {
-    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-    if (token) {
-      try {
-        const decoded: { sub: string; email: string } = jwtDecode(token);
-        setAppUser({ _id: decoded.sub, email: decoded.email } as User);
-      } catch (e) {
-        console.error("Invalid token found in storage", e);
-        localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
-      }
-    }
-    loadHistory();
-    loadSettings();
+  // --- AUTH HANDLERS ---
+  const handleLogout = useCallback(() => {
+    setAppUser(null);
+    localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
+    console.log("User logged out.");
   }, []);
+
+  // --- DATA FETCHING & SIDE EFFECTS ---
+  const fetchUserProfile = useCallback(
+    async (token: string) => {
+      try {
+        const userProfile = await getMeApi(token);
+        setAppUser(userProfile);
+        console.log(`User profile loaded: ${userProfile.email}`);
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        handleLogout();
+      }
+    },
+    [handleLogout],
+  );
+
+  useEffect(() => {
+    const initialize = async () => {
+      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+      if (token) {
+        await fetchUserProfile(token);
+      }
+      await loadHistory();
+      await loadSettings();
+    };
+    initialize();
+  }, [fetchUserProfile]);
 
   // --- API HANDLERS ---
   const loadHistory = useCallback(async () => {
@@ -96,22 +102,11 @@ function App() {
       if (!response.ok) throw new Error("Failed to save settings");
       const data = await response.json();
       setSettings(data.settings);
-      setShowSettings(false); // Close modal on success
+      setShowSettings(false);
     } catch (error) {
       console.error("Error saving settings:", error);
       setSettingsError("Failed to save settings. Please try again.");
     }
-  }, []);
-
-  // --- AUTHENTICATION HANDLERS ---
-  const handleLogout = useCallback(() => {
-    setAppUser(null);
-    localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
-  }, []);
-
-  const handleLoginError = useCallback(() => {
-    setAppUser(null);
-    localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
   }, []);
 
   const handleLoginSuccess = useCallback(
@@ -119,20 +114,19 @@ function App() {
       const googleIdToken = credentialResponse.credential;
       if (!googleIdToken) {
         alert("Missing required token from Google!");
-        return handleLoginError();
+        return handleLogout();
       }
       try {
         const { access_token } = await loginWithGoogleApi(googleIdToken);
         localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
-        const decoded: { sub: string; email: string } = jwtDecode(access_token);
-        setAppUser({ _id: decoded.sub, email: decoded.email } as User);
+        await fetchUserProfile(access_token);
       } catch (error) {
-        console.error("Login failed:", error);
+        console.error("Login process failed:", error);
         alert("Login failed. Please try again.");
-        handleLoginError();
+        handleLogout();
       }
     },
-    [handleLoginError],
+    [fetchUserProfile, handleLogout],
   );
 
   // --- RENDER ---
@@ -143,7 +137,7 @@ function App() {
           <Header
             appUser={appUser}
             onLoginSuccess={handleLoginSuccess}
-            onLoginError={handleLoginError}
+            onLoginError={handleLogout}
             onLogout={handleLogout}
             onShowSettings={() => setShowSettings(true)}
           />
@@ -154,8 +148,8 @@ function App() {
             error={historyError}
           />
         </div>
-        {showSettings && (
-          <SettingsModal
+        {showSettings && settings && (
+          <SettingsMenu
             initialSettings={settings}
             onSave={saveSettings}
             onClose={() => setShowSettings(false)}
