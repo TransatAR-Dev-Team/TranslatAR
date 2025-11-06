@@ -13,6 +13,7 @@ from models.settings import SettingsModel, SettingsResponse
 from models.summarization import SummarizationRequest, SummarizationResponse
 from models.translation import TranslationResponse
 from routes.auth import router as auth_router
+from routes.auth_unity import router as auth_unity_router
 from routes.users import router as users_router
 from websocket import router as websocket_router
 
@@ -42,6 +43,12 @@ app.include_router(websocket_router)
 
 # --- Auth Router ---
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+# --- Auth Unity Router ---
+# --- Auth Device Flow Router ---
+router.include_router(
+    auth_unity_router, prefix="/auth/device", tags=["Authentication (Device Flow)"]
+)
 
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
