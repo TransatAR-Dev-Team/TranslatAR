@@ -24,7 +24,8 @@ logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
 
 unity-editor: ## Open the Unity project in the editor (macOS/Windows only).
 	@./scripts/open_unity_editor.sh
-	@./scripts/open_unity_editor.sh
+
+open-unity: unity-editor ## Alias for `unity-editor`.
 
 test: ## Run all applicable test suites (Unit, Integration, Unity).
 	@./scripts/run_all_tests.sh
