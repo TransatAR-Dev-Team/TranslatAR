@@ -5,11 +5,11 @@ repos:
     rev: v4.6.0
     hooks:
     -   id: trailing-whitespace
-        exclude: \.(unity|asset|meta)$
+        exclude: 'poetry\.lock|\.meta$|\.asset$|\.unity$'
     -   id: end-of-file-fixer
-        exclude: \.(unity|asset|meta)$
+        exclude: 'poetry\.lock|\.meta$|\.asset$|\.unity$'
     -   id: check-yaml
-        exclude: \.(unity|asset|meta)$
+        exclude: 'poetry\.lock|\.meta$|\.asset$|\.unity$'
 
 
 # == Python Formatting & Linting ==
@@ -53,4 +53,4 @@ repos:
     hooks:
     -   id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: 'poetry\.lock|\.meta$'
+        exclude: 'poetry\.lock|\.meta$|\.asset$|\.unity$'
