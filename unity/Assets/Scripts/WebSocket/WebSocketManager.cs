@@ -122,28 +122,51 @@ public class WebSocketManager : MonoBehaviour
             {
                 Debug.Log("WebSocket connected!");
                 isConnected = true;
-                lock (queueLock) { mainThreadActions.Enqueue(() => UpdateSubtitle("Connected.")); }
+
+                // Queue UI update for main thread
+                lock (queueLock)
+                {
+                    mainThreadActions.Enqueue(() =>
+                        UpdateSubtitle("Connected. Press and hold (B) button to record."));
+                }
             };
 
             ws.OnMessage += (sender, e) =>
             {
                 if (e.IsText)
                 {
-                    lock (queueLock) { mainThreadActions.Enqueue(() => HandleTranscriptionResponse(e.Data)); }
+                    string message = e.Data;
+                    Debug.Log("Received: " + message);
+
+                    // Queue for main thread
+                    lock (queueLock)
+                    {
+                        mainThreadActions.Enqueue(() => HandleTranscriptionResponse(message));
+                    }
                 }
             };
 
             ws.OnError += (sender, e) =>
             {
                 Debug.LogError("WebSocket Error: " + e.Message);
-                lock (queueLock) { mainThreadActions.Enqueue(() => UpdateSubtitle("Connection error.")); }
+
+                // Queue UI update for main thread
+                lock (queueLock)
+                {
+                    mainThreadActions.Enqueue(() => UpdateSubtitle("Connection error."));
+                }
             };
 
             ws.OnClose += (sender, e) =>
             {
                 Debug.Log("WebSocket closed!");
                 isConnected = false;
-                lock (queueLock) { mainThreadActions.Enqueue(() => UpdateSubtitle("Disconnected.")); }
+
+                // Queue UI update for main thread
+                lock (queueLock)
+                {
+                    mainThreadActions.Enqueue(() => UpdateSubtitle("Disconnected."));
+                }
             };
 
             ws.Connect();
