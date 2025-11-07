@@ -19,6 +19,15 @@ public class AuthManager : MonoBehaviour
     private Coroutine _pollingCoroutine;
     private const string JwtPlayerPrefsKey = "AppAuthToken";
 
+    private string _currentJwt;
+
+    /// <summary>
+    /// The current JSON Web Token (JWT) used for authentication.
+    /// This token is used to authenticate requests to the backend services.
+    /// </summary>
+    /// <value>The current JWT string if user is authenticated, or null if not logged in.</value>
+    public string CurrentJwt => _currentJwt;
+
     [Header("UI References")]
     [SerializeField] private LoginPanelUI loginPanelUI;
 
@@ -38,12 +47,13 @@ public class AuthManager : MonoBehaviour
 
     void Start()
     {
-        // Check if we have a saved token from a previous session
         string savedToken = PlayerPrefs.GetString(JwtPlayerPrefsKey, null);
         if (!string.IsNullOrEmpty(savedToken))
         {
             Debug.Log("Found saved auth token. Fetching user profile...");
-            // If we have a token, get the user profile to display the welcome message.
+
+            _currentJwt = savedToken;
+
             StartCoroutine(_apiService.GetMe(savedToken, OnProfileReceived, OnAuthError));
         }
         else
