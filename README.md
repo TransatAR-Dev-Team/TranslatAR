@@ -36,7 +36,7 @@ This project uses a `Makefile` to provide simple commands for common operations.
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | `make up`               | Build and start all services in Docker (auto-detects GPU).                          |
 | `make down`             | Stop and remove all services.                                                       |
-| `make restart`          | Restart all services. Alias for `make down` + `make up`.                            |
+| `make restart`          | Restart all services.                                                               |
 | `make logs`             | Show logs of all running services.                                                  |
 | `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                  |
 | `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows). |

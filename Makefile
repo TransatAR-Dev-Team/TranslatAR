@@ -12,15 +12,16 @@ ARGS = $(filter-out $@,$(MAKECMDGOALS))
 .PHONY: help up down restart logs test test-unit test-integration test-unity
 
 up: ## Start all services (auto-detects GPU).
-	@./scripts/start.sh up --build -d
+	@./scripts/docker-compose-manager.sh up --build -d
 
 down: ## Stop and remove all services.
-	@./scripts/start.sh down --remove-orphans
+	@./scripts/docker-compose-manager.sh down --remove-orphans
 
-restart: down up ## Stop and restart all services. Alias for `down` + `up`.
+restart: ## Restart all services.
+	@./scripts/docker-compose-manager.sh restart
 
 logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
-	@./scripts/start.sh logs $(ARGS)
+	@./scripts/docker-compose-manager.sh logs $(ARGS)
 
 unity-editor: ## Open the Unity project in the editor (macOS/Windows only).
 	@./scripts/open_unity_editor.sh
