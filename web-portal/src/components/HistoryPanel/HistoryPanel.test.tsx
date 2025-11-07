@@ -9,12 +9,14 @@ describe("HistoryPanel Component", () => {
       original_text: "Hello",
       translated_text: "Hola",
       source_lang: "en",
+      target_lang: "es",
     },
     {
       _id: "2",
       original_text: "Goodbye",
       translated_text: "Adiós",
       source_lang: "en",
+      target_lang: "es",
     },
   ];
 

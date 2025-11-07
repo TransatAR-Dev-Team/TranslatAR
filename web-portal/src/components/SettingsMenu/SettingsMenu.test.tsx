@@ -1,10 +1,8 @@
-// src/components/SettingsModal/SettingsModal.test.tsx
-
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import SettingsModal, { type Settings } from "./SettingsMenu";
+import SettingsMenu, { type Settings } from "./SettingsMenu";
 
-describe("SettingsModal Component", () => {
+describe("SettingsMenu Component", () => {
   const mockSettings: Settings = {
     source_language: "en",
     target_language: "es",
@@ -17,7 +15,7 @@ describe("SettingsModal Component", () => {
 
   it("renders with the initial settings values", () => {
     render(
-      <SettingsModal
+      <SettingsMenu
         initialSettings={mockSettings}
         onSave={() => {}}
         onClose={() => {}}
@@ -31,7 +29,7 @@ describe("SettingsModal Component", () => {
   it("calls the onClose prop when the cancel button is clicked", () => {
     const handleClose = vi.fn();
     render(
-      <SettingsModal
+      <SettingsMenu
         initialSettings={mockSettings}
         onSave={() => {}}
         onClose={handleClose}
@@ -46,7 +44,7 @@ describe("SettingsModal Component", () => {
   it("calls the onSave prop with the updated settings when save is clicked", () => {
     const handleSave = vi.fn();
     render(
-      <SettingsModal
+      <SettingsMenu
         initialSettings={mockSettings}
         onSave={handleSave}
         onClose={() => {}}
@@ -70,7 +68,7 @@ describe("SettingsModal Component", () => {
 
   it("displays an error message when an error is provided", () => {
     render(
-      <SettingsModal
+      <SettingsMenu
         initialSettings={mockSettings}
         onSave={() => {}}
         onClose={() => {}}

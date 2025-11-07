@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from "vitest";
 import Header from "./Header";
 import type { User } from "../../models/User";
 
-// Mock the GoogleLoginButton to simplify the test
 vi.mock("../GoogleLoginButton/GoogleLoginButton", () => ({
   default: ({ onLoginSuccess }: { onLoginSuccess: () => void }) => (
     <button onClick={onLoginSuccess}>Mock Sign In</button>
