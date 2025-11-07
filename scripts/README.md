@@ -15,6 +15,10 @@ All project [Prerequisites](../README.md#prerequisites) met.
 
 - [`docker-compose-manager.sh`](./docker-compose-manager.sh): Wrapper around `docker-compose` that auto-detects GPU, forwards common arguments, and is used by `Makefile` targets like `up`, `down`, `logs`, and `restart`.
 
+- [`clean.sh`](./clean.sh): Cleans up temporary and cached files across the project. It supports selective or deep cleanup modes. Use `make clean` for common cases or `make clean-deep` to wipe everything.
+
+    Use `./scripts/clean.sh --help` to see documentatoin on using script directly for more fine-grained control.
+
 - [`format.sh`](./format.sh): Runs project formatters (e.g. Black, Ruff formatter for Python, Prettier for frontend). Use `make format` to run across the repo.
 
 - [`lint.sh`](./lint.sh): Runs linters (Ruff for Python, ESLint for web). Use `make lint` or run directly.
