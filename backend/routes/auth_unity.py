@@ -55,7 +55,7 @@ async def start_device_flow():
     """
     if not GOOGLE_CLIENT_ID_UNITY:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Google Client ID for Unity is not configured on the server.",
         )
 
@@ -65,10 +65,11 @@ async def start_device_flow():
         try:
             response = await client.post(GOOGLE_DEVICE_CODE_URL, data=payload)
             response.raise_for_status()
-            data = response.json()
+
+            data = await response.json()
+
             return DeviceStartResponse(**data)
         except httpx.HTTPStatusError as e:
-            # Forward the error from Google's servers
             raise HTTPException(
                 status_code=e.response.status_code,
                 detail=f"Failed to get device code from Google: {e.response.text}",
@@ -102,7 +103,7 @@ async def poll_for_token(request: Request, poll_request: DevicePollRequest):
 
     async with httpx.AsyncClient() as client:
         response = await client.post(GOOGLE_TOKEN_URL, data=payload)
-        data = response.json()
+        data = await response.json()
 
         # Google uses error codes to signal status
         error = data.get("error")
