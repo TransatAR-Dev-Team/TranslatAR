@@ -28,6 +28,8 @@ Examples:
   ./scripts/clean_temp_files.sh --docker --node --python
   ./scripts/clean_temp_files.sh --deep
 EOF
+
+  exit 0
 }
 
 PYTHON=false
@@ -40,7 +42,6 @@ UNITY=false
 # ----------------------------------------------------------------------
 if [[ $# -eq 0 ]]; then
   show_help
-  exit 0
 fi
 
 for arg in "$@"; do
@@ -68,9 +69,7 @@ for arg in "$@"; do
   esac
 done
 
-if [[ "$PYTHON" || "$NODE" || "$DOCKER" || "$UNITY" ]]; then
-  echo "🧹 Cleaning temporary and build files..."
-fi
+echo "🧹 Cleaning temporary and build files..."
 
 # ----------------------------------------------------------------------
 # Python cleanup
@@ -135,14 +134,14 @@ if [[ "$NODE" == true ]]; then
 fi
 
 # ----------------------------------------------------------------------
-# Optional: Unity cleanup
+# Unity cleanup
 # ----------------------------------------------------------------------
 if [[ "$UNITY" == true ]]; then
   UNITY_DIR="unity"
   if [[ -d "$UNITY_DIR" ]]; then
     echo
     echo "⚠️  WARNING: You are about to delete Unity temporary and build folders."
-    echo "   It will take a long time to reimport when you reopen the project."
+    echo "   It will take a long time to reimport and recompile when you reopen the project."
     read -rp "   Continue cleaning Unity artifacts? (y/N): " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
       echo "→ Cleaning Unity-generated directories under '$UNITY_DIR/'..."
@@ -165,9 +164,15 @@ if [[ "$UNITY" == true ]]; then
         "Assets/Unity.VisualScripting.Generated"
       )
       for dir in "${UNITY_CLEAN_DIRS[@]}"; do
+        echo "Deleting $dir directory..."
         find "$UNITY_DIR" -type d -path "$UNITY_DIR/$dir" -exec rm -rf {} + 2>/dev/null || true
       done
+      echo "Deleting logs..."
       find "$UNITY_DIR" -type f -name "*.log" -delete 2>/dev/null || true
+
+      echo "Deleting .csproj files..."
+      find "$UNITY_DIR" -type f -name "*.csproj" -delete 2>/dev/null || true
+
       echo "✅ Unity cleanup complete."
     else
       echo "⏭️  Skipped Unity cleanup."
@@ -180,11 +185,14 @@ fi
 # ----------------------------------------------------------------------
 if [[ "$DOCKER" == true ]]; then
   echo
-  echo "⚠️  WARNING: You are about to delete all unused Docker data."
-  echo "   This includes all containers, unused networks, dangling images, and build caches."
+  echo "⚠️  WARNING: You are about to delete all Docker data."
+  echo "   This command will stop TranslatAR Docker containers then remove all unused Docker data."
+  echo "   This includes all containers, unused networks, dangling images, and build caches, even those not from TranslatAR."
   echo "   It will take a long time to re-download images rebuild containers, and download Ollama models again."
   read -rp "   Continue cleaning Docker system? (y/N): " confirm
   if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    echo "Stopping Docker containers (if they exist)..."
+    make down
     echo "🐳 Cleaning Docker system caches and volumes..."
     docker system prune -af --volumes
     echo "✅ Docker cleanup complete."
