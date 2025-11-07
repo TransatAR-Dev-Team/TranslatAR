@@ -63,6 +63,9 @@ Web Portal: <http://localhost:5173>
   - [Summarization Service](./summarization-service/README.md)
   - [Unity Frontend](./unity/README.md)
 
+- **Scripts:** a collection of shell and Python scripts used by the project (specicially `make`).
+  - [Scripts README](./scripts/README.md)
+
 - **Developer Guides:**
   - [Python Services Development Guide](./docs/developer_guide.python_services.md)
   - [VS Code Dev Containers Guide](./docs/dev_container.md)
