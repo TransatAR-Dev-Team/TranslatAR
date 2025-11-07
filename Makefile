@@ -48,5 +48,11 @@ format: ## Format all source code with Black, Ruff Formatter, and Prettier.
 lint: ## Lint all source code with Ruff and ESLint.
 	@./scripts/lint.sh
 
+clean: ## Clean up temporary Python and Node files.
+	@./scripts/clean.sh --python --node
+
+clean-deep: ## Clean up ALL temporary files, including Unity and Docker.
+	@./scripts/clean.sh --deep
+
 help: ## Show this help message.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
