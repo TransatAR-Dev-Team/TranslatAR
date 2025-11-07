@@ -14,8 +14,9 @@ This directory contains the Unity frontend for the TranslatAR project. It is a V
 - [Unity Hub](https://docs.unity3d.com/hub/manual/InstallHub.html) installed
 - Unity version `2022.3.62f1` with **Android Build Support** (and subcomponents) installed
 - Windows PC or Apple Silicon Mac
-  > Not supported on Linux or Intel Macs  
+  > Not supported on Linux or Intel Macs
 - A physical Meta Quest 3 headset, or use the **Meta XR Simulator** in the Unity Editor
+- A `.env` file located in the root of the project correctly configured. See [TranslatAR - Initial Set Up](../README.md#initial-set-up).
 
 ## Getting Started
 
@@ -45,10 +46,10 @@ Tests are separated into two types:
 
 ## Managing Dependencies
 
-Dependencies are handled through Unity’s Package Manager.  
-To add, update, or remove a package:  
+Dependencies are handled through Unity’s Package Manager.
+To add, update, or remove a package:
 1. Open Unity Editor
-2. Go to *Window > Package Manager*  
-3. Make changes, then commit the updated `Packages/manifest.json` and `Packages/packages-lock.json` files  
+2. Go to *Window > Package Manager*
+3. Make changes, then commit the updated `Packages/manifest.json` and `Packages/packages-lock.json` files
 
-> Do **not** commit the `Library/` or `Builds/` directories. They are machine-specific.  
+> Do **not** commit the `Library/` or `Builds/` directories. They are machine-specific.
