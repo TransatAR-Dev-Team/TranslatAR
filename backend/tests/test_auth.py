@@ -1,5 +1,3 @@
-# backend/tests/test_settings.py
-
 from types import SimpleNamespace
 
 import pytest

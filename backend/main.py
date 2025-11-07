@@ -45,7 +45,6 @@ app.include_router(websocket_router)
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 
 # --- Auth Unity Router ---
-# --- Auth Device Flow Router ---
 router.include_router(
     auth_unity_router, prefix="/auth/device", tags=["Authentication (Device Flow)"]
 )
