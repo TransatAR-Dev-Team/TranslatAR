@@ -43,7 +43,7 @@ public class WebSocketManager : MonoBehaviour
     /// The WebSocket connection instance used to communicate with the backend server.
     /// </summary>
     private IWebSocketClient ws;
-    
+
     /// <summary>
     /// A flag indicating whether the websocket endpoint is connected.
     /// </summary>
@@ -92,7 +92,7 @@ public class WebSocketManager : MonoBehaviour
     {
         ConnectWebSocket();
     }
-    
+
     /// <summary>
     /// Processes queued actions from WebSocket callbacks on the main thread each frame.
     /// </summary>
@@ -115,6 +115,7 @@ public class WebSocketManager : MonoBehaviour
     {
         try
         {
+            Debug.Log("Attempting to connect to WebSocket at: " + websocketUrl);
             ws = webSocketFactory(websocketUrl);
 
             ws.OnOpen += (sender, e) =>
@@ -170,9 +171,11 @@ public class WebSocketManager : MonoBehaviour
 
             ws.Connect();
         }
-        catch (Exception e)
+        catch (System.Exception e)
         {
-            Debug.LogError("Failed to connect WebSocket: " + e.Message);
+            Debug.LogError($"[WebSocketManager] FATAL: Failed to initiate WebSocket connection: {e.Message}");
+            isConnected = false;
+            UpdateSubtitle("Failed to connect to server.");
         }
     }
 

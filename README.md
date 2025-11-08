@@ -96,7 +96,15 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
     git clone https://github.com/TransatAR-Dev-Team/TranslatAR.git && cd TranslatAR
     ```
 
-2. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. Download the hooks takes several minutes.
+2. Set up `.env` file. Copy the template to the real file:
+
+    ```sh
+    cp .env.example .env
+    ```
+
+    Then follow the instructions in `.env` and add the missing values.
+
+3. Activate `pre-commit`. These commands install the pre-commit hooks into your local git configuration and downloaded the needed dependencies. `pre-commmit` will automatically format and lint your code every time you commit. **This is a required step for all contributors.** This step is only required once per clone. Download the hooks takes several minutes.
 
     ```sh
     pre-commit install
@@ -105,15 +113,15 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
     `pre-commit` will now run its hooks whenever you make a commit. Read more [here](#code-quality).
 
-3. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
+4. Start all the backend services. This runs a script that will automatically detect if you have an NVIDIA GPU and apply the correct configuration. The first time you run this, it may take a while to download and build the Docker images.
 
     ```sh
     make up
     ```
 
-4. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
+5. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
-5. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
+6. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
 
     ```sh
     docker exec -it ollama ollama pull phi3:mini
@@ -141,11 +149,23 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
 9. In the Unity Editor's taskbar, check *Meta* > *Meta XR Simulator* > *Activate*
 
-    > Leaving *Meta XR Simulator* set to *Deactivate* only renders the subtitle box in 2D and saves resources.
+    > Leaving *Meta XR Simulator* set to *Deactivate* only renders the game ojects and saves resources.
 
-10. Ensure the "Laptop" button next to the transpot buttons is blue. This runs the app on the headset simulator. Example:
+    When the simulator is enabled, the "Laptop" button next to the transpot buttons is blue. Example:
 
-    ![Laptop button is selected/blue](docs/images/laptop_button.png)
+    ![Laptop button is selected/blue](./docs/images/laptop_button.png)
+
+1.  Load environment variables. In the *Project* tab at the bottom of the editor, navigate to `Assets/Resources` in the file system. Right click within that directory and select *Create* > *TranslatAR* > *Environment Config*.
+
+    Example:
+
+    ![The correct right click menu to add EnvConfig](./docs/images/right_click_menu.png)
+
+    Then, in the menu bar, select *TranslatAR* > *Update Environment Config from .env*.
+
+    Example:
+
+    ![The correct taskbar menu item](./docs/images/taskbar.png)
 
 ## Demo
 
@@ -163,69 +183,23 @@ To demonstrate the connection between the containerized backend and the Unity fr
 
    Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
 
-3. **Click your mouse inside the simulator window** to give it focus.
+3. In the Unity Editor, click the *Login* button. Navigate to <https://google.com/device> and enter the code on screen. Authorize the login with your Google account. In a moment, the panel will welcome you with your "username".
 
-4. **Press and hold the `B` button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
+4. **Click your mouse inside the simulator window** to give it focus.
 
-5. **Release the `B` button**. The text will change to *"Processing audio..."*.
+5. **Press and hold the `B` button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
 
-6. After a moment, the text will update with the Spanish translation of what you said.
+6. **Release the `B` button**. The text will change to *"Processing audio..."*.
 
-7. Go to <http://localhost:5173> to see the web portal. The new translation you just created will be at the top of the history log.
+7. After a moment, the text will update with the Spanish translation of what you said.
 
-8. Repeat steps 4-6 to add more translations. Refresh the web portal to see the history update.
+8. Go to <http://localhost:5173> to see the web portal. The new translation you just created will be at the top of the history log.
 
-9. Type/copy some text into the "Summarize Text" text box on the web portal. Select a summary length (short, medium, long) and click the "Summarize" button. A summary of the text will be generated.
+9. Click the *Login* button in the upper right corner. Login with a google account. Your email will apear next to the login button. You can then click *Logout*.
 
-### Data flow demonstrated
+10. Repeat steps 4-6 to add more translations. Refresh the web portal to see the history update.
 
-#### Translation
-
-1. The user presses and holds a button in the Unity frontend.
-
-2. Unity captures live audio from the microphone into an audio clip.
-
-3. When the user releases the button, Unity converts the audio clip to a WAV byte stream and sends it to the backend.
-
-4. The backend forwards the audio file to the STT service.
-
-5. The STT service processes the audio using the Whisper model and returns the transcribed text to the backend.
-
-6. The backend sends the transcribed text to the translation service.
-
-7. The translation service returns the translated text to the backend.
-
-8. The backend saves the original text, translated text, and languages to the database.
-
-9. The backend returns the original and translated text to the Unity frontend.
-
-10. Unity receives the response and displays the translated text in the UI.
-
-11. The web portal periodically or manually requests the translation history from the backend.
-
-12. The backend fetches the conversation history from the database and returns it to the web portal.
-
-13. The web portal displays the updated conversation history.
-
-#### Summarization
-
-1. A user on the web portal enters text, selects a summary length, and clicks the "Summarize" button.
-
-2. The web portal sends the text and length preference to the backend's `/api/summarize` endpoint.
-
-3. The backend forwards the request to the `summarization-service`.
-
-4. The `summarization-service` constructs a prompt based on the desired length and text, and sends it to the `ollama` service.
-
-5. The `ollama` service uses its language model (`phi3:mini`) to generate a summary.
-
-6. The `ollama` service returns the generated summary to the `summarization-service`.
-
-7. The `summarization-service` forwards the summary back to `backend`.
-
-8. `backend` returns the summary to the web portal.
-
-9. The `web-portal` UI updates to display the generated summary.
+11. Type/copy some text into the "Summarize Text" text box on the web portal. Select a summary length (short, medium, long) and click the "Summarize" button. A summary of the text will be generated.
 
 ### Demo clean up
 
@@ -334,7 +308,7 @@ To run on all files:
 pre-commit run --all-files
 ```
 
-**Using `Make`:**
+**Using `make`:**
 
 To format and lint all code:
 

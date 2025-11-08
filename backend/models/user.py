@@ -1,6 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+
 from bson import ObjectId
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -8,10 +10,11 @@ class PyObjectId(ObjectId):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v, _):
         if not ObjectId.is_valid(v):
             raise ValueError("Invalid ObjectId")
         return ObjectId(v)
+
 
 class UserModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
@@ -21,15 +24,18 @@ class UserModel(BaseModel):
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        json_encoders = {ObjectId: str}
-        schema_extra = {
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str},
+        json_schema_extra={
             "example": {
-                "googleId": "1234567890abcdef",
+                "id": "user_id_123456",
+                "googleId": "12345678901234567890",
                 "email": "user@example.com",
                 "username": "user123",
                 "createdAt": "2025-10-28T12:00:00Z",
-                "updatedAt": "2025-10-28T12:00:00Z"
+                "updatedAt": "2025-10-28T12:00:00Z",
             }
-        }
+        },
+    )

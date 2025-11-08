@@ -1,49 +1,76 @@
-interface GoogleLoginPayload {
-    googleId: string;
-    email: string;
-}
+import type { User } from "../models/User";
 
-interface User {
-    _id: string;
-    googleId: string;
-    email: string;
-    username?: string;
-    profilePicPath?: string;
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
 }
 
 /**
- * Sends Google login details to the backend to find or create a user.
- * @param payload - The login details containing googleId and email.
- * @returns A promise that resolves to the User object from the backend.
+ * Sends a Google ID Token to the backend to log in and get an application JWT.
+ * @param token - The raw ID Token string from Google.
+ * @returns A promise that resolves to the application's access token and token type.
  */
-export const loginWithGoogleApi = async (payload: GoogleLoginPayload): Promise<User> => {
-    if (!payload.googleId || !payload.email) throw new Error("Missing googleId or email in login payload.");
+export const loginWithGoogleApi = async (
+  token: string,
+): Promise<LoginResponse> => {
+  if (!token) {
+    throw new Error("Google ID Token is missing.");
+  }
 
-    const targetUrl = `/api/auth/google/login`;
-    console.log(`[API] Attempting Google login POST to: ${targetUrl}`);
+  const targetUrl = `/api/auth/google/login`;
+  console.log(`[API] Attempting login POST to: ${targetUrl}`);
 
-    try {
-        const response = await fetch(targetUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify(payload),
-        });
-        console.log(`[API] Google login response status: ${response.status}`);
+  try {
+    const response = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      // The backend expects a JSON body with a 'token' key
+      body: JSON.stringify({ token: token }),
+    });
 
-        const responseData = await response.json();
+    console.log(`[API] Google login response status: ${response.status}`);
+    const responseData = await response.json();
 
-        if (!response.ok) {
-            const errorMessage = responseData?.error || `Backend Google login failed with status ${response.status}`;
-            console.error(`[API] Error during Google login: ${errorMessage}`, responseData);
-            throw new Error(errorMessage);
-        }
-
-        console.log("[API] Google login successful, user data received:", responseData);
-        return responseData as User; // Assume response matches User structure
-
-    } catch (error) {
-        console.error(`[API] Network or parsing error during Google login:`, error);
-        if (error instanceof Error) throw error;
-        throw new Error("An unknown error occurred during the login process.");
+    if (!response.ok) {
+      const errorMessage =
+        responseData?.detail ||
+        `Backend Google login failed with status ${response.status}`;
+      console.error(
+        `[API] Error during Google login: ${errorMessage}`,
+        responseData,
+      );
+      throw new Error(errorMessage);
     }
+
+    console.log(
+      "[API] Google login successful, app token received:",
+      responseData,
+    );
+    return responseData as LoginResponse;
+  } catch (error) {
+    console.error(`[API] Network or parsing error during Google login:`, error);
+    if (error instanceof Error) throw error;
+    throw new Error("An unknown error occurred during the login process.");
+  }
+};
+
+/**
+ * Fetches the current user's details from the backend using the application's JWT.
+ * @param token - The application's JWT, received from the `loginWithGoogleApi` endpoint.
+ * @returns A promise that resolves to the full User object from the backend.
+ */
+export const getMeApi = async (token: string): Promise<User> => {
+  if (!token) throw new Error("Authentication token is missing.");
+
+  const response = await fetch("/api/users/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user details. Token might be invalid.");
+  }
+  return response.json();
 };

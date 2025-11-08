@@ -2,8 +2,8 @@ import json
 
 from fastapi.testclient import TestClient
 
-import websocket as ws_mod
 from main import app
+from routes import websocket as ws_mod
 
 
 def _pack(meta: dict, audio: bytes) -> bytes:

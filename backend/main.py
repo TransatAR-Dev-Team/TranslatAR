@@ -7,11 +7,15 @@ import httpx
 import motor.motor_asyncio
 from fastapi import APIRouter, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from pymongo.errors import ConnectionFailure
 
+from models.settings import SettingsModel, SettingsResponse
+from models.summarization import SummarizationRequest, SummarizationResponse
+from models.translation import TranslationResponse
 from routes.auth import router as auth_router
-from websocket import router as websocket_router
+from routes.auth_unity import router as auth_unity_router
+from routes.users import router as users_router
+from routes.websocket import router as websocket_router
 
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
@@ -31,11 +35,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -- Users Router --
+router.include_router(users_router, prefix="/users", tags=["Users"])
+
 # --- WebSocket Router ---
 app.include_router(websocket_router)
 
 # --- Auth Router ---
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+# --- Auth Unity Router ---
+router.include_router(
+    auth_unity_router, prefix="/auth/device", tags=["Authentication (Device Flow)"]
+)
 
 # --- Database Connection ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
@@ -43,35 +55,6 @@ db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
 app.state.db = db
-
-
-# --- Pydantic Models ---
-class TranslationResponse(BaseModel):
-    original_text: str
-    translated_text: str
-
-
-class SummarizationRequest(BaseModel):
-    text: str
-    length: str = "medium"
-
-
-class SummarizationResponse(BaseModel):
-    summary: str
-
-
-class SettingsModel(BaseModel):
-    source_language: str = "en"
-    target_language: str = "es"
-    chunk_duration_seconds: float = 8.0
-    target_sample_rate: int = 48000
-    silence_threshold: float = 0.01
-    chunk_overlap_seconds: float = 0.5
-    websocket_url: str = "ws://localhost:8000/ws"
-
-
-class SettingsResponse(BaseModel):
-    settings: SettingsModel
 
 
 # --- Endpoints ---
