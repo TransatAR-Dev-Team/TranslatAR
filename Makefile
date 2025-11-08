@@ -1,7 +1,21 @@
+# -----------------------------------------------
+# Catch-all rule — ignore extra args like `backend`
+# -----------------------------------------------
+%:
+	@:
+
+# -----------------------------------------------
+# Variables
+# -----------------------------------------------
+
 # This captures all command-line arguments except for the target name.
 # It allows passing arguments to the underlying commands.
 # Example: `make logs backend` will pass `backend` to the logs command.
 ARGS = $(filter-out $@,$(MAKECMDGOALS))
+
+# -----------------------------------------------
+# Targets
+# -----------------------------------------------
 
 # By default, running 'make' will show the help message.
 .DEFAULT_GOAL := help
@@ -20,13 +34,16 @@ down: ## Stop and remove all services.
 restart: ## Restart all services.
 	@./scripts/docker-compose-manager.sh restart
 
+rebuild: ## Rebuild specific service(s) or all if none provided. Ex: `make rebuild <service name>`.
+	@echo "Rebuilding service(s): $(ARGS)"
+	@./scripts/docker-compose-manager.sh down $(ARGS)
+	@./scripts/docker-compose-manager.sh up --build -d $(ARGS)
+
 logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
 	@./scripts/docker-compose-manager.sh logs $(ARGS)
 
-unity-editor: ## Open the Unity project in the editor (macOS/Windows only).
+open-unity: ## Open the Unity project in the editor (macOS/Windows only).
 	@./scripts/open_unity_editor.sh
-
-open-unity: unity-editor ## Alias for `unity-editor`.
 
 test: ## Run all applicable test suites (Unit, Integration, Unity).
 	@./scripts/run_all_tests.sh
