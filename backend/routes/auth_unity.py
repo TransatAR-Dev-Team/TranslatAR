@@ -65,7 +65,7 @@ async def start_device_flow():
             response = await client.post(GOOGLE_DEVICE_CODE_URL, data=payload)
             response.raise_for_status()
 
-            data = await response.json()
+            data = response.json()
 
             return DeviceStartResponse(**data)
         except httpx.HTTPStatusError as e:
@@ -102,7 +102,7 @@ async def poll_for_token(request: Request, poll_request: DevicePollRequest):
 
     async with httpx.AsyncClient() as client:
         response = await client.post(GOOGLE_TOKEN_URL, data=payload)
-        data = await response.json()
+        data = response.json()
 
         # Google uses error codes to signal status
         error = data.get("error")

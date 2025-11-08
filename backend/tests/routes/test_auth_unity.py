@@ -39,8 +39,6 @@ def override_db_collection(monkeypatch, fake_users_collection):
 
 
 # --- Tests for /start endpoint ---
-
-
 def test_start_device_flow_success(client, mocker, monkeypatch):
     monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", "fake-id")
 
@@ -58,7 +56,7 @@ def test_start_device_flow_success(client, mocker, monkeypatch):
                 def raise_for_status(self):
                     pass
 
-                async def json(self):
+                def json(self):
                     return {
                         "device_code": "c",
                         "user_code": "uc",
@@ -95,7 +93,7 @@ def test_start_device_flow_google_error(client, mocker, monkeypatch):
                 def raise_for_status(self):
                     raise httpx.HTTPStatusError("Error", request=mocker.Mock(), response=self)
 
-                async def json(self):
+                def json(self):
                     return {}
 
             return MockResponse()
@@ -108,8 +106,6 @@ def test_start_device_flow_google_error(client, mocker, monkeypatch):
 
 
 # --- Tests for /poll endpoint ---
-
-
 def test_poll_authorization_pending(client, mocker, monkeypatch):
     monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", "fake-id")
     monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_SECRET_UNITY", "fake-secret")
@@ -126,7 +122,7 @@ def test_poll_authorization_pending(client, mocker, monkeypatch):
                 def raise_for_status(self):
                     pass
 
-                async def json(self):
+                def json(self):
                     return {"error": "authorization_pending"}
 
             return MockResponse()
@@ -161,7 +157,7 @@ def test_poll_success_new_user(client, mocker, monkeypatch, fake_users_collectio
                 def raise_for_status(self):
                     pass
 
-                async def json(self):
+                def json(self):
                     return {"id_token": "fake_google_id_token"}
 
             return MockResponse()
@@ -201,7 +197,7 @@ def test_poll_success_existing_user(client, mocker, monkeypatch, fake_users_coll
                 def raise_for_status(self):
                     pass
 
-                async def json(self):
+                def json(self):
                     return {"id_token": "fake_google_id_token"}
 
             return MockResponse()
