@@ -1,5 +1,4 @@
 import os
-from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request, status
@@ -8,10 +7,10 @@ from google.oauth2 import id_token
 from pydantic import BaseModel
 
 from security.auth import create_access_token
+from services.user_service import get_or_create_user_by_google_id
+
 
 # --- Pydantic Models ---
-
-
 class DeviceStartResponse(BaseModel):
     """Data sent to Unity after starting the login flow."""
 
@@ -124,21 +123,10 @@ async def poll_for_token(request: Request, poll_request: DevicePollRequest):
         except ValueError as e:
             raise HTTPException(status_code=401, detail=f"Invalid Google ID token: {e}") from e
 
-        # --- Find or create the user in our database ---
         db = request.app.state.db
         users_collection = db.get_collection(USERS_COLLECTION)
-        user = await users_collection.find_one({"googleId": google_id})
 
-        if not user:
-            new_user_doc = {
-                "googleId": google_id,
-                "email": email,
-                "username": email.split("@")[0],
-                "createdAt": datetime.now(UTC),
-                "updatedAt": datetime.now(UTC),
-            }
-            await users_collection.insert_one(new_user_doc)
-            user = await users_collection.find_one({"googleId": google_id})
+        user = await get_or_create_user_by_google_id(users_collection, google_id, email)
 
         if not user:
             raise HTTPException(status_code=500, detail="Could not create or retrieve user.")

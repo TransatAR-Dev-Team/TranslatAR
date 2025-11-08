@@ -1,11 +1,11 @@
 import os
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
 from security.auth import create_access_token
+from services.user_service import get_or_create_user_by_google_id
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ async def google_login(request: Request, token: str = Body(..., embed=True)):
         # Verify the ID token with Google's servers
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), GOOGLE_CLIENT_ID)
 
-        googleId = idinfo["sub"]  # 'sub' is the standard claim for user ID
+        googleId = idinfo["sub"]
         email = idinfo["email"]
 
     except ValueError as e:
@@ -38,21 +38,7 @@ async def google_login(request: Request, token: str = Body(..., embed=True)):
     db = request.app.state.db
     users_collection = db.get_collection(USERS_COLLECTION)
 
-    # Check if the user already exists in our database
-    user = await users_collection.find_one({"googleId": googleId})
-
-    if not user:
-        # If user doesn't exist, create a new one
-        username = email.split("@")[0]
-        new_user_doc = {
-            "googleId": googleId,
-            "email": email,
-            "username": username,
-            "createdAt": datetime.now(UTC),
-            "updatedAt": datetime.now(UTC),
-        }
-        await users_collection.insert_one(new_user_doc)
-        user = await users_collection.find_one({"googleId": googleId})
+    user = await get_or_create_user_by_google_id(users_collection, googleId, email)
 
     if not user:
         raise HTTPException(
