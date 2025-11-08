@@ -15,7 +15,7 @@ from models.translation import TranslationResponse
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
 from routes.users import router as users_router
-from websocket import router as websocket_router
+from routes.websocket import router as websocket_router
 
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")

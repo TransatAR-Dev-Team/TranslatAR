@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import websocket as ws_mod
+from routes import websocket as ws_mod
 
 
 class StubWS:
