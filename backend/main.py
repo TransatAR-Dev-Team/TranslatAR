@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo.errors import ConnectionFailure
 
 from config.database import client, db
-from models.settings import SettingsModel, SettingsResponse
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
 from routes.history import router as history_router
 from routes.process_audio import router as process_audio_router
+from routes.settings import router as settings_router
 from routes.summarization import router as summarization_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
@@ -39,6 +39,7 @@ router.include_router(
 )
 router.include_router(history_router, prefix="/history", tags=["History"])
 router.include_router(process_audio_router, prefix="/process-audio", tags=["Audio Processing"])
+router.include_router(settings_router, prefix="/settings", tags=["Settings"])
 router.include_router(summarization_router, prefix="/summarize", tags=["Summarization"])
 router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
@@ -49,57 +50,7 @@ settings_collection = db.get_collection("settings")
 app.state.db = db
 
 
-# --- Endpoints ---
-@router.get("/settings", response_model=SettingsResponse)
-async def get_settings():
-    """
-    Retrieves the current application settings from the database.
-    If no settings exist, returns default values.
-    """
-    try:
-        settings_doc = await settings_collection.find_one({})
-
-        if not settings_doc:
-            # Return default settings if none exist
-            default_settings = SettingsModel()
-            return SettingsResponse(settings=default_settings)
-        else:
-            # Remove MongoDB _id field before returning
-            settings_doc.pop("_id", None)
-            settings = SettingsModel(**settings_doc)
-            return SettingsResponse(settings=settings)
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve settings from database: {e}",
-        ) from e
-
-
-@router.post("/settings", response_model=SettingsResponse)
-async def save_settings(settings_update: SettingsModel):
-    """
-    Saves or updates application settings in the database.
-    """
-    try:
-        # Convert to dict for MongoDB insertion
-        settings_dict = settings_update.model_dump()
-
-        # Upsert the settings (insert if doesn't exist, update if exists)
-        await settings_collection.replace_one(
-            {},  # empty filter matches any document (there's only one settings document)
-            settings_dict,
-            upsert=True,
-        )
-
-        return SettingsResponse(settings=settings_update)
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to save settings to database: {e}"
-        ) from e
-
-
+# --- Health Check Endpoint ---
 @router.get("/health")
 async def health_check():
     """
