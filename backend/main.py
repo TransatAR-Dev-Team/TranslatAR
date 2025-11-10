@@ -1,17 +1,16 @@
 import os
 
-import httpx
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo.errors import ConnectionFailure
 
 from config.database import client, db
 from models.settings import SettingsModel, SettingsResponse
-from models.summarization import SummarizationRequest, SummarizationResponse
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
 from routes.history import router as history_router
 from routes.process_audio import router as process_audio_router
+from routes.summarization import router as summarization_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
 
@@ -40,6 +39,7 @@ router.include_router(
 )
 router.include_router(history_router, prefix="/history", tags=["History"])
 router.include_router(process_audio_router, prefix="/process-audio", tags=["Audio Processing"])
+router.include_router(summarization_router, prefix="/summarize", tags=["Summarization"])
 router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
@@ -50,26 +50,6 @@ app.state.db = db
 
 
 # --- Endpoints ---
-
-
-@router.post("/summarize", response_model=SummarizationResponse)
-async def get_summary(request: SummarizationRequest):
-    """
-    Receives text and a desired length, then forwards to the summarization service.
-    """
-    try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            payload = {"text": request.text, "length": request.length}
-            response = await client.post(f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload)
-            response.raise_for_status()
-            summary_text = response.json().get("summary")
-            if summary_text is None:
-                raise HTTPException(status_code=500, detail="Summarization failed.")
-            return SummarizationResponse(summary=summary_text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error during summarization: {e}") from e
-
-
 @router.get("/settings", response_model=SettingsResponse)
 async def get_settings():
     """
