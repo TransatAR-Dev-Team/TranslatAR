@@ -14,6 +14,7 @@ from models.summarization import SummarizationRequest, SummarizationResponse
 from models.translation import TranslationResponse
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
+from routes.history import router as history_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
 
@@ -35,19 +36,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -- Users Router --
-router.include_router(users_router, prefix="/users", tags=["Users"])
-
-# --- WebSocket Router ---
-app.include_router(websocket_router)
-
-# --- Auth Router ---
-router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-
-# --- Auth Unity Router ---
+# --- Include Routers ---
+router.include_router(auth_router, prefix="/auth", tags=["Authentication", "Web OAuth"])
 router.include_router(
-    auth_unity_router, prefix="/auth/device", tags=["Authentication (Device Flow)"]
+    auth_unity_router, prefix="/auth/device", tags=["Authentication", "Device OAuth"]
 )
+router.include_router(history_router, prefix="/history", tags=["History"])
+router.include_router(users_router, prefix="/users", tags=["Users"])
+app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
 # --- Database Connection ---
 translations_collection = db.get_collection("translations")
@@ -113,26 +109,6 @@ async def process_audio_and_translate(
             print(f"CRITICAL: Failed to save translation to database: {e}")
 
         return TranslationResponse(original_text=original_text, translated_text=translated_text)
-
-
-@router.get("/history")
-async def get_history():
-    """
-    Retrieves the translation records from the database.
-    """
-    try:
-        history_cursor = translations_collection.find({}).sort("timestamp", -1).limit(50)
-
-        history_list = []
-        async for doc in history_cursor:
-            doc["_id"] = str(doc["_id"])
-            history_list.append(doc)
-
-        return {"history": history_list}
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve history from database: {e}"
-        ) from e
 
 
 @router.post("/summarize", response_model=SummarizationResponse)
