@@ -1,20 +1,17 @@
-# ruff: noqa: B008
-
 import os
-from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo.errors import ConnectionFailure
 
 from config.database import client, db
 from models.settings import SettingsModel, SettingsResponse
 from models.summarization import SummarizationRequest, SummarizationResponse
-from models.translation import TranslationResponse
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
 from routes.history import router as history_router
+from routes.process_audio import router as process_audio_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
 
@@ -42,6 +39,7 @@ router.include_router(
     auth_unity_router, prefix="/auth/device", tags=["Authentication", "Device OAuth"]
 )
 router.include_router(history_router, prefix="/history", tags=["History"])
+router.include_router(process_audio_router, prefix="/process-audio", tags=["Audio Processing"])
 router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
@@ -52,63 +50,6 @@ app.state.db = db
 
 
 # --- Endpoints ---
-
-
-@router.post("/process-audio", response_model=TranslationResponse)
-async def process_audio_and_translate(
-    audio_file: UploadFile = File(...),
-    source_lang: str = Form("en"),
-    target_lang: str = Form("es"),
-):
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        # Step 1: STT call
-        try:
-            stt_files = {
-                "audio_file": (
-                    audio_file.filename,
-                    await audio_file.read(),
-                    audio_file.content_type,
-                )
-            }
-            stt_response = await client.post(f"{STT_SERVICE_URL}/transcribe", files=stt_files)
-            stt_response.raise_for_status()
-            original_text = stt_response.json().get("transcription")
-            if not original_text:
-                raise HTTPException(status_code=500, detail="Transcription failed.")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error in STT service: {e}") from e
-
-        # Step 2: Translation call
-        try:
-            translation_payload = {
-                "text": original_text,
-                "source_lang": source_lang,
-                "target_lang": target_lang,
-            }
-            translation_response = await client.post(
-                f"{TRANSLATION_SERVICE_URL}/translate", json=translation_payload
-            )
-            translation_response.raise_for_status()
-            translated_text = translation_response.json().get("translated_text")
-            if translated_text is None:
-                raise HTTPException(status_code=500, detail="Translation failed.")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error in Translation service: {e}") from e
-
-        # Step 3: Save to the DB
-        try:
-            translation_log = {
-                "original_text": original_text,
-                "translated_text": translated_text,
-                "source_lang": source_lang,
-                "target_lang": target_lang,
-                "timestamp": datetime.now(UTC),
-            }
-            await translations_collection.insert_one(translation_log)
-        except Exception as e:
-            print(f"CRITICAL: Failed to save translation to database: {e}")
-
-        return TranslationResponse(original_text=original_text, translated_text=translated_text)
 
 
 @router.post("/summarize", response_model=SummarizationResponse)
