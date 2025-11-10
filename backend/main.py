@@ -4,11 +4,11 @@ import os
 from datetime import UTC, datetime
 
 import httpx
-import motor.motor_asyncio
 from fastapi import APIRouter, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo.errors import ConnectionFailure
 
+from config.database import client, db
 from models.settings import SettingsModel, SettingsResponse
 from models.summarization import SummarizationRequest, SummarizationResponse
 from models.translation import TranslationResponse
@@ -50,25 +50,12 @@ router.include_router(
 )
 
 # --- Database Connection ---
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DATABASE_URL)
-db = client.translatar_db
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
 app.state.db = db
 
 
 # --- Endpoints ---
-
-
-@router.get("/db-hello")
-async def read_db_hello():
-    hello_db = client.helloworld_db
-    hello_coll = hello_db.get_collection("messages")
-    greeting = await hello_coll.find_one({"type": "greeting"})
-    if not greeting:
-        await hello_coll.insert_one({"type": "greeting", "message": "Hello from MongoDB!"})
-        greeting = await hello_coll.find_one({"type": "greeting"})
-    return {"message": greeting["message"]}
 
 
 @router.post("/process-audio", response_model=TranslationResponse)
