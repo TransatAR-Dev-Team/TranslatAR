@@ -1,5 +1,6 @@
 import os
 from datetime import UTC, datetime, timedelta
+from typing import Optional
 
 from bson import ObjectId
 from fastapi import Depends, HTTPException, Request, status
@@ -54,3 +55,26 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
         raise credentials_exception
 
     return user
+
+async def verify_jwt_token(token: str) -> Optional[str]:
+    """
+    Verify JWT token and return userId if valid.
+    Used for WebSocket authentication where we can't use FastAPI dependencies.
+    
+    Args:
+        token: JWT token string
+        
+    Returns:
+        User ID string if valid, None otherwise
+    """
+    if not token or not JWT_SECRET_KEY:
+        return None
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str | None = payload.get("sub")
+        return user_id
+    except JWTError:
+        return None
+    except Exception:
+        return None
