@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from security.auth import verify_jwt_token
 
 from security.auth import verify_jwt_token
@@ -14,6 +15,7 @@ router = APIRouter()
 # Service URLs from environment
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
+
 
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
