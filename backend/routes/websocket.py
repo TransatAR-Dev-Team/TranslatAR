@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from security.auth import verify_jwt_token
 
 router = APIRouter()
@@ -13,11 +14,12 @@ router = APIRouter()
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
 
+
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     print("Unity client connected!")
-    
+
     # Store userId for this connection
     user_id = None
 
@@ -35,7 +37,7 @@ async def websocket_endpoint(websocket: WebSocket):
             metadata = json.loads(metadata_json)
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
-            
+
             # Check for JWT token in metadata
             jwt_token = metadata.get("jwt_token")
             if jwt_token:
@@ -60,7 +62,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def process_audio_chunk(
-    websocket: WebSocket, audio_data: bytes, source_lang: str, target_lang: str
+    websocket: WebSocket,
+    audio_data: bytes,
+    source_lang: str,
+    target_lang: str,
+    user_id: str,
 ):
     """
     Process audio chunk: transcribe, translate, and save to database
