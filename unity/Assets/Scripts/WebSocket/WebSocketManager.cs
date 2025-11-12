@@ -220,10 +220,8 @@ public class WebSocketManager : MonoBehaviour
             target_lang = targetLanguage,
             sample_rate = AudioSettings.outputSampleRate,
             channels = 1,
-            jwtToken = jwtToken
+            jwt_token = jwtToken
         });
-
-        string metadata = JsonUtility.ToJson(metadataObj);
 
         byte[] metadataBytes = Encoding.UTF8.GetBytes(metadata);
         byte[] metadataLength = BitConverter.GetBytes(metadataBytes.Length);
