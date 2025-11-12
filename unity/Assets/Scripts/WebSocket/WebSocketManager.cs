@@ -194,9 +194,10 @@ public class WebSocketManager : MonoBehaviour
 
         try
         {
-            byte[] packagedData = PackageAudioData(audioData);
+            string jwtToken = AuthManager.Instance?.CurrentJwt;
+            byte[] packagedData = PackageAudioData(audioData, jwtToken);
             ws.Send(packagedData);
-            Debug.Log($"Sent audio chunk: {audioData.Length} bytes");
+            Debug.Log($"Sent audio chunk: {audioData.Length} bytes (authenticated: {!string.IsNullOrEmpty(jwtToken)})");
         }
         catch (Exception e)
         {
@@ -210,7 +211,7 @@ public class WebSocketManager : MonoBehaviour
     /// </summary>
     /// <param name="audioData">The raw audio data bytes.</param>
     /// <returns>The fully packaged byte array ready for transmission.</returns>
-    public byte[] PackageAudioData(byte[] audioData)
+    public byte[] PackageAudioData(byte[] audioData, string jwtToken = null)
     {
         // Create metadata JSON
         string metadata = JsonUtility.ToJson(new MetadataPayload
@@ -218,8 +219,11 @@ public class WebSocketManager : MonoBehaviour
             source_lang = sourceLanguage,
             target_lang = targetLanguage,
             sample_rate = AudioSettings.outputSampleRate,
-            channels = 1
+            channels = 1,
+            jwtToken = jwtToken
         });
+
+        string metadata = JsonUtility.ToJson(metadataObj);
 
         byte[] metadataBytes = Encoding.UTF8.GetBytes(metadata);
         byte[] metadataLength = BitConverter.GetBytes(metadataBytes.Length);
@@ -292,4 +296,5 @@ public class MetadataPayload
     public string target_lang;
     public int sample_rate;
     public int channels;
+    public string jwt_token;
 }
