@@ -13,22 +13,6 @@ router = APIRouter()
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
 
-async def verify_jwt_token(token: str) -> Optional[str]:
-    """Verify JWT and return userId if valid"""
-    if not token:
-        return None
-    
-    from jose import JWTError, jwt
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-    ALGORITHM = "HS256"
-    
-    try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        return user_id
-    except (JWTError, Exception):
-        return None
-
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
