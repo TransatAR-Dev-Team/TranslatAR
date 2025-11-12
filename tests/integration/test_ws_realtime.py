@@ -6,7 +6,7 @@ import pytest
 import websockets
 
 BACKEND_WS_URL = "ws://backend:8000/ws"
-MONGO_URL = "mongodb://mongodb_test:27017"
+MONGO_URL = "mongodb://mongodb:27017"
 
 
 def _pack_message(meta: dict, audio: bytes) -> bytes:
