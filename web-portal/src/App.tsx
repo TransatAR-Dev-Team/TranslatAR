@@ -11,12 +11,16 @@ import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import SettingsMenu, {
   type Settings,
 } from "./components/SettingsMenu/SettingsMenu";
+import SideNavigation from "./components/Sidebar/NavigationSidebar"; // NEW
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 if (!googleClientId) {
   console.error("Error: VITE_GOOGLE_CLIENT_ID env variable not set.");
 }
+
+// type for tabs (same keys as in SideNavigation)
+type TabKey = "dashboard" | "conversations" | "logs" | "settings";
 
 function App() {
   const [appUser, setAppUser] = useState<User | null>(null);
@@ -26,6 +30,10 @@ function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  // NEW: sidebar + active tab
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -140,7 +148,10 @@ function App() {
             onLoginError={handleLogout}
             onLogout={handleLogout}
             onShowSettings={() => setShowSettings(true)}
+            onShowNavigation={() => setIsNavOpen(true)}   // NEW
           />
+
+          {/*can later show different content based on activeTab maybe*/}
           <Summarizer />
           <HistoryPanel
             history={history}
@@ -148,6 +159,7 @@ function App() {
             error={historyError}
           />
         </div>
+
         {showSettings && settings && (
           <SettingsMenu
             initialSettings={settings}
@@ -156,6 +168,14 @@ function App() {
             error={settingsError}
           />
         )}
+
+        {/* Sidebar navigation */}
+        <SideNavigation
+          isOpen={isNavOpen}
+          activeTab={activeTab}
+          onClose={() => setIsNavOpen(false)}
+          onTabChange={(tab) => setActiveTab(tab)}
+        />
       </main>
     </GoogleOAuthProvider>
   );
