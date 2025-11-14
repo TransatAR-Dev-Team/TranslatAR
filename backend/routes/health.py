@@ -22,7 +22,7 @@ async def perform_health_check():
         raise HTTPException(status_code=503, detail="Database connection is unhealthy.") from e
 
 
-@router.get("/", tags=["Health"])
+@router.get("", tags=["Health"])
 async def verbose_health_check():
     """
     Provides a verbose health check for developers. It logs on both success and failure
