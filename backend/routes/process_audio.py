@@ -4,7 +4,8 @@ import os
 from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, Depends
+from security.auth import get_current_user
 
 from models.translation import TranslationResponse
 
@@ -22,6 +23,7 @@ async def process_audio_and_translate(
     audio_file: UploadFile = File(...),
     source_lang: str = Form("en"),
     target_lang: str = Form("es"),
+    current_user: dict = Depends(get_current_user),
 ):
     translations_collection = request.app.state.db.get_collection("translations")
 
@@ -67,6 +69,7 @@ async def process_audio_and_translate(
                 "translated_text": translated_text,
                 "source_lang": source_lang,
                 "target_lang": target_lang,
+                "userId": str(current_user["_id"]),
                 "timestamp": datetime.now(UTC),
             }
             await translations_collection.insert_one(translation_log)

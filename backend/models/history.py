@@ -9,6 +9,7 @@ class HistoryItem(BaseModel):
     source_lang: str
     target_lang: str
     timestamp: datetime
+    userId: Optional[str] = None
 
 
 class HistoryResponse(BaseModel):
