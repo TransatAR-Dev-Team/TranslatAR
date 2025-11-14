@@ -5,7 +5,7 @@ def parse_and_summarize(xml_file_path):
     """
     Parses a Unity NUnit XML test results file, prints a summary,
     and returns an exit code.
-    
+
     - Returns 0 if all tests passed.
     - Returns 1 if any test failed, was inconclusive, or the file is invalid.
     """
@@ -34,7 +34,7 @@ def parse_and_summarize(xml_file_path):
     failed = int(test_run.get('failed', 0))
     inconclusive = int(test_run.get('inconclusive', 0))
     skipped = int(test_run.get('skipped', 0))
-    
+
     print(f"Total: {total}, Passed: {passed}, Failed: {failed}, Skipped: {skipped}, Inconclusive: {inconclusive}")
 
     if failed > 0 or inconclusive > 0:
@@ -42,18 +42,18 @@ def parse_and_summarize(xml_file_path):
         for test_case in root.findall(".//test-case"):
             if test_case.get('result') == 'Failed':
                 name = test_case.get('fullname')
-                
+
                 failure_message_element = test_case.find(".//message")
                 failure_message = failure_message_element.text.strip() if failure_message_element is not None and failure_message_element.text else "No message provided."
 
                 stack_trace_element = test_case.find(".//stack-trace")
                 stack_trace = stack_trace_element.text.strip() if stack_trace_element is not None and stack_trace_element.text else "No stack trace provided (check for compile errors)."
-                
+
                 print(f"\n❌ Test: {name}", file=sys.stderr)
                 print(f"   Message: {failure_message}", file=sys.stderr)
                 print(f"   Stack Trace:\n{stack_trace}\n", file=sys.stderr)
         return 1
-    
+
     print("✅ All tests passed!")
     return 0
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python3 parse_unity_results.py <path_to_xml_file>", file=sys.stderr)
         sys.exit(1)
-        
+
     results_file = sys.argv[1]
     exit_code = parse_and_summarize(results_file)
     sys.exit(exit_code)

@@ -21,9 +21,6 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
         # Important: only run on files inside the python service directories
         files: ^(backend|stt-service|summarization-service|translation-service)/
-    # Run the Ruff formatter (as a backup to Black)
-    -   id: ruff-format
-        files: ^(backend|stt-service|summarization-service|translation-service)/
 
 -   repo: https://github.com/psf/black
     rev: 24.4.2
