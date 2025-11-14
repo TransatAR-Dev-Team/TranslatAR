@@ -2,6 +2,7 @@
     "name": "LanguageUI",
     "rootNamespace": "",
     "references": [
+        "GameRuntime",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
         "UnityEngine.TestRunner",
