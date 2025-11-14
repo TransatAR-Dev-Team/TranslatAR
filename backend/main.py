@@ -1,3 +1,4 @@
+import logging
 import os
 
 from fastapi import APIRouter, FastAPI, HTTPException
@@ -13,6 +14,10 @@ from routes.settings import router as settings_router
 from routes.summarization import router as summarization_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
+
+# --- Logging Configuration ---
+logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 # --- Configuration ---
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
@@ -56,10 +61,13 @@ async def health_check():
     """
     Checks the health of the service, including the database connection.
     """
+    logger.info("Health check endpoint was called.")
     try:
         await client.admin.command("ping")
+        logger.info("Database ping successful.")
         return {"status": "ok", "database_status": "connected"}
     except ConnectionFailure as e:
+        logger.error(f"Database connection failed during health check: {e}", exc_info=True)
         raise HTTPException(
             status_code=503,
             detail=f"Service Unavailable: Cannot connect to the database. Error: {e}",
