@@ -1,10 +1,13 @@
 import asyncio
 import json
+import logging
 import os
 from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -16,7 +19,8 @@ TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001"
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("Unity client connected!")
+    client_host = websocket.client.host if websocket.client else "unknown"
+    logger.info("WebSocket client connected from: %s", client_host)
 
     try:
         while True:
@@ -33,19 +37,24 @@ async def websocket_endpoint(websocket: WebSocket):
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
 
-            print(f"Received audio chunk: {len(audio_data)} bytes")
-            print(f"Languages: {source_lang} -> {target_lang}")
+            logger.info(
+                "Received audio chunk: %d bytes, lang: %s -> %s",
+                len(audio_data),
+                source_lang,
+                target_lang,
+            )
 
-            # Process audio in background to not block WebSocket
             asyncio.create_task(
                 process_audio_chunk(websocket, audio_data, source_lang, target_lang)
             )
 
     except WebSocketDisconnect:
-        print("Unity client disconnected")
+        logger.info("WebSocket client %s disconnected.", client_host)
     except Exception as e:
-        print(f"WebSocket error: {e}")
+        logger.error("WebSocket error with client %s: %s", client_host, e, exc_info=True)
         await websocket.close()
+    finally:
+        logger.info("Closing WebSocket connection handler for %s.", client_host)
 
 
 async def process_audio_chunk(
@@ -63,12 +72,12 @@ async def process_audio_chunk(
             stt_response.raise_for_status()
             original_text = stt_response.json().get("transcription", "")
 
-            if not original_text or original_text.strip() == "":
-                print("No transcription detected in chunk")
+            if not original_text or not original_text.strip():
+                logger.info("No transcription detected in chunk.")
                 await websocket.send_json({"original_text": "", "translated_text": ""})
                 return
 
-            print(f"Transcribed: {original_text}")
+            logger.info("STT result: '%s'", original_text)
 
             # Step 2: Translate the text
             translation_payload = {
@@ -82,8 +91,7 @@ async def process_audio_chunk(
             )
             translation_response.raise_for_status()
             translated_text = translation_response.json().get("translated_text", "")
-
-            print(f"Translated: {translated_text}")
+            logger.info("Translation result: '%s'", translated_text)
 
             # Step 3: Save to database
             try:
@@ -97,9 +105,11 @@ async def process_audio_chunk(
                     "timestamp": datetime.now(UTC),
                 }
                 await translations_collection.insert_one(translation_log)
-                print("Saved translation to database")
+                logger.info("Saved WebSocket translation to database.")
             except Exception as e:
-                print(f"WARNING: Failed to save translation to database: {e}")
+                logger.warning(
+                    "Failed to save WebSocket translation to database: %s", e, exc_info=True
+                )
 
             # Step 4: Send result back to Unity
             response = {
@@ -110,14 +120,14 @@ async def process_audio_chunk(
             await websocket.send_json(response)
 
     except httpx.HTTPError as e:
-        print(f"HTTP error during processing: {e}")
+        logger.error("HTTP error during audio chunk processing: %s", e, exc_info=True)
         error_response = {"original_text": "", "translated_text": f"Error: {str(e)}"}
         await websocket.send_json(error_response)
 
     except Exception as e:
-        print(f"Error processing audio chunk: {e}")
-        error_response = {
-            "original_text": "",
-            "translated_text": f"Processing error: {str(e)}",
-        }
-        await websocket.send_json(error_response)
+        logger.error("Error processing audio chunk: %s", e, exc_info=True)
+        try:
+            error_response = {"original_text": "", "translated_text": f"Processing error: {str(e)}"}
+            await websocket.send_json(error_response)
+        except WebSocketDisconnect:
+            logger.warning("Could not send error to client as they disconnected.")
