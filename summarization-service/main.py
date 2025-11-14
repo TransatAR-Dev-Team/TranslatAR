@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
+logging.getLogger("httpx").setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
@@ -46,7 +48,7 @@ async def summarize(request: SummarizationRequest):
     logger.debug(f"Ollama payload: {payload}")
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(f"{OLLAMA_URL}/api/generate", json=payload)
             logger.info(f"Ollama response status code: {response.status_code}")
             logger.debug(f"Ollama raw response: {response.text}")
@@ -55,33 +57,21 @@ async def summarize(request: SummarizationRequest):
 
             if "response" not in data:
                 logger.error(f"Invalid response from Ollama: {data}")
-                raise HTTPException(
-                    status_code=500, detail="Invalid response from Ollama."
-                )
+                raise HTTPException(status_code=500, detail="Invalid response from Ollama.")
 
             summary_text = data["response"].strip()
-            logger.info(
-                f"Successfully generated summary. Length: {len(summary_text)} chars."
-            )
+            logger.info(f"Successfully generated summary. Length: {len(summary_text)} chars.")
             return SummarizationResponse(summary=summary_text)
 
     except httpx.RequestError as e:
-        logger.error(f"Could not connect to Ollama: {e}")
-        raise HTTPException(
-            status_code=503, detail=f"Error connecting to Ollama: {e}"
-        ) from e
+        logger.error(f"Could not connect to Ollama: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Error connecting to Ollama: {e}") from e
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"Ollama returned an error: {e.response.status_code} - {e.response.text}"
-        )
+        logger.error(f"Ollama returned an error: {e.response.status_code} - {e.response.text}")
         raise HTTPException(status_code=500, detail=f"Ollama failed: {e}") from e
     except Exception as e:
-        logger.error(
-            f"An unexpected error occurred during summarization: {e}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail="An unexpected error occurred."
-        ) from e
+        logger.error(f"An unexpected error occurred during summarization: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.") from e
 
 
 @app.get("/health")
