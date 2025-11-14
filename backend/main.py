@@ -1,13 +1,13 @@
 import logging
 import os
 
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pymongo.errors import ConnectionFailure
 
-from config.database import client, db
+from config.database import db
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
+from routes.health import router as health_router
 from routes.history import router as history_router
 from routes.process_audio import router as process_audio_router
 from routes.settings import router as settings_router
@@ -37,7 +37,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # --- Include Routers ---
+router.include_router(health_router, prefix="/health", tags=["Health"])
 router.include_router(auth_router, prefix="/auth", tags=["Authentication", "Web OAuth"])
 router.include_router(
     auth_unity_router, prefix="/auth/device", tags=["Authentication", "Device OAuth"]
@@ -49,29 +51,11 @@ router.include_router(summarization_router, prefix="/summarize", tags=["Summariz
 router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
+
 # --- Database Connection ---
 translations_collection = db.get_collection("translations")
 settings_collection = db.get_collection("settings")
 app.state.db = db
-
-
-# --- Health Check Endpoint ---
-@router.get("/health")
-async def health_check():
-    """
-    Checks the health of the service, including the database connection.
-    """
-    logger.info("Health check endpoint was called.")
-    try:
-        await client.admin.command("ping")
-        logger.info("Database ping successful.")
-        return {"status": "ok", "database_status": "connected"}
-    except ConnectionFailure as e:
-        logger.error(f"Database connection failed during health check: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=503,
-            detail=f"Service Unavailable: Cannot connect to the database. Error: {e}",
-        ) from e
 
 
 app.include_router(router, prefix="/api")
