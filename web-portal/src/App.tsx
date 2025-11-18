@@ -63,8 +63,8 @@ function App() {
       if (token) {
         await fetchUserProfile(token);
       }
-      await loadHistory();
       await loadSettings();
+      await loadHistory();
     };
     initialize();
   }, [fetchUserProfile]);
@@ -73,9 +73,33 @@ function App() {
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     setHistoryError(null);
+    
     try {
-      const response = await fetch("/api/history");
-      if (!response.ok) throw new Error("Network response was not ok");
+      // Get the JWT token from localStorage
+      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+      
+      // If no token, just return empty history (don't show error)
+      if (!token) {
+        setHistory([]);
+        setIsHistoryLoading(false);
+        return;
+      }
+      
+      const response = await fetch("/api/history", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        // If 401, user might be logged out
+        if (response.status === 401) {
+          setHistory([]);
+          return;
+        }
+        throw new Error("Network response was not ok");
+      }
+      
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
@@ -85,6 +109,13 @@ function App() {
       setIsHistoryLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (appUser) {
+      loadHistory();
+    }
+  }, [appUser, loadHistory]);
+
 
   const loadSettings = useCallback(async () => {
     setSettingsError(null);

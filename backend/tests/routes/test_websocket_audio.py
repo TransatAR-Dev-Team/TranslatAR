@@ -67,7 +67,7 @@ async def test_process_audio_chunk_success(monkeypatch):
 
     monkeypatch.setattr(ws_mod.httpx, "AsyncClient", lambda timeout=30.0: Client())
     ws = StubWS()
-    await ws_mod.process_audio_chunk(ws, b"wav", "en", "es")
+    await ws_mod.process_audio_chunk(ws, b"wav", "en", "es", None)
 
     assert ws.sent == [{"original_text": "hello", "translated_text": "hola"}]
 
@@ -96,7 +96,7 @@ async def test_process_audio_chunk_stt_error(monkeypatch):
 
     monkeypatch.setattr(ws_mod.httpx, "AsyncClient", lambda timeout=3.0: BadClient())
     ws = StubWS()
-    await ws_mod.process_audio_chunk(ws, b"x", "en", "es")
+    await ws_mod.process_audio_chunk(ws, b"x", "en", "es", None)
     assert ws.sent and "Error:" in ws.sent[0]["translated_text"]
 
     # Assert that nothing was saved to the DB on error

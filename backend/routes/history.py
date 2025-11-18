@@ -1,17 +1,20 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
+from security.auth import get_current_user
 
 router = APIRouter()
 
 
 @router.get("")
-async def get_history(request: Request):
+async def get_history(request: Request, current_user: dict = Depends(get_current_user)):
     """
-    Retrieves the translation records from the database.
+    Retrieves the translation records for the authenticated user.
     """
     try:
         translations_collection = request.app.state.db.get_collection("translations")
-
-        history_cursor = translations_collection.find({}).sort("timestamp", -1).limit(50)
+        
+        # Filter by userId
+        user_id = str(current_user["_id"])
+        history_cursor = translations_collection.find({"userId": user_id}).sort("timestamp", -1).limit(50)
 
         history_list = []
         async for doc in history_cursor:

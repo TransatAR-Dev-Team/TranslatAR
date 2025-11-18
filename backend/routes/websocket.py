@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from security.auth import verify_jwt_token
+
 router = APIRouter()
 
 # Service URLs from environment
@@ -17,6 +19,9 @@ TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001"
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     print("Unity client connected!")
+
+    # Store userId for this connection
+    user_id = None
 
     try:
         while True:
@@ -33,12 +38,20 @@ async def websocket_endpoint(websocket: WebSocket):
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
 
+            # Check for JWT token in metadata
+            jwt_token = metadata.get("jwt_token")
+            if jwt_token:
+                verified_user_id = await verify_jwt_token(jwt_token)
+                if verified_user_id:
+                    user_id = verified_user_id
+                    print(f"Authenticated user: {user_id}")
+
             print(f"Received audio chunk: {len(audio_data)} bytes")
             print(f"Languages: {source_lang} -> {target_lang}")
 
-            # Process audio in background to not block WebSocket
+            # Process audio in background with userId
             asyncio.create_task(
-                process_audio_chunk(websocket, audio_data, source_lang, target_lang)
+                process_audio_chunk(websocket, audio_data, source_lang, target_lang, user_id)
             )
 
     except WebSocketDisconnect:
@@ -49,7 +62,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def process_audio_chunk(
-    websocket: WebSocket, audio_data: bytes, source_lang: str, target_lang: str
+    websocket: WebSocket,
+    audio_data: bytes,
+    source_lang: str,
+    target_lang: str,
+    user_id: str,
 ):
     """
     Process audio chunk: transcribe, translate, and save to database
@@ -94,10 +111,11 @@ async def process_audio_chunk(
                     "translated_text": translated_text,
                     "source_lang": source_lang,
                     "target_lang": target_lang,
+                    "userId": user_id,
                     "timestamp": datetime.now(UTC),
                 }
                 await translations_collection.insert_one(translation_log)
-                print("Saved translation to database")
+                print(f"Saved translation to database (userId: {user_id})")
             except Exception as e:
                 print(f"WARNING: Failed to save translation to database: {e}")
 

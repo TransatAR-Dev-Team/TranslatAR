@@ -2,15 +2,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "./App";
 
-// Declare fetchMock for TypeScript
 declare let fetchMock: typeof vi & {
   mockResponseOnce: (body: string, init?: ResponseInit) => void;
 };
 
 describe("App Component", () => {
-  // Reset mocks before each test runs
   beforeEach(() => {
     fetchMock.resetMocks();
+    localStorage.clear(); // Clean up localStorage between tests
   });
 
   it("should render the main heading and show the initial loading state", () => {
@@ -20,7 +19,27 @@ describe("App Component", () => {
   });
 
   it("should display the translation history after a successful fetch", async () => {
-    // Mock the API response for history
+    // Mock localStorage to have a token
+    const mockToken = "fake-jwt-token";
+    localStorage.setItem("translatar_jwt", mockToken);
+
+    // Mock the /api/me call (getUserProfile)
+    fetchMock.mockResponseOnce(
+      JSON.stringify({
+        email: "test@example.com",
+        id: "user123",
+        name: "Test User",
+      }),
+    );
+
+    // Mock the /api/settings call
+    fetchMock.mockResponseOnce(
+      JSON.stringify({
+        settings: {},
+      }),
+    );
+
+    // Mock the /api/history call
     const mockHistory = [
       {
         _id: "1",
@@ -43,9 +62,8 @@ describe("App Component", () => {
 
     render(<App />);
 
-    // Wait for the component to re-render after fetching data
+    // Wait for the component to finish loading
     await waitFor(() => {
-      // The "Loading..." text should disappear
       expect(screen.queryByText(/Loading history.../i)).not.toBeInTheDocument();
     });
 
@@ -55,7 +73,26 @@ describe("App Component", () => {
   });
 
   it("should display an error message if the fetch fails", async () => {
-    // Mock a network error
+    // Mock localStorage to have a token
+    const mockToken = "fake-jwt-token";
+    localStorage.setItem("translatar_jwt", mockToken);
+
+    // Mock the /api/me call to succeed
+    fetchMock.mockResponseOnce(
+      JSON.stringify({
+        email: "test@example.com",
+        id: "user123",
+      }),
+    );
+
+    // Mock the /api/settings call to succeed
+    fetchMock.mockResponseOnce(
+      JSON.stringify({
+        settings: {},
+      }),
+    );
+
+    // Mock the /api/history call to fail
     fetchMock.mockReject(new Error("API is unavailable"));
 
     render(<App />);
