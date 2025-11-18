@@ -11,7 +11,8 @@ import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import SettingsMenu, {
   type Settings,
 } from "./components/SettingsMenu/SettingsMenu";
-import SideNavigation from "./components/Sidebar/NavigationSidebar"; // NEW
+import SideNavigation from "./components/Sidebar/NavigationSidebar";
+
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -19,21 +20,31 @@ if (!googleClientId) {
   console.error("Error: VITE_GOOGLE_CLIENT_ID env variable not set.");
 }
 
-// type for tabs (same keys as in SideNavigation)
-type TabKey = "dashboard" | "conversations" | "logs" | "settings";
+// ✅ Default settings so the modal always has something to show
+const DEFAULT_SETTINGS: Settings = {
+  source_language: "en",
+  target_language: "es",
+  chunk_duration_seconds: 8.0,
+  target_sample_rate: 48000,
+  silence_threshold: 0.01,
+  chunk_overlap_seconds: 0.5,
+  websocket_url: "ws://localhost:8000/ws",
+};
 
 function App() {
   const [appUser, setAppUser] = useState<User | null>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [showNavigation, setShowNavigation] = useState(false);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "conversations" | "logs" | "settings">("dashboard");
+
+
+
+  // ❗️Changed: no longer nullable, starts with DEFAULT_SETTINGS
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-
-  // NEW: sidebar + active tab
-  const [isNavOpen, setIsNavOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -67,6 +78,7 @@ function App() {
       await loadHistory();
     };
     initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchUserProfile]);
 
   // --- API HANDLERS ---
@@ -123,10 +135,12 @@ function App() {
       const response = await fetch("/api/settings");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
+      // ✅ Just overwrite defaults if API works
       setSettings(data.settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
+      // We KEEP whatever was in `settings` (defaults) instead of null
     }
   }, []);
 
@@ -173,16 +187,15 @@ function App() {
     <GoogleOAuthProvider clientId={googleClientId || ""}>
       <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
         <div className="w-full max-w-2xl">
-          <Header
-            appUser={appUser}
-            onLoginSuccess={handleLoginSuccess}
-            onLoginError={handleLogout}
-            onLogout={handleLogout}
-            onShowSettings={() => setShowSettings(true)}
-            onShowNavigation={() => setIsNavOpen(true)}   // NEW
-          />
+        <Header
+          appUser={appUser}
+          onLoginSuccess={handleLoginSuccess}
+          onLoginError={handleLogout}
+          onLogout={handleLogout}
+          onShowSettings={() => setShowSettings(true)}
+          onShowNavigation={() => setShowNavigation(true)}
+        />
 
-          {/*can later show different content based on activeTab maybe*/}
           <Summarizer />
           <HistoryPanel
             history={history}
@@ -191,7 +204,8 @@ function App() {
           />
         </div>
 
-        {showSettings && settings && (
+        {/* Changed: we no longer gate on `settings &&` */}
+        {showSettings && (
           <SettingsMenu
             initialSettings={settings}
             onSave={saveSettings}
@@ -199,13 +213,16 @@ function App() {
             error={settingsError}
           />
         )}
-
-        {/* Sidebar navigation */}
+        {/* NEW: slide-in navigation sidebar */}
         <SideNavigation
-          isOpen={isNavOpen}
+          isOpen={showNavigation}
           activeTab={activeTab}
-          onClose={() => setIsNavOpen(false)}
-          onTabChange={(tab) => setActiveTab(tab)}
+          onClose={() => setShowNavigation(false)}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            //closes sidebar when selecting tab
+            setShowNavigation(false);
+          }}
         />
       </main>
     </GoogleOAuthProvider>
