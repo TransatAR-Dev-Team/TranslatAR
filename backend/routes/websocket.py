@@ -8,8 +8,6 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from security.auth import verify_jwt_token
 
-from security.auth import verify_jwt_token
-
 router = APIRouter()
 
 # Service URLs from environment
