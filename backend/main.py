@@ -7,11 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.database import db
 from routes.auth import router as auth_router
 from routes.auth_unity import router as auth_unity_router
-<<<<<<< HEAD
-from routes.health import router as health_router
-=======
 from routes.genadvice import router as advice_router
->>>>>>> d467295 (advice works but is too long, fixed timeout issue)
+from routes.health import router as health_router
 from routes.history import router as history_router
 from routes.process_audio import router as process_audio_router
 from routes.settings import router as settings_router
