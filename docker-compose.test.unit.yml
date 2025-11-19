@@ -14,6 +14,8 @@ services:
         condition: service_completed_successfully
       web_portal_test:
         condition: service_completed_successfully
+      advice_test:
+        condition: service_completed_successfully
 
   backend_test:
     container_name: backend_unit_test
@@ -85,3 +87,13 @@ services:
     ports:
       - "27018:27017"
     command: mongod --quiet --logpath /dev/null
+
+  advice_test:
+    container_name: advice_unit_test
+    build:
+      context: ./advice_service
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - ./advice_service:/app
+    command: ["pytest", "-v"]
