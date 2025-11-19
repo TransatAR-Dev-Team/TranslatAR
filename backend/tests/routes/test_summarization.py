@@ -1,10 +1,9 @@
-import pytest
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
 from routes import summarization as summarization_route
-
 
 # --- Fixtures ---
 
@@ -185,6 +184,7 @@ def test_summarize_empty_text(client, monkeypatch):
     assert response.status_code == 200
     assert response.json()["summary"] == ""
 
+
 def test_summarize_service_returns_none(client, monkeypatch):
     """
     Test that the endpoint returns 500 when the summarization service
@@ -270,8 +270,8 @@ def test_summarize_service_timeout(client, monkeypatch):
 
     response = client.post("/api/summarize", json={"text": "Test text"})
 
-    assert response.status_code == 500
-    assert "Error during summarization" in response.json()["detail"]
+    assert response.status_code == 503
+    assert "unavailable" in response.json()["detail"]
 
 
 def test_summarize_service_500_response(client, monkeypatch):
@@ -284,6 +284,7 @@ def test_summarize_service_500_response(client, monkeypatch):
 
     class MockResponse:
         status_code = 500
+        text = "Mocked internal server error from downstream service"
 
         def raise_for_status(self):
             raise httpx.HTTPStatusError(

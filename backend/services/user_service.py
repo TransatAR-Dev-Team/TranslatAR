@@ -1,6 +1,9 @@
+import logging
 from datetime import UTC, datetime
 
 from motor.motor_asyncio import AsyncIOMotorCollection
+
+logger = logging.getLogger(__name__)
 
 
 async def get_or_create_user_by_google_id(
@@ -17,13 +20,14 @@ async def get_or_create_user_by_google_id(
     Returns:
         The user document from the database (dict), or None if creation fails.
     """
-    # heck if the user already exists
+    # check if the user already exists
     user = await users_collection.find_one({"googleId": google_id})
     if user:
+        logger.info("Found existing user for email: %s", email)
         return user
 
     # If not, create a new user document
-    print(f"User with Google ID {google_id} not found. Creating new user.")
+    logger.info(f"User with email {email} not found. Creating new user.")
     username = email.split("@")[0]
     new_user_doc = {
         "googleId": google_id,
@@ -35,9 +39,10 @@ async def get_or_create_user_by_google_id(
 
     try:
         await users_collection.insert_one(new_user_doc)
+        logger.info(f"Successfully inserted new user for email: {email}")
         # Retrieve the newly created user to get the _id and confirm creation
         created_user = await users_collection.find_one({"googleId": google_id})
         return created_user
     except Exception as e:
-        print(f"Error creating user in database: {e}")
+        logger.error("Database error while creating user for email %s: %s", email, e, exc_info=True)
         return None
