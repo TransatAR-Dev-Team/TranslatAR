@@ -1,15 +1,14 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from io import BytesIO
 
-import pytest
 import httpx
+import pytest
 from bson import ObjectId
 from fastapi.testclient import TestClient
 
 from main import app
 from routes import process_audio as process_audio_route
 from security.auth import get_current_user
-
 
 # --- Fixtures ---
 
@@ -64,9 +63,10 @@ def override_db_dependency(monkeypatch, fake_translations_collection):
 @pytest.fixture
 def authenticated_client(mock_user):
     """Fixture that provides authentication override."""
+
     async def mock_get_current_user():
         return mock_user
-    
+
     app.dependency_overrides[get_current_user] = mock_get_current_user
     yield
     app.dependency_overrides.clear()
@@ -92,9 +92,7 @@ def test_process_audio_success(
     """
     # Mock service URLs
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     # Mock httpx.AsyncClient
     class MockSTTResponse:
@@ -161,9 +159,7 @@ def test_process_audio_default_languages(
     Test that default languages (en -> es) are used when not specified.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     class MockSTTResponse:
         status_code = 200
@@ -218,9 +214,7 @@ def test_process_audio_various_language_pairs(
     Test audio processing with different language pairs.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     captured_langs = {}
 
@@ -276,9 +270,7 @@ def test_process_audio_missing_audio_file(client, authenticated_client, mock_use
     """
     Test that the endpoint returns 422 when audio file is missing.
     """
-    response = client.post(
-        "/api/process-audio", data={"source_lang": "en", "target_lang": "es"}
-    )
+    response = client.post("/api/process-audio", data={"source_lang": "en", "target_lang": "es"})
 
     assert response.status_code == 422
 
@@ -316,7 +308,7 @@ def test_process_audio_stt_service_error(
     audio_file = create_mock_audio_file()
     response = client.post("/api/process-audio", files={"audio_file": audio_file})
 
-    assert response.status_code == 500
+    assert response.status_code == 502
     assert "Error in STT service" in response.json()["detail"]
 
 
@@ -352,7 +344,7 @@ def test_process_audio_stt_returns_no_transcription(
     audio_file = create_mock_audio_file()
     response = client.post("/api/process-audio", files={"audio_file": audio_file})
 
-    assert response.status_code == 500
+    assert response.status_code == 502
     assert "Transcription failed" in response.json()["detail"]
 
 
@@ -363,9 +355,7 @@ def test_process_audio_translation_service_error(
     Test handling of errors from the translation service.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     class MockSTTResponse:
         status_code = 200
@@ -394,7 +384,7 @@ def test_process_audio_translation_service_error(
     audio_file = create_mock_audio_file()
     response = client.post("/api/process-audio", files={"audio_file": audio_file})
 
-    assert response.status_code == 500
+    assert response.status_code == 502
     assert "Error in Translation service" in response.json()["detail"]
 
 
@@ -405,9 +395,7 @@ def test_process_audio_translation_returns_none(
     Test handling when translation service returns no translated text.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     class MockSTTResponse:
         status_code = 200
@@ -445,7 +433,7 @@ def test_process_audio_translation_returns_none(
     audio_file = create_mock_audio_file()
     response = client.post("/api/process-audio", files={"audio_file": audio_file})
 
-    assert response.status_code == 500
+    assert response.status_code == 502
     assert "Translation failed" in response.json()["detail"]
 
 
@@ -457,18 +445,14 @@ def test_process_audio_database_save_failure(
     (The code prints a warning but doesn't fail the request)
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     # Create a mock collection that fails on insert
     class FailingCollection:
         async def insert_one(self, doc):
             raise Exception("Database connection lost")
 
-    monkeypatch.setattr(
-        app.state.db, "get_collection", lambda name: FailingCollection()
-    )
+    monkeypatch.setattr(app.state.db, "get_collection", lambda name: FailingCollection())
 
     class MockSTTResponse:
         status_code = 200
@@ -519,9 +503,7 @@ def test_process_audio_preserves_filename(
     Test that the audio filename is preserved when forwarding to STT service.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     captured_filename = None
 
@@ -579,9 +561,7 @@ def test_process_audio_timeout_60_seconds(
     Test that the AsyncClient uses a 60-second timeout.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     timeout_used = None
 
@@ -636,9 +616,7 @@ def test_process_audio_timestamp_saved(
     Test that a timestamp is saved with the translation record.
     """
     monkeypatch.setattr(process_audio_route, "STT_SERVICE_URL", "http://stt:9000")
-    monkeypatch.setattr(
-        process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001"
-    )
+    monkeypatch.setattr(process_audio_route, "TRANSLATION_SERVICE_URL", "http://translation:9001")
 
     class MockSTTResponse:
         status_code = 200
