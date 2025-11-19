@@ -95,6 +95,7 @@ services:
     container_name: advice
     build:
       context: ./advice_service
+      target: production
     ports:
       - "9003:9003"
     environment:
