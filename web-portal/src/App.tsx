@@ -20,7 +20,6 @@ if (!googleClientId) {
   console.error("Error: VITE_GOOGLE_CLIENT_ID env variable not set.");
 }
 
-// ✅ Default settings so the modal always has something to show
 const DEFAULT_SETTINGS: Settings = {
   // Backend-related (unchanged from original app, keep these)
   source_language: "en",
@@ -49,7 +48,6 @@ function App() {
 
 
 
-  // ❗️Changed: no longer nullable, starts with DEFAULT_SETTINGS
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -144,7 +142,6 @@ function App() {
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
   
-      // 👇 Merge backend settings onto our defaults
       setSettings({
         ...DEFAULT_SETTINGS,
         ...(data.settings ?? {}),
