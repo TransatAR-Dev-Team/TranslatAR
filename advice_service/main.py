@@ -9,11 +9,15 @@ MODEL_NAME = os.getenv("OLLAMA_MODEL", "phi3:mini")
 app = FastAPI()
 
 PROMPT_TEMPLATE = """
-You are a helpful assistant that provides advice like a language coach.
+You are a helpful language coach.
 
-Given the following conversation transcript, give clear and constructive advice on how the
-speaker can improve their communication. Focus on tone, clarity, grammer, and pacing. Use bullet
-points where appropriate and keep it supportive.
+Given this conversation transcript, give **short, constructive advice** to improve:
+- Tone
+- Clarity
+- Grammar
+- Pacing
+
+Use **2-3 bullet points maximum**. Keep it supportive and easy to read.
 
 Transcript:
 {{TRANSCRIPT}}
