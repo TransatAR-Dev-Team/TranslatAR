@@ -29,13 +29,14 @@ class adviceResponse(BaseModel):
 
 @app.post("/advice", response_model=adviceResponse)
 async def advise(request: adviceRequest):
-    prompt = (PROMPT_TEMPLATE.replace("{{TRANSCRIPT}}", request.text))
+    import traceback
+
+    prompt = PROMPT_TEMPLATE.replace("{{TRANSCRIPT}}", request.text)
     payload = {"model": MODEL_NAME, "prompt": prompt, "stream": False}
 
-
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(f"{OLLAMA_URL}/v1/generate", json=payload)
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            response = await client.post(f"{OLLAMA_URL}/api/generate", json=payload)
             response.raise_for_status()
             data = response.json()
 
@@ -44,7 +45,7 @@ async def advise(request: adviceRequest):
 
             return adviceResponse(advice=data["response"].strip())
 
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Error connecting to Ollama: {e}") from e
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=500, detail=f"Ollama failed: {e}") from e
+    except Exception as e:
+        print("=== ERROR IN ADVICE SERVICE ===")
+        traceback.print_exc()
+        raise
