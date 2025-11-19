@@ -1,7 +1,21 @@
+# -----------------------------------------------
+# Catch-all rule — ignore extra args like `backend`
+# -----------------------------------------------
+%:
+	@:
+
+# -----------------------------------------------
+# Variables
+# -----------------------------------------------
+
 # This captures all command-line arguments except for the target name.
 # It allows passing arguments to the underlying commands.
 # Example: `make logs backend` will pass `backend` to the logs command.
 ARGS = $(filter-out $@,$(MAKECMDGOALS))
+
+# -----------------------------------------------
+# Targets
+# -----------------------------------------------
 
 # By default, running 'make' will show the help message.
 .DEFAULT_GOAL := help
@@ -12,20 +26,24 @@ ARGS = $(filter-out $@,$(MAKECMDGOALS))
 .PHONY: help up down restart logs test test-unit test-integration test-unity
 
 up: ## Start all services (auto-detects GPU).
-	@./scripts/start.sh up --build -d
+	@./scripts/docker-compose-manager.sh up --build -d
 
 down: ## Stop and remove all services.
-	@./scripts/start.sh down --remove-orphans
+	@./scripts/docker-compose-manager.sh down --remove-orphans
 
-restart: down up ## Stop and restart all services. Alias for `down` + `up`.
+restart: ## Restart all services.
+	@./scripts/docker-compose-manager.sh restart
+
+rebuild: ## Rebuild specific service(s) or all if none provided. Ex: `make rebuild <service name>`.
+	@echo "Rebuilding service(s): $(ARGS)"
+	@./scripts/docker-compose-manager.sh down $(ARGS)
+	@./scripts/docker-compose-manager.sh up --build -d $(ARGS)
 
 logs: ## Show logs. Ex: `make logs <service name>` for a specific service.
-	@./scripts/start.sh logs $(ARGS)
+	@./scripts/docker-compose-manager.sh logs $(ARGS)
 
-unity-editor: ## Open the Unity project in the editor (macOS/Windows only).
+open-unity: ## Open the Unity project in the editor (macOS/Windows only).
 	@./scripts/open_unity_editor.sh
-
-open-unity: unity-editor ## Alias for `unity-editor`.
 
 test: ## Run all applicable test suites (Unit, Integration, Unity).
 	@./scripts/run_all_tests.sh
@@ -46,6 +64,12 @@ format: ## Format all source code with Black, Ruff Formatter, and Prettier.
 
 lint: ## Lint all source code with Ruff and ESLint.
 	@./scripts/lint.sh
+
+clean: ## Clean up temporary Python and Node files.
+	@./scripts/clean.sh --python --node
+
+clean-deep: ## Clean up ALL temporary files, including Unity and Docker.
+	@./scripts/clean.sh --deep
 
 help: ## Show this help message.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
