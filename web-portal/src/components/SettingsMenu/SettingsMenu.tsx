@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 export interface Settings {
+  // Backend-related (kept for compatibility, but not shown to user)
   source_language: string;
   target_language: string;
   chunk_duration_seconds: number;
@@ -8,6 +9,12 @@ export interface Settings {
   silence_threshold: number;
   chunk_overlap_seconds: number;
   websocket_url: string;
+
+  // UX-facing
+  subtitles_enabled: boolean;
+  translation_enabled: boolean;
+  subtitle_font_size: number;
+  subtitle_style: "normal" | "bold" | "high-contrast";
 }
 
 interface SettingsMenuProps {
@@ -42,15 +49,13 @@ export default function SettingsMenu({
     setSettings(initialSettings);
   }, [initialSettings]);
 
-  const handleChange =
-    (field: keyof Settings) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      const { value, type } = e.target;
-      const isNumber = type === "number";
-
+  // Generic updater that preserves untouched fields (backend ones included)
+  const updateField =
+    <K extends keyof Settings>(field: K) =>
+    (value: Settings[K]) => {
       setSettings((prev) => ({
         ...prev,
-        [field]: isNumber ? parseFloat(value) : value,
+        [field]: value,
       }));
     };
 
@@ -66,7 +71,7 @@ export default function SettingsMenu({
           <div>
             <h2 className="text-2xl font-bold">Settings</h2>
             <p className="text-sm text-slate-300">
-              Configure default language pair and audio capture options.
+              Configure your default language pair and subtitle behavior.
             </p>
           </div>
           <button
@@ -85,11 +90,11 @@ export default function SettingsMenu({
         )}
 
         <div className="space-y-6">
-          {/* Language pairing */}
+          {/* Default Language Pair */}
           <section>
             <h3 className="text-lg font-semibold mb-2">Default Language Pair</h3>
             <p className="text-xs text-slate-300 mb-3">
-              This pair will be used by default in the Unity app and backend.
+              This pair is used as your default for real-time translation.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -101,9 +106,10 @@ export default function SettingsMenu({
                 </label>
                 <select
                   id="source_language"
-                  name="source_language"
                   value={settings.source_language}
-                  onChange={handleChange("source_language")}
+                  onChange={(e) =>
+                    updateField("source_language")(e.target.value)
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {LANGUAGES.map((lang) => (
@@ -123,9 +129,10 @@ export default function SettingsMenu({
                 </label>
                 <select
                   id="target_language"
-                  name="target_language"
                   value={settings.target_language}
-                  onChange={handleChange("target_language")}
+                  onChange={(e) =>
+                    updateField("target_language")(e.target.value)
+                  }
                   className="w-full bg-slate-700 p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {LANGUAGES.map((lang) => (
@@ -138,109 +145,101 @@ export default function SettingsMenu({
             </div>
           </section>
 
-          {/* Audio / chunking */}
+          {/* Live Subtitles & Translation */}
           <section>
-            <h3 className="text-lg font-semibold mb-2">Audio Chunking</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="chunk_duration_seconds"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Chunk Duration (seconds)
-                </label>
+            <h3 className="text-lg font-semibold mb-2">
+              Live Subtitles & Translation
+            </h3>
+            <div className="space-y-3">
+              {/* Toggle: subtitles */}
+              <label className="flex items-center justify-between bg-slate-700/60 rounded-md px-3 py-2 cursor-pointer">
+                <span className="text-sm">
+                  Enable live subtitles in the headset
+                </span>
                 <input
-                  id="chunk_duration_seconds"
-                  type="number"
-                  value={settings.chunk_duration_seconds}
-                  onChange={handleChange("chunk_duration_seconds")}
-                  className="w-full bg-slate-700 p-2 rounded-md text-white"
-                  min={1}
-                  max={30}
-                  step={0.5}
+                  type="checkbox"
+                  className="h-4 w-4 accent-blue-500"
+                  checked={settings.subtitles_enabled}
+                  onChange={(e) =>
+                    updateField("subtitles_enabled")(e.target.checked)
+                  }
                 />
-              </div>
+              </label>
 
-              <div>
-                <label
-                  htmlFor="chunk_overlap_seconds"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Chunk Overlap (seconds)
-                </label>
+              {/* Toggle: translation */}
+              <label className="flex items-center justify-between bg-slate-700/60 rounded-md px-3 py-2 cursor-pointer">
+                <span className="text-sm">
+                  Enable live translation (audio → text)
+                </span>
                 <input
-                  id="chunk_overlap_seconds"
-                  type="number"
-                  value={settings.chunk_overlap_seconds}
-                  onChange={handleChange("chunk_overlap_seconds")}
-                  className="w-full bg-slate-700 p-2 rounded-md text-white"
-                  min={0}
-                  max={5}
-                  step={0.1}
+                  type="checkbox"
+                  className="h-4 w-4 accent-blue-500"
+                  checked={settings.translation_enabled}
+                  onChange={(e) =>
+                    updateField("translation_enabled")(e.target.checked)
+                  }
                 />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="target_sample_rate"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Sample Rate (Hz)
-                </label>
-                <input
-                  id="target_sample_rate"
-                  type="number"
-                  value={settings.target_sample_rate}
-                  onChange={handleChange("target_sample_rate")}
-                  className="w-full bg-slate-700 p-2 rounded-md text-white"
-                  min={8000}
-                  max={96000}
-                  step={1000}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="silence_threshold"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Silence Threshold
-                </label>
-                <input
-                  id="silence_threshold"
-                  type="number"
-                  value={settings.silence_threshold}
-                  onChange={handleChange("silence_threshold")}
-                  className="w-full bg-slate-700 p-2 rounded-md text-white"
-                  min={0}
-                  max={1}
-                  step={0.001}
-                />
-              </div>
+              </label>
             </div>
           </section>
 
-          {/* Backend */}
+          {/* Subtitle appearance */}
           <section>
-            <h3 className="text-lg font-semibold mb-2">Backend Connection</h3>
-            <div>
-              <label
-                htmlFor="websocket_url"
-                className="block text-sm font-medium mb-1"
-              >
-                WebSocket URL
-              </label>
-              <input
-                id="websocket_url"
-                type="text"
-                value={settings.websocket_url}
-                onChange={handleChange("websocket_url")}
-                className="w-full bg-slate-700 p-2 rounded-md text-white"
-                placeholder="ws://localhost:8000/ws"
-              />
-              <p className="text-xs text-slate-400 mt-1">
-                This should match the WebSocket endpoint the Unity client uses.
-              </p>
+            <h3 className="text-lg font-semibold mb-2">Subtitle Appearance</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Font size */}
+              <div>
+                <label
+                  htmlFor="subtitle_font_size"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Font Size (px)
+                </label>
+                <input
+                  id="subtitle_font_size"
+                  type="number"
+                  min={12}
+                  max={40}
+                  step={1}
+                  value={settings.subtitle_font_size}
+                  onChange={(e) =>
+                    updateField("subtitle_font_size")(
+                      Number(e.target.value) || 18,
+                    )
+                  }
+                  className="w-full bg-slate-700 p-2 rounded-md text-white"
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Larger sizes are easier to read in AR.
+                </p>
+              </div>
+
+              {/* Style */}
+              <div>
+                <label
+                  htmlFor="subtitle_style"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Style
+                </label>
+                <select
+                  id="subtitle_style"
+                  value={settings.subtitle_style}
+                  onChange={(e) =>
+                    updateField("subtitle_style")(
+                      e.target.value as Settings["subtitle_style"],
+                    )
+                  }
+                  className="w-full bg-slate-700 p-2 rounded-md text-white"
+                >
+                  <option value="normal">Normal</option>
+                  <option value="bold">Bold</option>
+                  <option value="high-contrast">High Contrast</option>
+                </select>
+                <p className="text-xs text-slate-400 mt-1">
+                  High contrast is best for bright environments.
+                </p>
+              </div>
             </div>
           </section>
         </div>

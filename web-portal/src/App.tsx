@@ -22,6 +22,7 @@ if (!googleClientId) {
 
 // ✅ Default settings so the modal always has something to show
 const DEFAULT_SETTINGS: Settings = {
+  // Backend-related (unchanged from original app, keep these)
   source_language: "en",
   target_language: "es",
   chunk_duration_seconds: 8.0,
@@ -29,7 +30,14 @@ const DEFAULT_SETTINGS: Settings = {
   silence_threshold: 0.01,
   chunk_overlap_seconds: 0.5,
   websocket_url: "ws://localhost:8000/ws",
+
+  // New UX-facing fields
+  subtitles_enabled: true,
+  translation_enabled: true,
+  subtitle_font_size: 18,
+  subtitle_style: "normal",
 };
+
 
 function App() {
   const [appUser, setAppUser] = useState<User | null>(null);
@@ -135,14 +143,19 @@ function App() {
       const response = await fetch("/api/settings");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-      // ✅ Just overwrite defaults if API works
-      setSettings(data.settings);
+  
+      // 👇 Merge backend settings onto our defaults
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...(data.settings ?? {}),
+      });
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
-      // We KEEP whatever was in `settings` (defaults) instead of null
+      // keep whatever is currently in `settings` (defaults)
     }
   }, []);
+  
 
   const saveSettings = useCallback(async (newSettings: Settings) => {
     setSettingsError(null);
@@ -220,7 +233,7 @@ function App() {
           onClose={() => setShowNavigation(false)}
           onTabChange={(tab) => {
             setActiveTab(tab);
-            //closes sidebar when selecting tab
+            //closes sidebar when selecting
             setShowNavigation(false);
           }}
         />
