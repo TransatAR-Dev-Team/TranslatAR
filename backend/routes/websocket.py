@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from security.auth import verify_jwt_token
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ async def websocket_endpoint(websocket: WebSocket):
             metadata = json.loads(metadata_json)
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
+            conversation_id = metadata.get("conversation_id")
 
             # Check for JWT token in metadata
             jwt_token = metadata.get("jwt_token")
@@ -59,7 +61,9 @@ async def websocket_endpoint(websocket: WebSocket):
             )
 
             asyncio.create_task(
-                process_audio_chunk(websocket, audio_data, source_lang, target_lang, user_id)
+                process_audio_chunk(
+                    websocket, audio_data, source_lang, target_lang, user_id, conversation_id
+                )
             )
 
     except WebSocketDisconnect:
@@ -77,6 +81,7 @@ async def process_audio_chunk(
     source_lang: str,
     target_lang: str,
     user_id: str,
+    conversation_id: str,
 ):
     """
     Process audio chunk: transcribe, translate, and save to database
@@ -121,6 +126,7 @@ async def process_audio_chunk(
                     "source_lang": source_lang,
                     "target_lang": target_lang,
                     "userId": user_id,
+                    "conversationId": conversation_id or str(uuid4()),
                     "timestamp": datetime.now(UTC),
                 }
                 await translations_collection.insert_one(translation_log)

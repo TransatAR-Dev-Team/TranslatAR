@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.IO;
 using System.Collections;
+using System;
 
 #if PLATFORM_ANDROID
 using UnityEngine.Android;
@@ -67,6 +68,12 @@ public class AudioRecordingManager : MonoBehaviour
     /// Maximum length in seconds for the circular recording buffer.
     /// </summary>
     private const int maxRecordingLength = 30;
+
+    /// <summary>
+    /// The current conversation ID for this recording session.
+    /// A new ID is generated each time recording starts.
+    /// </summary>
+    private string currentConversationId;
 
     /// <summary>
     /// Requests microphone permission on Android and initializes overlap sample count.
@@ -145,7 +152,9 @@ public class AudioRecordingManager : MonoBehaviour
         lastSamplePosition = 0;
         chunkTimer = 0f;
 
-        Debug.Log("Recording started...");
+        // Generate a new conversation ID
+        currentConversationId = Guid.NewGuid().ToString();
+        Debug.Log("Recording started... New Conversation ID: " + currentConversationId);
 
         // Start fresh - end any previous recording
         if (Microphone.IsRecording(null))
@@ -230,7 +239,7 @@ public class AudioRecordingManager : MonoBehaviour
         byte[] wavData = ConvertSamplesToWav(samples, targetSampleRate, recordingClip.channels);
         if (WebSocketManager.Instance != null)
         {
-            WebSocketManager.Instance.SendAudioChunk(wavData);
+            WebSocketManager.Instance.SendAudioChunk(wavData, currentConversationId);
         }
 
         lastSamplePosition = currentPosition % recordingClip.samples;
@@ -324,4 +333,6 @@ public class AudioRecordingManager : MonoBehaviour
             Microphone.End(null);
         }
     }
+
+    
 }

@@ -51,6 +51,7 @@ function App() {
 
   const [showNavigation, setShowNavigation] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -196,38 +197,18 @@ function App() {
             onLoginError={handleLogout}
             onLogout={handleLogout}
             onShowSettings={() => setShowSettings(true)}
-            onShowNavigation={() => setShowNavigation(true)}
+            onShowNavigation={() => setShowNavigation(true)}   // NEW
           />
 
-          {/* ---------- PAGE CONTENT BY TAB ---------- */}
-          {activeTab === "dashboard" && (
-            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
-              <p className="text-slate-300 text-sm">
-                Overview coming soon. Use the sidebar to jump to Summarization or
-                Conversations.
-              </p>
-            </div>
-          )}
-
-          {activeTab === "summarization" && <Summarizer />}
-
-          {activeTab === "conversations" && (
-            <HistoryPanel
-              history={history}
-              isLoading={isHistoryLoading}
-              error={historyError}
-            />
-          )}
-
-          {activeTab === "logs" && (
-            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-2">Logs</h2>
-              <p className="text-slate-300 text-sm">
-                Logs page placeholder – this will eventually show transcript logs.
-              </p>
-            </div>
-          )}
+          {/*can later show different content based on activeTab maybe*/}
+          <Summarizer />
+          <HistoryPanel
+            history={history}
+            isLoading={isHistoryLoading}
+            error={historyError}
+            activeConversationId={activeConversationId}
+            onSelectConversation={setActiveConversationId}
+          />
         </div>
 
         {/* Settings modal */}
