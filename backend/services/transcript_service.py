@@ -15,7 +15,7 @@ async def fetch_transcripts(
     if since:
         query["timestamp"] = {"$gte": since}
     if user_id:
-        query["user_id"] = user_id  # use if user information is stored
+        query["userId"] = user_id  # use if user information is stored
 
     cursor = (
         db.get_collection("translations")
