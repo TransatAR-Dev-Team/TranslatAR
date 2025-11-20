@@ -6,6 +6,9 @@ export default function Summarizer() {
   const [summaryLength, setSummaryLength] = useState<string>("medium");
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [advice, setAdvice] = useState<string>("");
+  const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
+  const [adviceError, setAdviceError] = useState<string | null>(null);
 
   const handleSummarize = async () => {
     if (!textToSummarize.trim()) {
@@ -35,6 +38,37 @@ export default function Summarizer() {
       setSummaryError("Failed to generate summary. Please try again.");
     } finally {
       setIsSummarizing(false);
+    }
+  };
+
+  const handleGetAdvice = async () => {
+    if (!textToSummarize.trim()) {
+      setAdviceError("Please enter some text to get advice.");
+      return;
+    }
+
+    setIsGettingAdvice(true);
+    setAdviceError(null);
+    setAdvice("");
+
+    try {
+      const response = await fetch("/api/advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textToSummarize }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAdvice(data.advice);
+    } catch (error) {
+      console.error("Error getting advice:", error);
+      setAdviceError("Failed to generate advice. Please try again.");
+    } finally {
+      setIsGettingAdvice(false);
     }
   };
 
@@ -75,6 +109,20 @@ export default function Summarizer() {
         <div className="mt-4 bg-slate-700 p-4 rounded-md">
           <h3 className="font-semibold mb-2">Summary:</h3>
           <p>{summary}</p>
+        </div>
+      )}
+      <button
+        onClick={handleGetAdvice}
+        disabled={isGettingAdvice}
+        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-md transition-colors duration-200"
+      >
+        {isGettingAdvice ? "Getting Advice..." : "Learning Advise"}
+      </button>
+      {adviceError && <p className="text-red-400 mt-4">{adviceError}</p>}
+      {advice && (
+        <div className="mt-4 bg-slate-700 p-4 rounded-md">
+          <h3 className="font-semibold mb-2">Learning Advise:</h3>
+          <p>{advice}</p>
         </div>
       )}
     </div>
