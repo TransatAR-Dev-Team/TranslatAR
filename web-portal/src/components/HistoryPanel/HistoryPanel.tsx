@@ -128,7 +128,7 @@ export default function HistoryPanel({
                           </span>
                         )}
                         
-                      <button className="text-xs text-indigo-300 hover:underline"
+                      <button className="text-xs text-indigo-300 hover:underline cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigator.clipboard.writeText(convo.translatedTranscript);
