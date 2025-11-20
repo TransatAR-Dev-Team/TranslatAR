@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from security.auth import verify_jwt_token
 
 logger = logging.getLogger(__name__)
@@ -27,29 +28,44 @@ async def websocket_endpoint(websocket: WebSocket):
     user_id = None
 
     try:
-        while True:
-            # Receive binary message from Unity
-            data = await websocket.receive_bytes()
+        # First message should contain authentication
+        first_data = await websocket.receive_bytes()
+        metadata_length = int.from_bytes(first_data[:4], byteorder="little")
+        metadata_json = first_data[4 : 4 + metadata_length].decode("utf-8")
+        metadata = json.loads(metadata_json)
 
-            # Parse the message format: [4 bytes length][metadata JSON][audio WAV]
+        # Authenticate the connection
+        jwt_token = metadata.get("jwt_token")
+        if jwt_token:
+            user_id = await verify_jwt_token(jwt_token)
+            if user_id:
+                logger.info(f"WebSocket authenticated for user: {user_id}")
+            else:
+                logger.warning("JWT verification failed")
+                await websocket.close(code=4001, reason="Authentication failed")
+                return
+        else:
+            logger.warning("No JWT token provided in initial message")
+
+        # Process first audio chunk
+        audio_data = first_data[4 + metadata_length :]
+        source_lang = metadata.get("source_lang", "en")
+        target_lang = metadata.get("target_lang", "es")
+        asyncio.create_task(
+            process_audio_chunk(websocket, audio_data, source_lang, target_lang, user_id)
+        )
+
+        # Continue receiving subsequent messages
+        while True:
+            data = await websocket.receive_bytes()
             metadata_length = int.from_bytes(data[:4], byteorder="little")
             metadata_json = data[4 : 4 + metadata_length].decode("utf-8")
             audio_data = data[4 + metadata_length :]
-
-            # Parse metadata
             metadata = json.loads(metadata_json)
+
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
 
-            # Check for JWT token in metadata
-            jwt_token = metadata.get("jwt_token")
-            if jwt_token:
-                verified_user_id = await verify_jwt_token(jwt_token)
-                if verified_user_id:
-                    user_id = verified_user_id
-                    print(f"Authenticated user: {user_id}")
-
-            # Process audio in background with userId
             logger.info(
                 "Received audio chunk from user %s: %d bytes, lang: %s -> %s",
                 user_id or "NO USER ID",
