@@ -117,7 +117,7 @@ export default function HistoryPanel({
                   <div onClick={() => onSelectConversation?.(convo.id)}
                       className="flex justify-between items-center cursor-pointer pb-2">
                       <p className="text-xs text-gray-400 mb-2">
-                        Conversation started: {convo.startedAt.toLocaleString()}
+                        Conversation started: {convo.startedAt.toLocaleDateString()}
                       </p>
 
                       <div className="flex items-center gap-2">
