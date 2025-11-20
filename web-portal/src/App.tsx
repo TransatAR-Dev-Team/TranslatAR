@@ -148,6 +148,17 @@ function App() {
     }
   }, [appUser, loadHistory]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const historyPanel = document.getElementById("history-panel");
+      if (historyPanel && !historyPanel.contains(e.target as Node)) {
+        setActiveConversationId(null);
+      }
+    };
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const saveSettings = useCallback(async (newSettings: Settings) => {
     setSettingsError(null);
     try {
