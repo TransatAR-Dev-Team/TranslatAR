@@ -3392,18 +3392,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1309872645}
   m_CullTransparentMesh: 1
---- !u!114 &1421752977 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8863927046010899422, guid: 47d374095727a9d4fa7a325c9682b286,
-    type: 3}
-  m_PrefabInstance: {fileID: 530034005}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1462565720
 GameObject:
   m_ObjectHideFlags: 0
@@ -3537,6 +3525,18 @@ MonoBehaviour:
   overlapMask: 0
   overlayType: 1
   _overlayEnabled: 1
+--- !u!114 &1564356444 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7303753908348779260, guid: 47d374095727a9d4fa7a325c9682b286,
+    type: 3}
+  m_PrefabInstance: {fileID: 530034005}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1595725569
 GameObject:
   m_ObjectHideFlags: 0
@@ -4755,7 +4755,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   subtitleText: {fileID: 150052533}
   fontSizeSlider: {fileID: 1065832247}
-  fontSizeValueText: {fileID: 1421752977}
+  fontSizeValueText: {fileID: 1564356444}
   minSize: 18
   maxSize: 72
 --- !u!114 &2109808711
