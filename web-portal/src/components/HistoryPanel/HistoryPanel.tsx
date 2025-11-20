@@ -8,6 +8,8 @@ interface HistoryItem {
   target_lang: string;
   conversationId?: string | null;
   timestamp: string;
+  conversationId?: string | null;
+  timestamp: string;
 }
 
 interface HistoryPanelProps {
@@ -28,7 +30,7 @@ interface Conversation {
   startedAt: Date;
 };
 
-export function buildConversationTranscripts(history: HistoryItem[]): Conversation[] {
+function buildConversationTranscripts(history: HistoryItem[]): Conversation[] {
   if (!history.length) return [];
 
   const convMap = new Map<string, HistoryItem[]>();
