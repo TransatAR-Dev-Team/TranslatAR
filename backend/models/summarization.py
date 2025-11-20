@@ -8,6 +8,7 @@ class SummarizationRequest(BaseModel):
 
 class SummarizationResponse(BaseModel):
     summary: str
+    message: str | None = None
 
 
 class SummarySaveRequest(BaseModel):

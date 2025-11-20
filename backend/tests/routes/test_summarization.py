@@ -38,6 +38,33 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+@pytest.fixture
+def mock_summarization_service(monkeypatch):
+    """Mock the summarization service HTTP call."""
+    class MockResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"summary": "Test summary"}
+
+    class MockClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def post(self, url, json=None, **kwargs):
+            return MockResponse()
+
+    monkeypatch.setattr(
+        "routes.summarization.httpx.AsyncClient", lambda timeout=120.0: MockClient()
+    )
+
+
 # --- Tests for POST /api/summarize ---
 
 
@@ -69,7 +96,8 @@ def test_summarize_success_default_length(client, monkeypatch):
         async def post(self, url, json=None, **kwargs):
             # Verify the correct payload was sent
             assert json["text"] == "This is a long text that needs summarization."
-            assert json["length"] == "medium"  # default
+            # Auto-downgrade may change the length for short texts
+            assert json["length"] in ["short", "medium"]
             return MockResponse()
 
     monkeypatch.setattr("routes.summarization.httpx.AsyncClient", lambda timeout: MockClient())
@@ -83,6 +111,7 @@ def test_summarize_success_default_length(client, monkeypatch):
     data = response.json()
     assert "summary" in data
     assert data["summary"] == "This is a test summary"
+    # Note: message may be present if auto-downgrade occurred
 
 
 def test_summarize_success_short_length(client, monkeypatch):
@@ -155,9 +184,11 @@ def test_summarize_success_long_length(client, monkeypatch):
 
     monkeypatch.setattr("routes.summarization.httpx.AsyncClient", lambda timeout: MockClient())
 
+    # Use text with 400+ words to ensure it's long enough for "long" summary
+    long_text = "word " * 400
     response = client.post(
         "/api/summarize",
-        json={"text": "Long text here.", "length": "long"},
+        json={"text": long_text, "length": "long"},
     )
 
     assert response.status_code == 200
@@ -262,14 +293,14 @@ def test_summarize_service_http_error(client, monkeypatch):
             pass
 
         async def post(self, url, json=None, **kwargs):
-            raise httpx.HTTPError("Service unavailable")
+            raise httpx.ConnectError("Service unavailable")
 
     monkeypatch.setattr("routes.summarization.httpx.AsyncClient", lambda timeout: MockClient())
 
     response = client.post("/api/summarize", json={"text": "Test text"})
 
-    assert response.status_code == 500
-    assert "Error during summarization" in response.json()["detail"]
+    assert response.status_code == 503
+    assert "unavailable" in response.json()["detail"]
 
 
 def test_summarize_service_timeout(client, monkeypatch):
@@ -400,18 +431,19 @@ def test_summarize_invalid_length_value(client, monkeypatch):
             pass
 
         async def post(self, url, json=None, **kwargs):
-            # Service receives whatever length value was sent
-            assert json["length"] == "invalid_value"
+            # Auto-downgrade will convert invalid_value to a valid length based on text size
+            # Short text (5 words) will downgrade to "short"
+            assert json["length"] == "short"
             return MockResponse()
 
     monkeypatch.setattr("routes.summarization.httpx.AsyncClient", lambda timeout: MockClient())
 
     response = client.post(
         "/api/summarize",
-        json={"text": "Test", "length": "invalid_value"},
+        json={"text": "Test text with few words", "length": "invalid_value"},
     )
 
-    # The endpoint doesn't validate length values, passes them through
+    # The endpoint auto-downgrades invalid values to appropriate length based on text size
     assert response.status_code == 200
 
 
@@ -621,3 +653,72 @@ def test_get_history_empty(client):
     assert response.json()["history"] == []
 
     client.app.dependency_overrides = {}
+
+
+# --- Auto-downgrade tests ---
+
+
+def test_summarize_with_appropriate_length_no_downgrade(mock_summarization_service, client):
+    """Test that no downgrade occurs when text length is appropriate."""
+    # Text with 150 words (enough for medium, not enough for long)
+    medium_text = "word " * 150
+    resp = client.post(
+        "/api/summarize", json={"text": medium_text, "length": "medium"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["summary"] == "Test summary"
+    assert resp.json().get("message") is None
+
+
+def test_summarize_auto_downgrade_from_long_to_medium(mock_summarization_service, client):
+    """Test auto-downgrade from long to medium when text is too short."""
+    # Text with 150 words (enough for medium, not enough for long)
+    medium_text = "word " * 150
+    resp = client.post(
+        "/api/summarize", json={"text": medium_text, "length": "long"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["summary"] == "Test summary"
+    assert resp.json()["message"] is not None
+    assert "medium" in resp.json()["message"].lower()
+    assert "long" in resp.json()["message"].lower()
+
+
+def test_summarize_auto_downgrade_from_long_to_short(mock_summarization_service, client):
+    """Test auto-downgrade from long to short when text is very short."""
+    # Text with 50 words (only enough for short)
+    short_text = "word " * 50
+    resp = client.post(
+        "/api/summarize", json={"text": short_text, "length": "long"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["summary"] == "Test summary"
+    assert resp.json()["message"] is not None
+    assert "short" in resp.json()["message"].lower()
+    assert "long" in resp.json()["message"].lower()
+
+
+def test_summarize_auto_downgrade_from_medium_to_short(mock_summarization_service, client):
+    """Test auto-downgrade from medium to short when text is too short."""
+    # Text with 50 words (only enough for short)
+    short_text = "word " * 50
+    resp = client.post(
+        "/api/summarize", json={"text": short_text, "length": "medium"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["summary"] == "Test summary"
+    assert resp.json()["message"] is not None
+    assert "short" in resp.json()["message"].lower()
+    assert "medium" in resp.json()["message"].lower()
+
+
+def test_summarize_no_downgrade_for_long_text(mock_summarization_service, client):
+    """Test that long text allows long summary without downgrade."""
+    # Text with 400 words (enough for long)
+    long_text = "word " * 400
+    resp = client.post(
+        "/api/summarize", json={"text": long_text, "length": "long"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["summary"] == "Test summary"
+    assert resp.json().get("message") is None
