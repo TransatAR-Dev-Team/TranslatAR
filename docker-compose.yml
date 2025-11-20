@@ -91,6 +91,19 @@ services:
     depends_on:
       - ollama
 
+  advice:
+    container_name: advice
+    build:
+      context: ./advice_service
+      target: production
+    ports:
+      - "9003:9003"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=phi3:mini
+    depends_on:
+      - ollama
+
   ollama:
     container_name: ollama
     image: ollama/ollama

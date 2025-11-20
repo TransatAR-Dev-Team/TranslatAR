@@ -1,4 +1,4 @@
-services: 
+services:
   test_runner:
     container_name: test_runner_integration
     build:
@@ -8,7 +8,7 @@ services:
       backend:
         condition: service_healthy
     command: ["poetry", "run", "pytest", "-v"]
-  
+
   backend:
     container_name: backend_integration_test
     build:
@@ -19,10 +19,12 @@ services:
       - STT_URL=http://mock_stt:9000
       - TRANSLATION_URL=http://mock_translation:9001
       - SUMMARIZATION_URL=http://summarization:9002
+      - ADVICE_URL=http://mock_advice:9003
     depends_on:
       - mongodb_test
       - mock_stt
       - mock_translation
+      - mock_advice
     # This tells Docker how to determine if the backend is ready.
     healthcheck:
       # The command runs INSIDE the container. 'curl -f' fails with a non-zero
@@ -57,3 +59,11 @@ services:
       context: ./tests/integration
       dockerfile: Dockerfile
     command: ["poetry","run","uvicorn","mock_translation:app","--host","0.0.0.0","--port","9001"]
+
+  mock_advice:
+    container_name: mock_advice_integration
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile
+    # Run the mock app on port 9003
+    command: ["poetry", "run", "uvicorn", "mock_advice:app", "--host", "0.0.0.0", "--port", "9003"]
