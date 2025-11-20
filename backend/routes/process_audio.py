@@ -33,7 +33,7 @@ async def process_audio_and_translate(
     )
     translations_collection = request.app.state.db.get_collection("translations")
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=120.0) as client:
         # Step 1: STT call
         try:
             logger.info("Forwarding audio to STT service at %s", STT_SERVICE_URL)
@@ -78,12 +78,52 @@ async def process_audio_and_translate(
             logger.error("Error calling Translation service: %s", e, exc_info=True)
             raise HTTPException(status_code=502, detail=f"Error in Translation service: {e}") from e
 
-        # Step 3: Save to the DB
+        # Step 3: Produce an English version for summarization
+        try:
+            english_text = original_text if source_lang.lower() == "en" else None
+
+            if target_lang.lower() == "en":
+                english_text = translated_text
+
+            if english_text is None:
+                english_payload = {
+                    "text": original_text,
+                    "source_lang": source_lang,
+                    "target_lang": "en",
+                }
+                english_response = await client.post(
+                    f"{TRANSLATION_SERVICE_URL}/translate", json=english_payload
+                )
+                english_response.raise_for_status()
+                english_text = english_response.json().get("translated_text")
+
+            if not english_text:
+                raise HTTPException(status_code=500, detail="Failed to produce English text.")
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Error obtaining English translation: {e}"
+            ) from e
+
+        # Step 4: Summarize the English text via Ollama
+        try:
+            summary_payload = {"text": english_text, "length": "medium"}
+            summary_response = await client.post(
+                f"{SUMMARIZATION_SERVICE_URL}/summarize", json=summary_payload
+            )
+            summary_response.raise_for_status()
+            summary_text = summary_response.json().get("summary")
+            if summary_text is None:
+                raise HTTPException(status_code=500, detail="Summarization failed.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error in Summarization service: {e}") from e
+
+        # Step 5: Save to the DB
         try:
             logger.info("Saving translation to the database.")
             translation_log = {
                 "original_text": original_text,
                 "translated_text": translated_text,
+                "summary_text": summary_text,
                 "source_lang": source_lang,
                 "target_lang": target_lang,
                 "userId": str(current_user["_id"]),
@@ -96,4 +136,8 @@ async def process_audio_and_translate(
                 "CRITICAL: Failed to save translation to database: %s", e, exc_info=True
             )
 
-        return TranslationResponse(original_text=original_text, translated_text=translated_text)
+        return TranslationResponse(
+            original_text=original_text,
+            translated_text=translated_text,
+            summary_text=summary_text,
+        )

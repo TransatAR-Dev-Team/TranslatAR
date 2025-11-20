@@ -15,6 +15,7 @@ router = APIRouter()
 # Service URLs from environment
 STT_SERVICE_URL = os.getenv("STT_URL", "http://stt:9000")
 TRANSLATION_SERVICE_URL = os.getenv("TRANSLATION_URL", "http://translation:9001")
+SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
 
 
 @router.websocket("")
@@ -82,7 +83,7 @@ async def process_audio_chunk(
     Process audio chunk: transcribe, translate, and save to database
     """
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             # Step 1: Send to STT service
             files = {"audio_file": ("chunk.wav", audio_data, "audio/wav")}
 
@@ -111,13 +112,45 @@ async def process_audio_chunk(
             translated_text = translation_response.json().get("translated_text", "")
             logger.info("Translation result: '%s'", translated_text)
 
-            # Step 3: Save to database
+            # Step 3: Ensure we have English text for summarization
+            english_text = original_text if source_lang.lower() == "en" else None
+            if target_lang.lower() == "en":
+                english_text = translated_text
+
+            if english_text is None:
+                english_payload = {
+                    "text": original_text,
+                    "source_lang": source_lang,
+                    "target_lang": "en",
+                }
+                english_response = await client.post(
+                    f"{TRANSLATION_SERVICE_URL}/translate", json=english_payload
+                )
+                english_response.raise_for_status()
+                english_text = english_response.json().get("translated_text", "")
+
+            if not english_text:
+                raise ValueError("Failed to obtain English text for summarization.")
+
+            # Step 4: Summarize using Ollama
+            summary_payload = {"text": english_text, "length": "medium"}
+            summary_response = await client.post(
+                f"{SUMMARIZATION_SERVICE_URL}/summarize", json=summary_payload
+            )
+            summary_response.raise_for_status()
+            summary_text = summary_response.json().get("summary", "")
+
+            if not summary_text:
+                raise ValueError("Summarization service returned empty summary.")
+
+            # Step 5: Save to database
             try:
                 db = websocket.app.state.db
                 translations_collection = db.get_collection("translations")
                 translation_log = {
                     "original_text": original_text,
                     "translated_text": translated_text,
+                    "summary_text": summary_text,
                     "source_lang": source_lang,
                     "target_lang": target_lang,
                     "userId": user_id,
@@ -130,15 +163,17 @@ async def process_audio_chunk(
                     "Failed to save WebSocket translation to database: %s", e, exc_info=True
                 )
 
-            # Step 4: Send result back to Unity
+            # Step 6: Send result back to Unity
             response = {
                 "original_text": original_text,
                 "translated_text": translated_text,
+                "summary_text": summary_text,
             }
 
             await websocket.send_json(response)
 
     except httpx.HTTPError as e:
+<<<<<<< Updated upstream
         logger.error("HTTP error during audio chunk processing: %s", e, exc_info=True)
         error_response = {"original_text": "", "translated_text": f"Error: {str(e)}"}
         await websocket.send_json(error_response)
@@ -150,3 +185,21 @@ async def process_audio_chunk(
             await websocket.send_json(error_response)
         except WebSocketDisconnect:
             logger.warning("Could not send error to client as they disconnected.")
+=======
+        print(f"HTTP error during processing: {e}")
+        error_response = {
+            "original_text": "",
+            "translated_text": f"Error: {str(e)}",
+            "summary_text": "",
+        }
+        await websocket.send_json(error_response)
+
+    except Exception as e:
+        print(f"Error processing audio chunk: {e}")
+        error_response = {
+            "original_text": "",
+            "translated_text": f"Processing error: {str(e)}",
+            "summary_text": "",
+        }
+        await websocket.send_json(error_response)
+>>>>>>> Stashed changes
