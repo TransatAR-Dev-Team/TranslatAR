@@ -8,7 +8,7 @@ interface HeaderProps {
   onLoginError: () => void;
   onLogout: () => void;
   onShowSettings: () => void;
-  onShowNavigation: () => void;   // NEW
+  onShowNavigation: () => void;  
 }
 
 export default function Header({
