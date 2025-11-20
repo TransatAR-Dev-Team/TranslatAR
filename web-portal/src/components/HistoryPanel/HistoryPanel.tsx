@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface HistoryItem {
   _id: string;
   original_text: string;
@@ -86,11 +88,10 @@ export default function HistoryPanel({
   activeConversationId,
   onSelectConversation,
 }: HistoryPanelProps) {
-  console.log("History from backend: ", history);
+  const [copiedConversationId, setCopiedConversationId] = useState<string | null>(null); 
   const conversations = buildConversationTranscripts(history);
-  console.log("Built conversations: ", conversations);
   return (
-    <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
+    <div id="history-panel" className="bg-slate-800 rounded-lg p-6 shadow-lg">
       <h2 className="text-2xl font-semibold mb-4 text-left">
         Translation History
       </h2>
@@ -107,29 +108,47 @@ export default function HistoryPanel({
           ) : (
             conversations.map((convo) => {
               const isActive = convo.id === activeConversationId;
+              const isCopied = convo.id === copiedConversationId;
 
               return (
-                <button
-                  key={convo.id}
-                  type="button"
-                  onClick={() => onSelectConversation?.(convo.id)}
-                  className={`w-full text-left border rounded-md p-3 transition ${
-                    isActive
-                      ? "border-indigo-400 bg-slate-700"
-                      : "border-slate-700 hover:border-slate-500"
-                  }`}
-                >
-                  <p className="text-xs text-gray-400 mb-2">
-                    Conversation started: {convo.startedAt.toLocaleString()}
-                  </p>
+                <div key={convo.id} className={`border rounded-md p-3 transition ${
+                  isActive ? "border-indigo-400 bg-slate-700" : "border-slate-700 hover:border-slate-500"
+                }`}>
+                  <div onClick={() => onSelectConversation?.(convo.id)}
+                      className="flex justify-between items-center cursor-pointer pb-2">
+                      <p className="text-xs text-gray-400 mb-2">
+                        Conversation started: {convo.startedAt.toLocaleString()}
+                      </p>
 
-                  <p className="text-gray-400 mb-1">
-                    {convo.originalTranscript} <span className="text-xs">({convo.source_lang}):</span>
-                  </p>
-                  <p className="text-lg">
-                    {convo.translatedTranscript} <span className="text-xs">({convo.target_lang}):</span>
-                  </p>
-                </button>
+                      <div className="flex items-center gap-2">
+                        {/* Copied badge */}
+                        {isCopied && (
+                          <span className="text-xs text-green-400">
+                            Copied!
+                          </span>
+                        )}
+                        
+                      <button className="text-xs text-indigo-300 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(convo.translatedTranscript);
+                          setCopiedConversationId(convo.id);
+                          setTimeout(() => setCopiedConversationId(null), 2000);
+                        }}>
+                        Copy Translated Text
+
+                      </button>
+                    </div>
+                    </div>
+                    <div className="select-text">
+                      <p className="text-gray-400 mb-1">
+                        {convo.originalTranscript}{" "} <span className="text-xs">({convo.source_lang}):</span>
+                      </p>
+                      <p className="text-lg">
+                        {convo.translatedTranscript}{" "} <span className="text-xs">({convo.target_lang}):</span>
+                        </p>
+                    </div>
+                </div>
               );
             })
           )}
