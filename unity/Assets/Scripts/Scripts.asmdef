@@ -1,14 +1,19 @@
 {
     "name": "GameRuntime",
+    "rootNamespace": "",
     "references": [
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Oculus.VR"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "autoReferenced": true,
+    "overrideReferences": false,
     "precompiledReferences": [
         "websocket-sharp.dll"
-    ]
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
-
