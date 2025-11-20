@@ -67,19 +67,19 @@ async def test_transcripts_applies_filters(transcripts_collection):
             **MARKER,
             "timestamp": now,
             "original_text": "alice-new",
-            "user_id": "alice",
+            "userId": "alice",
         },
         {
             **MARKER,
             "timestamp": now - timedelta(days=1),
             "original_text": "alice-old",
-            "user_id": "alice",
+            "userId": "alice",
         },
         {
             **MARKER,
             "timestamp": now - timedelta(hours=1),
             "original_text": "bob-new",
-            "user_id": "bob",
+            "userId": "bob",
         },
     ]
     await transcripts_collection.insert_many(docs)
@@ -97,5 +97,5 @@ async def test_transcripts_applies_filters(transcripts_collection):
     body = response.json()
     assert len(body) == 1
     assert body[0]["original_text"] == "alice-new"
-    assert body[0]["user_id"] == "alice"
+    assert body[0]["userId"] == "alice"
 
