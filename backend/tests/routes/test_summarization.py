@@ -70,9 +70,7 @@ def test_summarize_success_default_length(client, monkeypatch):
             pass
 
         async def post(self, url, json=None, **kwargs):
-            # Verify the correct payload was sent
             assert json["text"] == "This is a long text that needs summarization."
-            # Auto-downgrade may change the length for short texts
             assert json["length"] in ["short", "medium"]
             return MockResponse()
 
@@ -87,7 +85,6 @@ def test_summarize_success_default_length(client, monkeypatch):
     data = response.json()
     assert "summary" in data
     assert data["summary"] == "This is a test summary"
-    # Note: message may be present if auto-downgrade occurred
 
 
 def test_summarize_success_short_length(client, monkeypatch):
@@ -407,8 +404,6 @@ def test_summarize_invalid_length_value(client, monkeypatch):
             pass
 
         async def post(self, url, json=None, **kwargs):
-            # Auto-downgrade will convert invalid_value to a valid length based on text size
-            # Short text (5 words) will downgrade to "short"
             assert json["length"] == "short"
             return MockResponse()
 
@@ -419,7 +414,6 @@ def test_summarize_invalid_length_value(client, monkeypatch):
         json={"text": "Test text with few words", "length": "invalid_value"},
     )
 
-    # The endpoint auto-downgrades invalid values to appropriate length based on text size
     assert response.status_code == 200
 
 
@@ -506,12 +500,7 @@ Paragraph 2"""
     assert response.status_code == 200
 
 
-# --- Auto-downgrade tests ---
-
-
 def test_summarize_with_appropriate_length_no_downgrade(mock_summarization_service, client):
-    """Test that no downgrade occurs when text length is appropriate."""
-    # Text with 150 words (enough for medium, not enough for long)
     medium_text = "word " * 150
     resp = client.post(
         "/api/summarize", json={"text": medium_text, "length": "medium"}
@@ -522,8 +511,6 @@ def test_summarize_with_appropriate_length_no_downgrade(mock_summarization_servi
 
 
 def test_summarize_auto_downgrade_from_long_to_medium(mock_summarization_service, client):
-    """Test auto-downgrade from long to medium when text is too short."""
-    # Text with 150 words (enough for medium, not enough for long)
     medium_text = "word " * 150
     resp = client.post(
         "/api/summarize", json={"text": medium_text, "length": "long"}
@@ -536,8 +523,6 @@ def test_summarize_auto_downgrade_from_long_to_medium(mock_summarization_service
 
 
 def test_summarize_auto_downgrade_from_long_to_short(mock_summarization_service, client):
-    """Test auto-downgrade from long to short when text is very short."""
-    # Text with 50 words (only enough for short)
     short_text = "word " * 50
     resp = client.post(
         "/api/summarize", json={"text": short_text, "length": "long"}
@@ -550,8 +535,6 @@ def test_summarize_auto_downgrade_from_long_to_short(mock_summarization_service,
 
 
 def test_summarize_auto_downgrade_from_medium_to_short(mock_summarization_service, client):
-    """Test auto-downgrade from medium to short when text is too short."""
-    # Text with 50 words (only enough for short)
     short_text = "word " * 50
     resp = client.post(
         "/api/summarize", json={"text": short_text, "length": "medium"}
@@ -564,8 +547,6 @@ def test_summarize_auto_downgrade_from_medium_to_short(mock_summarization_servic
 
 
 def test_summarize_no_downgrade_for_long_text(mock_summarization_service, client):
-    """Test that long text allows long summary without downgrade."""
-    # Text with 400 words (enough for long)
     long_text = "word " * 400
     resp = client.post(
         "/api/summarize", json={"text": long_text, "length": "long"}
