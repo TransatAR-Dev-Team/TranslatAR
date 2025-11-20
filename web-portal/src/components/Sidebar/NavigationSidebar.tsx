@@ -1,6 +1,6 @@
 import React from "react";
 
-type TabKey = "dashboard" | "conversations" | "logs" | "settings";
+export type TabKey = "dashboard" | "summarization" | "conversations" | "logs";
 
 interface SideNavigationProps {
   isOpen: boolean;
@@ -11,9 +11,9 @@ interface SideNavigationProps {
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
-  { key: "conversations", label: "Conversations" },
+  { key: "summarization", label: "Summarization" },
+  { key: "conversations", label: "Conversations / History" },
   { key: "logs", label: "Logs" },
-  { key: "settings", label: "Settings" },
 ];
 
 export default function SideNavigation({
@@ -58,7 +58,10 @@ export default function SideNavigation({
             <button
               key={tab.key}
               type="button"
-              onClick={() => onTabChange(tab.key)}
+              onClick={() => {
+                onTabChange(tab.key);
+                onClose();
+              }}
               className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                 activeTab === tab.key
                   ? "bg-slate-700 text-white"
