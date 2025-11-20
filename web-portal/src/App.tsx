@@ -15,6 +15,7 @@ import SettingsMenu, {
 import SideNavigation, {
   type TabKey,
 } from "./components/Sidebar/NavigationSidebar";
+import LiveTranslationView from "./components/TranslationView/TranslationView";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -186,6 +187,9 @@ function App() {
   // --- RENDER HELPERS ---
   const renderMainContent = () => {
     switch (activeTab) {
+      case "live_translation":
+        return <LiveTranslationView settings={settings} />;
+
       case "summarization":
         return <Summarizer />;
 

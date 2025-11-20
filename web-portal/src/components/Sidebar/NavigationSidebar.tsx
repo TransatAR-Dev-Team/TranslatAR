@@ -2,9 +2,11 @@ import React from "react";
 
 export type TabKey =
   | "dashboard"
+  | "live_translation"
   | "summarization"
   | "conversations"
-  | "summaryHistory";
+  | "summaryHistory"
+  | "logs";
 
 interface SideNavigationProps {
   isOpen: boolean;
@@ -15,9 +17,11 @@ interface SideNavigationProps {
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
+  { key: "live_translation", label: "Live Translation" },
   { key: "summarization", label: "Summarization" },
   { key: "conversations", label: "Conversations / History" },
   { key: "summaryHistory", label: "Summary History" },
+  { key: "logs", label: "Logs" },
 ];
 
 export default function SideNavigation({
