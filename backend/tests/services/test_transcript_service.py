@@ -25,8 +25,8 @@ class FakeCollection:
             if gte:
                 docs = [doc for doc in docs if doc["timestamp"] >= gte]
 
-        if "user_id" in query:
-            docs = [doc for doc in docs if doc.get("user_id") == query["user_id"]]
+        if "userId" in query:
+            docs = [doc for doc in docs if doc.get("userId") == query["userId"]]
 
         return AsyncCursor(docs)
 
@@ -74,8 +74,8 @@ async def test_fetch_transcripts_returns_sorted_and_limited():
 async def test_fetch_transcripts_applies_filters():
     now = datetime.utcnow()
     docs = [
-        {"_id": object(), "timestamp": now, "user_id": "alice"},
-        {"_id": object(), "timestamp": now - timedelta(days=1), "user_id": "bob"},
+        {"_id": object(), "timestamp": now, "userId": "alice"},
+        {"_id": object(), "timestamp": now - timedelta(days=1), "userId": "bob"},
     ]
     db = FakeDB(docs)
 
@@ -86,4 +86,4 @@ async def test_fetch_transcripts_applies_filters():
     )
 
     assert len(result) == 1
-    assert result[0]["user_id"] == "alice"
+    assert result[0]["userId"] == "alice"

@@ -11,8 +11,9 @@ import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import SettingsMenu, {
   type Settings,
 } from "./components/SettingsMenu/SettingsMenu";
-import SideNavigation from "./components/Sidebar/NavigationSidebar";
-
+import SideNavigation, {
+  type TabKey,
+} from "./components/Sidebar/NavigationSidebar";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -21,7 +22,7 @@ if (!googleClientId) {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  // Backend-related (unchanged from original app, keep these)
+  // Backend-related (unchanged)
   source_language: "en",
   target_language: "es",
   chunk_duration_seconds: 8.0,
@@ -37,20 +38,19 @@ const DEFAULT_SETTINGS: Settings = {
   subtitle_style: "normal",
 };
 
-
 function App() {
   const [appUser, setAppUser] = useState<User | null>(null);
+
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [showNavigation, setShowNavigation] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "conversations" | "logs" | "settings">("dashboard");
-
-
 
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  const [showNavigation, setShowNavigation] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -74,50 +74,33 @@ function App() {
     [handleLogout],
   );
 
-  useEffect(() => {
-    const initialize = async () => {
-      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-      if (token) {
-        await fetchUserProfile(token);
-      }
-      await loadSettings();
-      await loadHistory();
-    };
-    initialize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchUserProfile]);
-
-  // --- API HANDLERS ---
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     setHistoryError(null);
-    
+
     try {
-      // Get the JWT token from localStorage
       const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-      
-      // If no token, just return empty history (don't show error)
+
       if (!token) {
         setHistory([]);
         setIsHistoryLoading(false);
         return;
       }
-      
+
       const response = await fetch("/api/history", {
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (!response.ok) {
-        // If 401, user might be logged out
         if (response.status === 401) {
           setHistory([]);
           return;
         }
         throw new Error("Network response was not ok");
       }
-      
+
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
@@ -128,20 +111,13 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (appUser) {
-      loadHistory();
-    }
-  }, [appUser, loadHistory]);
-
-
   const loadSettings = useCallback(async () => {
     setSettingsError(null);
     try {
       const response = await fetch("/api/settings");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-  
+
       setSettings({
         ...DEFAULT_SETTINGS,
         ...(data.settings ?? {}),
@@ -149,10 +125,27 @@ function App() {
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
-      // keep whatever is currently in `settings` (defaults)
     }
   }, []);
-  
+
+  useEffect(() => {
+    const initialize = async () => {
+      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+      if (token) {
+        await fetchUserProfile(token);
+      }
+      await loadSettings();
+      await loadHistory();
+    };
+    void initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchUserProfile]);
+
+  useEffect(() => {
+    if (appUser) {
+      loadHistory();
+    }
+  }, [appUser, loadHistory]);
 
   const saveSettings = useCallback(async (newSettings: Settings) => {
     setSettingsError(null);
@@ -197,24 +190,47 @@ function App() {
     <GoogleOAuthProvider clientId={googleClientId || ""}>
       <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
         <div className="w-full max-w-2xl">
-        <Header
-          appUser={appUser}
-          onLoginSuccess={handleLoginSuccess}
-          onLoginError={handleLogout}
-          onLogout={handleLogout}
-          onShowSettings={() => setShowSettings(true)}
-          onShowNavigation={() => setShowNavigation(true)}
-        />
-
-          <Summarizer />
-          <HistoryPanel
-            history={history}
-            isLoading={isHistoryLoading}
-            error={historyError}
+          <Header
+            appUser={appUser}
+            onLoginSuccess={handleLoginSuccess}
+            onLoginError={handleLogout}
+            onLogout={handleLogout}
+            onShowSettings={() => setShowSettings(true)}
+            onShowNavigation={() => setShowNavigation(true)}
           />
+
+          {/* ---------- PAGE CONTENT BY TAB ---------- */}
+          {activeTab === "dashboard" && (
+            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
+              <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
+              <p className="text-slate-300 text-sm">
+                Overview coming soon. Use the sidebar to jump to Summarization or
+                Conversations.
+              </p>
+            </div>
+          )}
+
+          {activeTab === "summarization" && <Summarizer />}
+
+          {activeTab === "conversations" && (
+            <HistoryPanel
+              history={history}
+              isLoading={isHistoryLoading}
+              error={historyError}
+            />
+          )}
+
+          {activeTab === "logs" && (
+            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
+              <h2 className="text-2xl font-semibold mb-2">Logs</h2>
+              <p className="text-slate-300 text-sm">
+                Logs page placeholder – this will eventually show transcript logs.
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Changed: we no longer gate on `settings &&` */}
+        {/* Settings modal */}
         {showSettings && (
           <SettingsMenu
             initialSettings={settings}
@@ -223,14 +239,14 @@ function App() {
             error={settingsError}
           />
         )}
-        {/* NEW: slide-in navigation sidebar */}
+
+        {/* Sidebar navigation */}
         <SideNavigation
           isOpen={showNavigation}
           activeTab={activeTab}
           onClose={() => setShowNavigation(false)}
           onTabChange={(tab) => {
             setActiveTab(tab);
-            //closes sidebar when selecting
             setShowNavigation(false);
           }}
         />
