@@ -1,8 +1,5 @@
-<<<<<<< Updated upstream
 import logging
-=======
 
->>>>>>> Stashed changes
 import os
 
 import httpx

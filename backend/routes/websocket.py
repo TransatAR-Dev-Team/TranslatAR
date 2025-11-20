@@ -173,7 +173,6 @@ async def process_audio_chunk(
             await websocket.send_json(response)
 
     except httpx.HTTPError as e:
-<<<<<<< Updated upstream
         logger.error("HTTP error during audio chunk processing: %s", e, exc_info=True)
         error_response = {"original_text": "", "translated_text": f"Error: {str(e)}"}
         await websocket.send_json(error_response)
@@ -185,21 +184,3 @@ async def process_audio_chunk(
             await websocket.send_json(error_response)
         except WebSocketDisconnect:
             logger.warning("Could not send error to client as they disconnected.")
-=======
-        print(f"HTTP error during processing: {e}")
-        error_response = {
-            "original_text": "",
-            "translated_text": f"Error: {str(e)}",
-            "summary_text": "",
-        }
-        await websocket.send_json(error_response)
-
-    except Exception as e:
-        print(f"Error processing audio chunk: {e}")
-        error_response = {
-            "original_text": "",
-            "translated_text": f"Processing error: {str(e)}",
-            "summary_text": "",
-        }
-        await websocket.send_json(error_response)
->>>>>>> Stashed changes
