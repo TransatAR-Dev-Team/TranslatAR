@@ -24,6 +24,7 @@ describe("Header Component", () => {
         onLoginError={() => {}}
         onLogout={() => {}}
         onShowSettings={() => {}}
+        onShowNavigation={() => {}}
       />,
     );
     expect(
@@ -40,6 +41,7 @@ describe("Header Component", () => {
         onLoginError={() => {}}
         onLogout={() => {}}
         onShowSettings={() => {}}
+        onShowNavigation={() => {}}
       />,
     );
 
@@ -56,10 +58,27 @@ describe("Header Component", () => {
         onLoginError={() => {}}
         onLogout={handleLogout}
         onShowSettings={() => {}}
+        onShowNavigation={() => {}}
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /logout/i }));
     expect(handleLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onShowNavigation when the navigation button is clicked", () => {
+    const handleShowNavigation = vi.fn();
+    render(
+      <Header
+        appUser={null}
+        onLoginSuccess={() => {}}
+        onLoginError={() => {}}
+        onLogout={() => {}}
+        onShowSettings={() => {}}
+        onShowNavigation={handleShowNavigation}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /navigation/i }));
+    expect(handleShowNavigation).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "./App";
 
@@ -12,10 +12,21 @@ describe("App Component", () => {
     localStorage.clear(); // Clean up localStorage between tests
   });
 
-  it("should render the main heading and show the initial loading state", () => {
+  it("should render the main heading and show the initial history state", async () => {
     render(<App />);
     expect(screen.getByText(/TranslatAR Web Portal/i)).toBeInTheDocument();
-    expect(screen.getByText(/Loading history.../i)).toBeInTheDocument();
+
+    // Navigate to the history panel
+    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
+    const conversationsButton = await screen.findByRole("button", {
+      name: /conversations \/ history/i,
+    });
+    fireEvent.click(conversationsButton);
+
+    // For a logged-out user, it should show the empty state, not the loading state.
+    expect(
+      await screen.findByText(/no translations found in the database/i),
+    ).toBeInTheDocument();
   });
 
   it("should display the translation history after a successful fetch", async () => {
@@ -23,7 +34,7 @@ describe("App Component", () => {
     const mockToken = "fake-jwt-token";
     localStorage.setItem("translatar_jwt", mockToken);
 
-    // Mock the /api/me call (getUserProfile)
+    // Mock the /api/me call
     fetchMock.mockResponseOnce(
       JSON.stringify({
         email: "test@example.com",
@@ -39,7 +50,7 @@ describe("App Component", () => {
       }),
     );
 
-    // Mock the /api/history call
+    // Mock the /api/history call (needs to be mocked twice)
     const mockHistory = [
       {
         _id: "1",
@@ -58,16 +69,25 @@ describe("App Component", () => {
         timestamp: new Date().toISOString(),
       },
     ];
+    // Mock for the first call in initialize()
+    fetchMock.mockResponseOnce(JSON.stringify({ history: mockHistory }));
+    // Mock for the second call in the useEffect that watches appUser
     fetchMock.mockResponseOnce(JSON.stringify({ history: mockHistory }));
 
     render(<App />);
 
-    // Wait for the component to finish loading
+    // Navigate to the history panel
+    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
+    const conversationsButton = await screen.findByRole("button", {
+      name: /conversations \/ history/i,
+    });
+    fireEvent.click(conversationsButton);
+
+    // Wait for the component to finish loading and check for the data
     await waitFor(() => {
       expect(screen.queryByText(/Loading history.../i)).not.toBeInTheDocument();
     });
 
-    // Check that our mock data is now on the screen
     expect(screen.getByText(/Hello/i)).toBeInTheDocument();
     expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
   });
@@ -96,6 +116,13 @@ describe("App Component", () => {
     fetchMock.mockReject(new Error("API is unavailable"));
 
     render(<App />);
+
+    // Navigate to the history panel
+    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
+    const conversationsButton = await screen.findByRole("button", {
+      name: /conversations \/ history/i,
+    });
+    fireEvent.click(conversationsButton);
 
     // Wait for the error message to appear in the UI
     const errorMessage = await screen.findByText(
