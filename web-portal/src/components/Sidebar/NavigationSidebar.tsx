@@ -1,6 +1,11 @@
 import React from "react";
 
-export type TabKey = "dashboard" | "summarization" | "conversations" | "logs";
+export type TabKey =
+  | "dashboard"
+  | "live_translation"
+  | "summarization"
+  | "conversations"
+  | "logs";
 
 interface SideNavigationProps {
   isOpen: boolean;
@@ -11,6 +16,7 @@ interface SideNavigationProps {
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
+  { key: "live_translation", label: "Live Translation" },
   { key: "summarization", label: "Summarization" },
   { key: "conversations", label: "Conversations / History" },
   { key: "logs", label: "Logs" },
@@ -25,7 +31,9 @@ export default function SideNavigation({
   return (
     <div
       className={`fixed inset-0 z-40 transition-opacity duration-300 ${
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        isOpen
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
       }`}
     >
       {/* Backdrop */}

@@ -14,6 +14,7 @@ import SettingsMenu, {
 import SideNavigation, {
   type TabKey,
 } from "./components/Sidebar/NavigationSidebar";
+import LiveTranslationView from "./components/TranslationView/TanslationView";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -204,11 +205,13 @@ function App() {
             <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
               <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
               <p className="text-slate-300 text-sm">
-                Overview coming soon. Use the sidebar to jump to Summarization or
-                Conversations.
+                Overview coming soon. Use the sidebar to jump to Summarization
+                or Conversations.
               </p>
             </div>
           )}
+
+          {activeTab === "live_translation" && <LiveTranslationView />}
 
           {activeTab === "summarization" && <Summarizer />}
 
@@ -224,7 +227,8 @@ function App() {
             <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
               <h2 className="text-2xl font-semibold mb-2">Logs</h2>
               <p className="text-slate-300 text-sm">
-                Logs page placeholder – this will eventually show transcript logs.
+                Logs page placeholder – this will eventually show transcript
+                logs.
               </p>
             </div>
           )}
