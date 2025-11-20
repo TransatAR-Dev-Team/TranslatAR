@@ -116,7 +116,7 @@ export default function Summarizer() {
         disabled={isGettingAdvice}
         className="mt-4 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-md transition-colors duration-200"
       >
-        {isGettingAdvice ? "Getting Advice..." : "Learning Advise"}
+        {isGettingAdvice ? "Getting Advice..." : "Give Me Advice"}
       </button>
       {adviceError && <p className="text-red-400 mt-4">{adviceError}</p>}
       {advice && (
