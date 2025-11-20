@@ -88,8 +88,12 @@ export default function HistoryPanel({
   activeConversationId,
   onSelectConversation,
 }: HistoryPanelProps) {
+
   const [copiedConversationId, setCopiedConversationId] = useState<string | null>(null); 
+  console.log("History from backend: ", history);
   const conversations = buildConversationTranscripts(history);
+  console.log("Built conversations: ", conversations);
+
   return (
     <div id="history-panel" className="bg-slate-800 rounded-lg p-6 shadow-lg">
       <h2 className="text-2xl font-semibold mb-4 text-left">
