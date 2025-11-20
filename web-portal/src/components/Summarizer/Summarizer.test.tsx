@@ -68,4 +68,25 @@ describe("Summarizer Component", () => {
       await screen.findByText(/failed to generate summary/i),
     ).toBeInTheDocument();
   });
+
+  it("displays a notification message when summary length is auto-downgraded", async () => {
+    const notificationMessage =
+      "Your text was too short for a long summary, so a medium summary was generated instead.";
+    fetchMock.mockResponseOnce(
+      JSON.stringify({
+        summary: "This is the summary.",
+        message: notificationMessage,
+      }),
+    );
+
+    render(<Summarizer />);
+    const textarea = screen.getByPlaceholderText(/paste or type text here/i);
+    const button = screen.getByRole("button", { name: /summarize/i });
+
+    fireEvent.change(textarea, { target: { value: "A short text." } });
+    fireEvent.click(button);
+
+    expect(await screen.findByText(notificationMessage)).toBeInTheDocument();
+    expect(await screen.findByText("This is the summary.")).toBeInTheDocument();
+  });
 });

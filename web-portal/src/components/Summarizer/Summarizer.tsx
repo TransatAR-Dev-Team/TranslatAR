@@ -6,6 +6,7 @@ export default function Summarizer() {
   const [summaryLength, setSummaryLength] = useState<string>("medium");
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<string | null>(null);
   const [advice, setAdvice] = useState<string>("");
   const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
   const [adviceError, setAdviceError] = useState<string | null>(null);
@@ -18,6 +19,7 @@ export default function Summarizer() {
 
     setIsSummarizing(true);
     setSummaryError(null);
+    setNotification(null);
     setSummary("");
 
     try {
@@ -33,6 +35,9 @@ export default function Summarizer() {
 
       const data = await response.json();
       setSummary(data.summary);
+      if (data.message) {
+        setNotification(data.message);
+      }
     } catch (error) {
       console.error("Error summarizing text:", error);
       setSummaryError("Failed to generate summary. Please try again.");
@@ -105,6 +110,11 @@ export default function Summarizer() {
         {isSummarizing ? "Summarizing..." : "Summarize"}
       </button>
       {summaryError && <p className="text-red-400 mt-4">{summaryError}</p>}
+      {notification && (
+        <div className="mt-4 bg-yellow-600/20 border border-yellow-600/50 text-yellow-200 p-3 rounded-md">
+          <p>{notification}</p>
+        </div>
+      )}
       {summary && (
         <div className="mt-4 bg-slate-700 p-4 rounded-md">
           <h3 className="font-semibold mb-2">Summary:</h3>

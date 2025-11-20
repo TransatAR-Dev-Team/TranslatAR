@@ -12,13 +12,52 @@ SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization
 # --- Logger Setup ---
 logger = logging.getLogger(__name__)
 
+# Minimum word counts for each summary length
+MIN_WORDS_MEDIUM = 100
+MIN_WORDS_LONG = 300
+
 router = APIRouter()
+
+
+def determine_appropriate_length(text: str, requested_length: str) -> tuple[str, str | None]:
+    """
+    Determines the appropriate summary length based on text size.
+    Auto-downgrades if the requested length is too long for the input text.
+
+    Returns:
+        tuple: (actual_length, notification_message)
+    """
+    word_count = len(text.split())
+
+    # Determine the maximum appropriate length for this text
+    if word_count < MIN_WORDS_MEDIUM:
+        max_appropriate = "short"
+    elif word_count < MIN_WORDS_LONG:
+        max_appropriate = "medium"
+    else:
+        max_appropriate = "long"
+
+    # Auto-downgrade if requested length is too long
+    length_order = {"short": 1, "medium": 2, "long": 3}
+    requested_level = length_order.get(requested_length, 2)
+    max_level = length_order.get(max_appropriate, 2)
+
+    if requested_level > max_level:
+        actual_length = max_appropriate
+        message = (
+            f"Your text was too short for a {requested_length} summary, "
+            f"so a {actual_length} summary was generated instead."
+        )
+        return actual_length, message
+
+    return requested_length, None
 
 
 @router.post("", response_model=SummarizationResponse)
 async def get_summary(request: SummarizationRequest):
     """
     Receives text and a desired length, then forwards to the summarization service.
+    Auto-downgrades the length if the input text is too short for the requested length.
     """
     logger.info(
         "Received request: summarize text of length %d with length '%s'.",
@@ -26,8 +65,12 @@ async def get_summary(request: SummarizationRequest):
         request.length,
     )
     try:
+        actual_length, notification_message = determine_appropriate_length(
+            request.text, request.length
+        )
+
         async with httpx.AsyncClient(timeout=120.0) as client:
-            payload = {"text": request.text, "length": request.length}
+            payload = {"text": request.text, "length": actual_length}
             logger.info(
                 "Forwarding request to summarization service at %s/summarize",
                 SUMMARIZATION_SERVICE_URL,
@@ -51,7 +94,7 @@ async def get_summary(request: SummarizationRequest):
                 raise HTTPException(status_code=500, detail="Summarization failed.")
 
             logger.info("Successfully received summary from summarization service.")
-            return SummarizationResponse(summary=summary_text)
+            return SummarizationResponse(summary=summary_text, message=notification_message)
     except httpx.RequestError as e:
         logger.error(
             f"Could not connect to the summarization service at {SUMMARIZATION_SERVICE_URL}: {e}",
