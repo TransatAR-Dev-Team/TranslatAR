@@ -115,8 +115,8 @@ export default function HistoryPanel({
                   isActive ? "border-indigo-400 bg-slate-700" : "border-slate-700 hover:border-slate-500"
                 }`}>
                   <div onClick={() => onSelectConversation?.(convo.id)}
-                      className="flex justify-between items-center cursor-pointer pb-2">
-                      <p className="text-xs text-gray-400 mb-2">
+                      className="flex w-full justify-between items-center cursor-pointer pb-2">
+                      <p className="text-xs text-gray-400 m-0">
                         Conversation started: {convo.startedAt.toLocaleDateString()}
                       </p>
 
@@ -128,16 +128,15 @@ export default function HistoryPanel({
                           </span>
                         )}
                         
-                      <button className="text-xs text-indigo-300 hover:underline cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(convo.translatedTranscript);
-                          setCopiedConversationId(convo.id);
-                          setTimeout(() => setCopiedConversationId(null), 2000);
-                        }}>
-                        Copy Translated Text
-
-                      </button>
+                        <button className="text-xs text-indigo-400 hover:underline cursor-pointer m-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(convo.translatedTranscript);
+                            setCopiedConversationId(convo.id);
+                            setTimeout(() => setCopiedConversationId(null), 2000);
+                          }}>
+                          Copy Translated Text
+                        </button>
                     </div>
                     </div>
                     <div className="select-text">
