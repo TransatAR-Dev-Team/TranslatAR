@@ -1,24 +1,24 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslationWebSocket } from "../../hooks/useTranslationWebSocket";
 import { createWavBlob } from "../../utils/audioUtils";
+import type { Settings } from "../SettingsMenu/SettingsMenu"; // Import the Settings type
 
 // Mirroring the Unity settings for consistency
 const CHUNK_DURATION_SECONDS = 1.5;
 const CHUNK_OVERLAP_SECONDS = 0.5;
 const SILENCE_THRESHOLD = 0.01;
 
-// Helper to package data
+// Helper to package data, now using settings
 async function packageAudioData(
   audioBlob: Blob,
-  sourceLang: string,
-  targetLang: string,
+  settings: Settings,
 ): Promise<Blob> {
   const token = localStorage.getItem("translatar_jwt");
   const metadata = {
-    source_lang: sourceLang,
-    target_lang: targetLang,
+    source_lang: settings.source_language, // Use setting
+    target_lang: settings.target_language, // Use setting
     jwt_token: token || null,
-    sample_rate: 44100,
+    sample_rate: settings.target_sample_rate,
     channels: 1,
   };
   const metadataJson = JSON.stringify(metadata);
@@ -33,7 +33,11 @@ async function packageAudioData(
   ]);
 }
 
-export default function LiveTranslationView() {
+interface TranslationViewProps {
+  settings: Settings;
+}
+
+export default function TranslationView({ settings }: TranslationViewProps) {
   const { isConnected, lastMessage, sendData } = useTranslationWebSocket();
   const [isRecording, setIsRecording] = useState(false);
 
@@ -41,31 +45,23 @@ export default function LiveTranslationView() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
-
-  // --- Refs for continuous processing ---
   const audioBufferRef = useRef<Float32Array>(new Float32Array(0));
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- The core chunking logic ---
   const processAndSendChunk = useCallback(() => {
     if (audioBufferRef.current.length === 0) return;
 
-    // We process a fixed chunk size + overlap
     const sampleRate = audioContextRef.current?.sampleRate || 44100;
     const samplesToProcess = Math.floor(
       (CHUNK_DURATION_SECONDS + CHUNK_OVERLAP_SECONDS) * sampleRate,
     );
 
-    if (audioBufferRef.current.length < samplesToProcess) return; // Not enough audio yet
+    if (audioBufferRef.current.length < samplesToProcess) return;
 
     const audioChunk = audioBufferRef.current.slice(0, samplesToProcess);
-
-    // --- Slice the buffer to maintain the overlap for the next chunk ---
-    const samplesToKeep = Math.floor(CHUNK_OVERLAP_SECONDS * sampleRate);
     const samplesToDiscard = Math.floor(CHUNK_DURATION_SECONDS * sampleRate);
     audioBufferRef.current = audioBufferRef.current.slice(samplesToDiscard);
 
-    // Silence detection on the chunk
     const rms = Math.sqrt(
       audioChunk.reduce((sum, val) => sum + val * val, 0) / audioChunk.length,
     );
@@ -74,13 +70,15 @@ export default function LiveTranslationView() {
       return;
     }
 
-    // Create WAV and send
+    // Create WAV and send, passing the settings object
     const wavBlob = createWavBlob(audioChunk, sampleRate);
-    packageAudioData(wavBlob, "en", "es").then((packagedBlob) => {
+    packageAudioData(wavBlob, settings).then((packagedBlob) => {
       sendData(packagedBlob);
-      console.log(`Sent audio chunk of ${packagedBlob.size} bytes.`);
+      console.log(
+        `Sent audio chunk with target lang: ${settings.target_language}`,
+      );
     });
-  }, [sendData]);
+  }, [sendData, settings]); // <-- Add settings to the dependency array
 
   const startRecording = async () => {
     if (!isConnected || isRecording) return;
@@ -90,7 +88,7 @@ export default function LiveTranslationView() {
 
       const context = new AudioContext();
       audioContextRef.current = context;
-      audioBufferRef.current = new Float32Array(0); // Reset buffer
+      audioBufferRef.current = new Float32Array(0);
 
       const source = context.createMediaStreamSource(stream);
       const processor = context.createScriptProcessor(4096, 1, 1);
@@ -98,7 +96,6 @@ export default function LiveTranslationView() {
 
       processor.onaudioprocess = (event: AudioProcessingEvent) => {
         const inputData = event.inputBuffer.getChannelData(0);
-        // Append new audio data to our main buffer
         const newBuffer = new Float32Array(
           audioBufferRef.current.length + inputData.length,
         );
@@ -112,7 +109,6 @@ export default function LiveTranslationView() {
 
       setIsRecording(true);
 
-      // --- Set up the interval to send chunks periodically ---
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(
         processAndSendChunk,
@@ -131,10 +127,8 @@ export default function LiveTranslationView() {
       intervalRef.current = null;
     }
 
-    // Send any remaining audio
     processAndSendChunk();
 
-    // Clean up audio resources
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
     }
@@ -142,7 +136,6 @@ export default function LiveTranslationView() {
     if (audioContextRef.current) audioContextRef.current.close();
   }, [processAndSendChunk]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (isRecording) stopRecording();
@@ -168,7 +161,7 @@ export default function LiveTranslationView() {
       <button
         onMouseDown={startRecording}
         onMouseUp={stopRecording}
-        onMouseLeave={isRecording ? stopRecording : undefined} // Stop if mouse leaves button
+        onMouseLeave={isRecording ? stopRecording : undefined}
         onTouchStart={startRecording}
         onTouchEnd={stopRecording}
         className={`w-full px-4 py-3 rounded-md transition-colors text-white font-bold text-lg select-none ${
