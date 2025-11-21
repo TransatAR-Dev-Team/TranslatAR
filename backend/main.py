@@ -55,6 +55,12 @@ router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 router.include_router(transcripts_router, prefix="/transcripts", tags=["Transcripts"])
 
+# --- Include Test Routers Conditionally ---
+if os.getenv("APP_ENV") == "test":
+    from routes.auth_testing import router as test_auth_router
+
+    router.include_router(test_auth_router, prefix="/test-auth", tags=["Testing"])
+
 
 # --- Database Connection ---
 translations_collection = db.get_collection("translations")
