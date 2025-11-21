@@ -4,8 +4,7 @@ export type TabKey =
   | "dashboard"
   | "live_translation"
   | "summarization"
-  | "conversations"
-  | "logs";
+  | "conversations";
 
 interface SideNavigationProps {
   isOpen: boolean;
@@ -19,7 +18,6 @@ const tabs: { key: TabKey; label: string }[] = [
   { key: "live_translation", label: "Live Translation" },
   { key: "summarization", label: "Summarization" },
   { key: "conversations", label: "Conversations / History" },
-  { key: "logs", label: "Logs" },
 ];
 
 export default function SideNavigation({
@@ -80,10 +78,6 @@ export default function SideNavigation({
             </button>
           ))}
         </nav>
-
-        <div className="mt-6 px-4 text-xs text-slate-400">
-          Tabs are placeholders for now.
-        </div>
       </div>
     </div>
   );

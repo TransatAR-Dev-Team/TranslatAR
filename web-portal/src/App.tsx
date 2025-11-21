@@ -247,16 +247,6 @@ function App() {
               error={historyError}
             />
           )}
-
-          {activeTab === "logs" && (
-            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-2">Logs</h2>
-              <p className="text-slate-300 text-sm">
-                Logs page placeholder – this will eventually show transcript
-                logs.
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Settings modal */}
