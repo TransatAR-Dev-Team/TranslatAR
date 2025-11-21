@@ -186,7 +186,7 @@ function App() {
   const renderMainContent = () => {
     switch (activeTab) {
       case "live_translation":
-        return <LiveTranslationView />;
+        return <LiveTranslationView settings={settings} />;
 
       case "summarization":
         return <Summarizer />;
