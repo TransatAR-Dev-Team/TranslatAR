@@ -81,7 +81,11 @@ export default function TranslationView({ settings }: TranslationViewProps) {
 
   const startRecording = async () => {
     if (!isConnected || isRecording) return;
-    setIsRecording(true); // UI state update
+
+    console.log("Attempting to start recording...");
+
+    setIsRecording(true);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -116,6 +120,8 @@ export default function TranslationView({ settings }: TranslationViewProps) {
         processAndSendChunk,
         CHUNK_DURATION_SECONDS * 1000,
       );
+
+      console.log("Recording started successfully.");
     } catch (err) {
       console.error("Error accessing media devices:", err);
       alert("Microphone or webcam access denied.");
@@ -124,7 +130,8 @@ export default function TranslationView({ settings }: TranslationViewProps) {
   };
 
   const stopRecording = useCallback(() => {
-    setIsRecording(false); // This will trigger the useEffect cleanup
+    console.log("Attempting to stop recording...");
+    setIsRecording(false);
   }, []);
 
   const handleToggleRecording = () => {
@@ -138,6 +145,7 @@ export default function TranslationView({ settings }: TranslationViewProps) {
   useEffect(() => {
     // This return function is the cleanup handler.
     return () => {
+      console.log("Running component unmount cleanup..."); // <-- ADDED LOG
       if (intervalRef.current) clearInterval(intervalRef.current);
 
       if (mediaStreamRef.current) {
@@ -165,12 +173,11 @@ export default function TranslationView({ settings }: TranslationViewProps) {
   // This separate effect handles the logic when the recording state is toggled off.
   useEffect(() => {
     if (!isRecording) {
+      console.log("isRecording is false, running cleanup logic...");
       if (intervalRef.current) clearInterval(intervalRef.current);
 
       intervalRef.current = null;
-
-      processAndSendChunk(); // Send any remaining data
-
+      processAndSendChunk();
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
@@ -223,7 +230,6 @@ export default function TranslationView({ settings }: TranslationViewProps) {
           </p>
         </div>
       </div>
-
       <button
         onClick={handleToggleRecording}
         className={`w-full px-4 py-3 rounded-md transition-colors text-white font-bold text-lg select-none ${
