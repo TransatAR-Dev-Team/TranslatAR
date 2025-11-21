@@ -47,6 +47,7 @@ function App() {
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
+  // Note: Logs state removed as the feature is deprecated
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -120,6 +121,8 @@ function App() {
       setIsHistoryLoading(false);
     }
   }, []);
+
+  // loadLogs removed here to resolve conflict
 
   const loadSettings = useCallback(async () => {
     setSettingsError(null);
