@@ -1,11 +1,25 @@
 from types import SimpleNamespace
 
 import pytest
+from bson import ObjectId
 from fastapi.testclient import TestClient
 from pymongo.errors import ConnectionFailure
 
-from main import app  # Import the app instance
+from main import app
 from models.settings import SettingsModel
+from security.auth import get_current_user
+
+# --- Fixtures ---
+
+
+@pytest.fixture
+def mock_user():
+    """Provides a mock user document."""
+    return {
+        "_id": ObjectId(),
+        "googleId": "test_google_id_settings",
+        "email": "settingsuser@example.com",
+    }
 
 
 @pytest.fixture
@@ -14,15 +28,15 @@ def fake_settings_collection():
 
     class _Fake:
         def __init__(self):
-            self._doc = None  # This will store our single settings document
+            self._docs = {}
 
-        async def find_one(self, _filter: dict):
-            # Return a copy of the document to mimic database behavior
-            return self._doc.copy() if self._doc else None
+        async def find_one(self, filter: dict):
+            user_id = filter.get("userId")
+            return self._docs.get(user_id, {}).copy() or None
 
-        async def replace_one(self, _filter: dict, replacement: dict, upsert: bool):
-            # Store a copy of the replacement document
-            self._doc = dict(replacement)
+        async def replace_one(self, filter: dict, replacement: dict, upsert: bool):
+            user_id = filter.get("userId")
+            self._docs[user_id] = dict(replacement)
             return SimpleNamespace(acknowledged=True, modified_count=1)
 
     return _Fake()
@@ -30,12 +44,25 @@ def fake_settings_collection():
 
 @pytest.fixture(autouse=True)
 def override_db_dependency(monkeypatch, fake_settings_collection):
-    """
-    This fixture intercepts the database call within the endpoint and provides
-    our in-memory mock collection instead of a real one.
-    """
+    """Intercepts the database call to provide our in-memory mock."""
     monkeypatch.setattr(app.state.db, "get_collection", lambda name: fake_settings_collection)
     yield
+
+
+# --- Fixture to automatically authenticate all tests in this file ---
+@pytest.fixture(autouse=True)
+def authenticated_client(mock_user):
+    """Fixture that provides authentication override for all tests."""
+
+    async def mock_get_current_user():
+        return mock_user
+
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    yield
+    app.dependency_overrides.clear()
+
+
+# --- Tests ---
 
 
 def test_get_settings_returns_defaults_when_empty():
@@ -46,7 +73,7 @@ def test_get_settings_returns_defaults_when_empty():
         assert resp.json()["settings"] == SettingsModel().model_dump()
 
 
-def test_post_then_get_returns_saved_values():
+def test_post_then_get_returns_saved_values(mock_user):
     with TestClient(app) as client:
         # Define a payload with custom settings
         payload = SettingsModel(source_language="ko", target_language="en").model_dump()
