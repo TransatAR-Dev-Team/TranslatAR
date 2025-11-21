@@ -39,6 +39,7 @@ interface TranslationViewProps {
 export default function TranslationView({ settings }: TranslationViewProps) {
   const { isConnected, lastMessage, sendData } = useTranslationWebSocket();
   const [isRecording, setIsRecording] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Refs for audio processing
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -60,7 +61,6 @@ export default function TranslationView({ settings }: TranslationViewProps) {
     const audioChunk = audioBufferRef.current.slice(0, samplesToProcess);
     const samplesToDiscard = Math.floor(CHUNK_DURATION_SECONDS * sampleRate);
     audioBufferRef.current = audioBufferRef.current.slice(samplesToDiscard);
-
     const rms = Math.sqrt(
       audioChunk.reduce((sum, val) => sum + val * val, 0) / audioChunk.length,
     );
@@ -81,10 +81,17 @@ export default function TranslationView({ settings }: TranslationViewProps) {
 
   const startRecording = async () => {
     if (!isConnected || isRecording) return;
+    setIsRecording(true); // UI state update
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
       mediaStreamRef.current = stream;
 
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
       const context = new AudioContext();
       audioContextRef.current = context;
       audioBufferRef.current = new Float32Array(0);
@@ -105,35 +112,20 @@ export default function TranslationView({ settings }: TranslationViewProps) {
 
       source.connect(processor);
       processor.connect(context.destination);
-
-      setIsRecording(true);
-
-      if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(
         processAndSendChunk,
         CHUNK_DURATION_SECONDS * 1000,
       );
     } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("Microphone access denied.");
+      console.error("Error accessing media devices:", err);
+      alert("Microphone or webcam access denied.");
+      setIsRecording(false); // Revert UI state on error
     }
   };
 
   const stopRecording = useCallback(() => {
-    setIsRecording(false);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    processAndSendChunk();
-
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    if (scriptProcessorRef.current) scriptProcessorRef.current.disconnect();
-    if (audioContextRef.current) audioContextRef.current.close();
-  }, [processAndSendChunk]);
+    setIsRecording(false); // This will trigger the useEffect cleanup
+  }, []);
 
   const handleToggleRecording = () => {
     if (isRecording) {
@@ -143,12 +135,65 @@ export default function TranslationView({ settings }: TranslationViewProps) {
     }
   };
 
-  // Cleanup effect
   useEffect(() => {
+    // This return function is the cleanup handler.
     return () => {
-      if (isRecording) stopRecording();
+      if (intervalRef.current) clearInterval(intervalRef.current);
+
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      if (scriptProcessorRef.current) {
+        scriptProcessorRef.current.disconnect();
+      }
+
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed"
+      ) {
+        audioContextRef.current.close();
+      }
+      // Reset all refs
+      intervalRef.current = null;
+      mediaStreamRef.current = null;
+      scriptProcessorRef.current = null;
+      audioContextRef.current = null;
     };
-  }, [isRecording, stopRecording]);
+  }, []);
+
+  // This separate effect handles the logic when the recording state is toggled off.
+  useEffect(() => {
+    if (!isRecording) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+
+      intervalRef.current = null;
+
+      processAndSendChunk(); // Send any remaining data
+
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      if (scriptProcessorRef.current) {
+        scriptProcessorRef.current.disconnect();
+        scriptProcessorRef.current = null;
+      }
+
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed"
+      ) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
+  }, [isRecording, processAndSendChunk]);
 
   const buttonText = isRecording ? "Stop Recording" : "Start Recording";
 
@@ -161,9 +206,22 @@ export default function TranslationView({ settings }: TranslationViewProps) {
           {isConnected ? "Connected" : "Disconnected"}
         </span>
       </p>
-
-      <div className="bg-slate-900 rounded-md my-4 p-6 min-h-[100px] flex items-center justify-center">
-        <p className="text-2xl text-slate-200">{lastMessage || "..."}</p>
+      <div className="relative bg-slate-900 rounded-md my-4 min-h-[300px] flex items-center justify-center overflow-hidden">
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+            isRecording ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ transform: "scaleX(-1)" }}
+        ></video>
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50">
+          <p className="text-2xl text-slate-200 text-center drop-shadow-lg">
+            {lastMessage || "..."}
+          </p>
+        </div>
       </div>
 
       <button
