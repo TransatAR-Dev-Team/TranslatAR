@@ -105,7 +105,14 @@ function App() {
     setIsLogsLoading(true);
     setLogsError(null);
     try {
-      const response = await fetch("/api/transcripts", { method: "POST" });
+      const response = await fetch("/api/transcripts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       setLogs(data);
