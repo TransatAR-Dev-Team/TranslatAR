@@ -1,65 +1,70 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from models.settings import SettingsModel, SettingsResponse
+from security.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 @router.get("", response_model=SettingsResponse)
-async def get_settings(request: Request):
+async def get_settings(
+    request: Request, current_user: dict = Depends(get_current_user)  # noqa: B008
+):
     """
-    Retrieves the current application settings from the database.
-    If no settings exist, returns default values.
+    Retrieves the current application settings from the database for the authenticated user.
+    If no settings exist for the user, returns default values.
     """
-    logger.info("Attempting to retrieve settings from database.")
+    user_id = str(current_user["_id"])
+    logger.info(f"Attempting to retrieve settings from database for user: {user_id}")
     try:
         settings_collection = request.app.state.db.get_collection("settings")
-        settings_doc = await settings_collection.find_one({})
+        settings_doc = await settings_collection.find_one({"userId": user_id})
 
         if not settings_doc:
-            logger.info("No settings found in database, returning default values.")
+            logger.info(f"No settings found for user {user_id}, returning default values.")
             default_settings = SettingsModel()
             return SettingsResponse(settings=default_settings)
         else:
-            logger.info("Successfully retrieved settings from database.")
-            # Remove MongoDB _id field before returning
+            logger.info(f"Successfully retrieved settings for user {user_id}.")
             settings_doc.pop("_id", None)
+            settings_doc.pop("userId", None)
             settings = SettingsModel(**settings_doc)
             return SettingsResponse(settings=settings)
 
     except Exception as e:
-        logger.error("Failed to retrieve settings from database: %s", e, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve settings from database: {e}",
-        ) from e
+        logger.error(f"Failed to retrieve settings for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve settings: {e}") from e
 
 
 @router.post("", response_model=SettingsResponse)
-async def save_settings(request: Request, settings_update: SettingsModel):
+async def save_settings(
+    request: Request,
+    settings_update: SettingsModel,
+    current_user: dict = Depends(get_current_user),  # noqa: B008
+):
     """
-    Saves or updates application settings in the database.
+    Saves or updates application settings for the authenticated user in the database.
     """
-    logger.info("Attempting to save settings to database.")
+    user_id = str(current_user["_id"])
+    logger.info(f"Attempting to save settings to database for user: {user_id}")
+
     try:
         settings_collection = request.app.state.db.get_collection("settings")
-        # Convert to dict for MongoDB insertion
         settings_dict = settings_update.model_dump()
 
-        # Upsert the settings (insert if doesn't exist, update if exists)
+        settings_dict["userId"] = user_id
+
         await settings_collection.replace_one(
-            {},  # empty filter matches any document (there's only one settings document)
+            {"userId": user_id},
             settings_dict,
             upsert=True,
         )
-        logger.info("Successfully saved settings to database.")
+        logger.info(f"Successfully saved settings for user {user_id}.")
         return SettingsResponse(settings=settings_update)
 
     except Exception as e:
-        logger.error("Failed to save settings to database: %s", e, exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to save settings to database: {e}"
-        ) from e
+        logger.error(f"Failed to save settings for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to save settings: {e}") from e
