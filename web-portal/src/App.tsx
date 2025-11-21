@@ -167,7 +167,7 @@ function App() {
       }
     },
     [loadSettings],
-  ); // Add loadSettings to the dependency array
+  );
 
   useEffect(() => {
     const initialize = async () => {
@@ -234,7 +234,9 @@ function App() {
             </div>
           )}
 
-          {activeTab === "live_translation" && <TranslationView />}
+          {activeTab === "live_translation" && (
+            <TranslationView settings={settings} /> // Pass the settings prop
+          )}
 
           {activeTab === "summarization" && <Summarizer />}
 
