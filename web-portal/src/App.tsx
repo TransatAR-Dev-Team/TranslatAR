@@ -54,7 +54,6 @@ function App() {
   const [showNavigation, setShowNavigation] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
 
-  // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
     setAppUser(null);
     localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
@@ -101,29 +100,17 @@ function App() {
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     setHistoryError(null);
-
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+    if (!token) {
+      setHistory([]);
+      setIsHistoryLoading(false);
+      return;
+    }
     try {
-      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-      if (!token) {
-        setHistory([]);
-        setIsHistoryLoading(false);
-        return;
-      }
-
       const response = await fetch("/api/history", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setHistory([]);
-          return;
-        }
-        throw new Error("Network response was not ok");
-      }
-
+      if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
@@ -136,15 +123,18 @@ function App() {
 
   const loadSettings = useCallback(async () => {
     setSettingsError(null);
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+    if (!token) {
+      setSettings(DEFAULT_SETTINGS);
+      return;
+    }
     try {
-      const response = await fetch("/api/settings");
+      const response = await fetch("/api/settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-
-      setSettings({
-        ...DEFAULT_SETTINGS,
-        ...(data.settings ?? {}),
-      });
+      setSettings({ ...DEFAULT_SETTINGS, ...(data.settings ?? {}) });
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
@@ -152,23 +142,32 @@ function App() {
     }
   }, []);
 
-  const saveSettings = useCallback(async (newSettings: Settings) => {
-    setSettingsError(null);
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSettings),
-      });
-      if (!response.ok) throw new Error("Failed to save settings");
-      const data = await response.json();
-      setSettings(data.settings);
-      setShowSettings(false);
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      setSettingsError("Failed to save settings. Please try again.");
-    }
-  }, []);
+  const saveSettings = useCallback(
+    async (newSettings: Settings) => {
+      setSettingsError(null);
+      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+      if (!token) {
+        setSettingsError("You must be logged in to save settings.");
+        return;
+      }
+      try {
+        const response = await fetch("/api/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newSettings),
+        });
+        if (!response.ok) throw new Error("Failed to save settings");
+        await loadSettings(); // Re-fetch after saving
+        setShowSettings(false);
+      } catch (error) {
+        console.error("Error saving settings:", error);
+        setSettingsError("Failed to save settings. Please try again.");
+      }
+    }, [loadSettings],
+  );
 
   // --- INITIALIZE ---
   useEffect(() => {
@@ -181,14 +180,13 @@ function App() {
       await loadHistory();
     };
     void initialize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile, loadSettings, loadHistory]);
 
   // --- RENDER HELPERS ---
   const renderMainContent = () => {
     switch (activeTab) {
       case "live_translation":
-        return <LiveTranslationView settings={settings} />;
+        return <LiveTranslationView />;
 
       case "summarization":
         return <Summarizer />;
@@ -215,7 +213,6 @@ function App() {
     }
   };
 
-  // --- RENDER ---
   return (
     <GoogleOAuthProvider clientId={googleClientId || ""}>
       <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
