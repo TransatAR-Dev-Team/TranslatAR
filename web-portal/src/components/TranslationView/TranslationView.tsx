@@ -1,22 +1,21 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslationWebSocket } from "../../hooks/useTranslationWebSocket";
 import { createWavBlob } from "../../utils/audioUtils";
-import type { Settings } from "../SettingsMenu/SettingsMenu"; // Import the Settings type
+import type { Settings } from "../SettingsMenu/SettingsMenu";
 
-// Mirroring the Unity settings for consistency
+// Constants and helper functions remain the same...
 const CHUNK_DURATION_SECONDS = 1.5;
 const CHUNK_OVERLAP_SECONDS = 0.5;
 const SILENCE_THRESHOLD = 0.01;
 
-// Helper to package data, now using settings
 async function packageAudioData(
   audioBlob: Blob,
   settings: Settings,
 ): Promise<Blob> {
   const token = localStorage.getItem("translatar_jwt");
   const metadata = {
-    source_lang: settings.source_language, // Use setting
-    target_lang: settings.target_language, // Use setting
+    source_lang: settings.source_language,
+    target_lang: settings.target_language,
     jwt_token: token || null,
     sample_rate: settings.target_sample_rate,
     channels: 1,
@@ -78,7 +77,7 @@ export default function TranslationView({ settings }: TranslationViewProps) {
         `Sent audio chunk with target lang: ${settings.target_language}`,
       );
     });
-  }, [sendData, settings]); // <-- Add settings to the dependency array
+  }, [sendData, settings]);
 
   const startRecording = async () => {
     if (!isConnected || isRecording) return;
@@ -136,13 +135,22 @@ export default function TranslationView({ settings }: TranslationViewProps) {
     if (audioContextRef.current) audioContextRef.current.close();
   }, [processAndSendChunk]);
 
+  const handleToggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  // Cleanup effect
   useEffect(() => {
     return () => {
       if (isRecording) stopRecording();
     };
   }, [isRecording, stopRecording]);
 
-  const statusText = isRecording ? "Recording..." : "Press and Hold to Record";
+  const buttonText = isRecording ? "Stop Recording" : "Start Recording";
 
   return (
     <div className="bg-slate-800 rounded-lg p-6 shadow-lg text-center">
@@ -159,11 +167,7 @@ export default function TranslationView({ settings }: TranslationViewProps) {
       </div>
 
       <button
-        onMouseDown={startRecording}
-        onMouseUp={stopRecording}
-        onMouseLeave={isRecording ? stopRecording : undefined}
-        onTouchStart={startRecording}
-        onTouchEnd={stopRecording}
+        onClick={handleToggleRecording}
         className={`w-full px-4 py-3 rounded-md transition-colors text-white font-bold text-lg select-none ${
           isRecording
             ? "bg-red-600 hover:bg-red-700"
@@ -171,7 +175,7 @@ export default function TranslationView({ settings }: TranslationViewProps) {
         }`}
         disabled={!isConnected}
       >
-        {statusText}
+        {buttonText}
       </button>
     </div>
   );
