@@ -1,9 +1,8 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslationWebSocket } from "../../hooks/useTranslationWebSocket";
 import { createWavBlob } from "../../utils/audioUtils";
 import type { Settings } from "../SettingsMenu/SettingsMenu";
 
-// Constants and helper functions remain the same...
 const CHUNK_DURATION_SECONDS = 1.5;
 const CHUNK_OVERLAP_SECONDS = 0.5;
 const SILENCE_THRESHOLD = 0.01;
@@ -44,7 +43,7 @@ export default function TranslationView({ settings }: TranslationViewProps) {
   // Refs for audio processing
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
   const audioBufferRef = useRef<Float32Array>(new Float32Array(0));
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -96,26 +95,26 @@ export default function TranslationView({ settings }: TranslationViewProps) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+
       const context = new AudioContext();
       audioContextRef.current = context;
-      audioBufferRef.current = new Float32Array(0);
 
-      const source = context.createMediaStreamSource(stream);
-      const processor = context.createScriptProcessor(4096, 1, 1);
-      scriptProcessorRef.current = processor;
+      // 1. Load the worklet module from the public directory
+      await context.audioWorklet.addModule("/audio-processor.js");
 
-      processor.onaudioprocess = (event: AudioProcessingEvent) => {
-        const inputData = event.inputBuffer.getChannelData(0);
-        const newBuffer = new Float32Array(
-          audioBufferRef.current.length + inputData.length,
-        );
-        newBuffer.set(audioBufferRef.current, 0);
-        newBuffer.set(inputData, audioBufferRef.current.length);
-        audioBufferRef.current = newBuffer;
+      // 2. Create an AudioWorkletNode instead of a ScriptProcessorNode
+      const workletNode = new AudioWorkletNode(context, "audio-processor");
+      audioWorkletNodeRef.current = workletNode;
+
+      // 3. Listen for messages (raw audio data) from the worklet
+      workletNode.port.onmessage = (event) => {
+        audioBufferRef.current = event.data;
       };
 
-      source.connect(processor);
-      processor.connect(context.destination);
+      const source = context.createMediaStreamSource(stream);
+      source.connect(workletNode);
+      workletNode.connect(context.destination);
+
       intervalRef.current = setInterval(
         processAndSendChunk,
         CHUNK_DURATION_SECONDS * 1000,
@@ -123,9 +122,12 @@ export default function TranslationView({ settings }: TranslationViewProps) {
 
       console.log("Recording started successfully.");
     } catch (err) {
-      console.error("Error accessing media devices:", err);
-      alert("Microphone or webcam access denied.");
-      setIsRecording(false); // Revert UI state on error
+      console.error(
+        "Error accessing media devices or setting up AudioWorklet:",
+        err,
+      );
+      alert("Microphone, webcam access denied, or browser not supported.");
+      setIsRecording(false);
     }
   };
 
@@ -145,15 +147,15 @@ export default function TranslationView({ settings }: TranslationViewProps) {
   useEffect(() => {
     // This return function is the cleanup handler.
     return () => {
-      console.log("Running component unmount cleanup..."); // <-- ADDED LOG
+      console.log("Running component unmount cleanup...");
       if (intervalRef.current) clearInterval(intervalRef.current);
 
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       }
 
-      if (scriptProcessorRef.current) {
-        scriptProcessorRef.current.disconnect();
+      if (audioWorkletNodeRef.current) {
+        audioWorkletNodeRef.current.disconnect();
       }
 
       if (
@@ -165,7 +167,7 @@ export default function TranslationView({ settings }: TranslationViewProps) {
       // Reset all refs
       intervalRef.current = null;
       mediaStreamRef.current = null;
-      scriptProcessorRef.current = null;
+      audioWorkletNodeRef.current = null;
       audioContextRef.current = null;
     };
   }, []);
@@ -183,9 +185,9 @@ export default function TranslationView({ settings }: TranslationViewProps) {
         mediaStreamRef.current = null;
       }
 
-      if (scriptProcessorRef.current) {
-        scriptProcessorRef.current.disconnect();
-        scriptProcessorRef.current = null;
+      if (audioWorkletNodeRef.current) {
+        audioWorkletNodeRef.current.disconnect();
+        audioWorkletNodeRef.current = null;
       }
 
       if (
