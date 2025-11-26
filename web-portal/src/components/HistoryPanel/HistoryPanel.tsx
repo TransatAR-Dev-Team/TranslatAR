@@ -28,7 +28,7 @@ interface Conversation {
   startedAt: Date;
 };
 
-function buildConversationTranscripts(history: HistoryItem[]): Conversation[] {
+export function buildConversationTranscripts(history: HistoryItem[]): Conversation[] {
   if (!history.length) return [];
 
   const convMap = new Map<string, HistoryItem[]>();
