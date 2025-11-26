@@ -8,8 +8,7 @@ interface HistoryItem {
   target_lang: string;
   conversationId?: string | null;
   timestamp: string;
-  conversationId?: string | null;
-  timestamp: string;
+ 
 }
 
 interface HistoryPanelProps {
