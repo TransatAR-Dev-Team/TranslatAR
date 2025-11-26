@@ -208,18 +208,40 @@ function App() {
             onLoginError={handleLogout}
             onLogout={handleLogout}
             onShowSettings={() => setShowSettings(true)}
-            onShowNavigation={() => setShowNavigation(true)}   // NEW
+            onShowNavigation={() => setShowNavigation(true)}
           />
 
-          {/*can later show different content based on activeTab maybe*/}
-          <Summarizer />
-          <HistoryPanel
-            history={history}
-            isLoading={isHistoryLoading}
-            error={historyError}
-            activeConversationId={activeConversationId}
-            onSelectConversation={setActiveConversationId}
-          />
+          {/* ---------- PAGE CONTENT BY TAB ---------- */}
+          {activeTab === "dashboard" && (
+            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
+              <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
+              <p className="text-slate-300 text-sm">
+                Overview coming soon. Use the sidebar to jump to Summarization or
+                Conversations.
+              </p>
+            </div>
+          )}
+
+          {activeTab === "summarization" && <Summarizer />}
+
+          {activeTab === "conversations" && (
+            <HistoryPanel
+              history={history}
+              isLoading={isHistoryLoading}
+              error={historyError}
+              activeConversationId={activeConversationId}
+              onSelectConversation={setActiveConversationId}
+            />
+          )}
+
+          {activeTab === "logs" && (
+            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
+              <h2 className="text-2xl font-semibold mb-2">Logs</h2>
+              <p className="text-slate-300 text-sm">
+                Logs page placeholder – this will eventually show transcript logs.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Settings modal */}
