@@ -74,7 +74,9 @@ export default function Summarizer() {
 
   return (
     <div className="bg-slate-800 rounded-lg p-6 shadow-lg mb-8">
-      <h2 className="text-2xl font-semibold mb-4 text-left">Summarize Text</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-left">
+        Insert Conversation
+      </h2>
       <textarea
         className="w-full bg-slate-700 p-3 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         rows={6}
@@ -109,6 +111,14 @@ export default function Summarizer() {
         <div className="mt-4 bg-slate-700 p-4 rounded-md">
           <h3 className="font-semibold mb-2">Summary:</h3>
           <p>{summary}</p>
+
+          {/* Save Summary Button */}
+          <button
+            onClick={() => handleSaveSummary(summary)}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition-colors duration-200"
+          >
+            Save
+          </button>
         </div>
       )}
       <button
