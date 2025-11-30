@@ -52,8 +52,11 @@ async def websocket_endpoint(websocket: WebSocket):
         audio_data = first_data[4 + metadata_length :]
         source_lang = metadata.get("source_lang", "en")
         target_lang = metadata.get("target_lang", "es")
+        conversation_id = metadata.get("conversation_id")
         asyncio.create_task(
-            process_audio_chunk(websocket, audio_data, source_lang, target_lang, user_id)
+            process_audio_chunk(
+                websocket, audio_data, source_lang, target_lang, user_id, conversation_id
+            )
         )
 
         # Continue receiving subsequent messages
