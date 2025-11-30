@@ -9,7 +9,8 @@ export default function Summarizer() {
   const [advice, setAdvice] = useState<string>("");
   const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
   const [adviceError, setAdviceError] = useState<string | null>(null);
-
+  const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
+  const [isLoggedIn, setIsLoggedIn] = useState<string | null>(null);
   const handleSummarize = async () => {
     if (!textToSummarize.trim()) {
       setSummaryError("Please enter some text to summarize.");
@@ -73,18 +74,32 @@ export default function Summarizer() {
   };
 
   const handleSaveSummary = async (summaryText: string) => {
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+
+    // 1. User must be logged in
+    if (!token) {
+      alert("You must be logged in to save a summary.");
+      return;
+    }
+
     try {
+      // 2. Make sure we send the token in the Authorization header
       const response = await fetch("/api/summarize/save", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // <--- critical
+        },
         body: JSON.stringify({
           summary: summaryText,
           original_text: textToSummarize,
-          user_id: "megha",
         }),
       });
 
+      // 3. Show error if fail
       if (!response.ok) {
+        const err = await response.text();
+        console.error("Backend returned:", err);
         throw new Error("Failed to save summary");
       }
 

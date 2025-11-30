@@ -1,11 +1,12 @@
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from models.summarization import SummarizationRequest, SummarizationResponse
+from models.summarization import SummarizationRequest, SummarizationResponse, SummarySaveRequest
+from security.auth import get_current_user
 
 # --- Configuration ---
 SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
@@ -80,21 +81,27 @@ async def get_summary(request: SummarizationRequest):
 
 
 @router.post("/save")
-async def save_summary(request: Request, payload: dict):
-    summary = payload.get("summary")
-    original_text = payload.get("original_text")
-    user_id = payload.get("user_id")
+async def save_summary(
+    payload: SummarySaveRequest,
+    request: Request,
+    current_user: dict = Depends(get_current_user),  # noqa: B008
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-    if not summary:
-        return {"error": "No summary provided"}
+    summary = payload.summary
+    original_text = payload.original_text
+
+    if not summary or not original_text:
+        raise HTTPException(status_code=400, detail="Missing summary or original_text")
 
     summaries = request.app.state.summaries
 
     doc = {
-        "user_id": user_id,
+        "userId": str(current_user["_id"]),
         "original_text": original_text,
         "summary": summary,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
 
     result = await summaries.insert_one(doc)
