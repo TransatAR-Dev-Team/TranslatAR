@@ -51,7 +51,6 @@ function App() {
 
   const [showNavigation, setShowNavigation] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -148,17 +147,6 @@ function App() {
     }
   }, [appUser, loadHistory]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const historyPanel = document.getElementById("history-panel");
-      if (historyPanel && !historyPanel.contains(e.target as Node)) {
-        setActiveConversationId(null);
-      }
-    };
-    window.addEventListener("mousedown", handleClickOutside);
-    return () => window.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const saveSettings = useCallback(async (newSettings: Settings) => {
     setSettingsError(null);
     try {
@@ -229,8 +217,6 @@ function App() {
               history={history}
               isLoading={isHistoryLoading}
               error={historyError}
-              activeConversationId={activeConversationId}
-              onSelectConversation={setActiveConversationId}
             />
           )}
 
