@@ -72,6 +72,29 @@ export default function Summarizer() {
     }
   };
 
+  const handleSaveSummary = async (summaryText: string) => {
+    try {
+      const response = await fetch("/api/summarize/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          summary: summaryText,
+          original_text: textToSummarize,
+          user_id: "megha",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save summary");
+      }
+
+      alert("Summary saved!");
+    } catch (error) {
+      console.error("Error saving summary:", error);
+      alert("Failed to save summary.");
+    }
+  };
+
   return (
     <div className="bg-slate-800 rounded-lg p-6 shadow-lg mb-8">
       <h2 className="text-2xl font-semibold mb-4 text-left">

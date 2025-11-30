@@ -1,8 +1,9 @@
 import logging
 import os
+from datetime import datetime
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from models.summarization import SummarizationRequest, SummarizationResponse
 
@@ -32,9 +33,7 @@ async def get_summary(request: SummarizationRequest):
                 "Forwarding request to summarization service at %s/summarize",
                 SUMMARIZATION_SERVICE_URL,
             )
-            response = await client.post(
-                f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload
-            )
+            response = await client.post(f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload)
 
             logger.info(
                 "Received response with status code %d from summarization service.",
@@ -77,6 +76,27 @@ async def get_summary(request: SummarizationRequest):
             f"An unexpected error occurred while processing the summarization request: {e}",
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=500, detail=f"Error during summarization: {e}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Error during summarization: {e}") from e
+
+
+@router.post("/save")
+async def save_summary(request: Request, payload: dict):
+    summary = payload.get("summary")
+    original_text = payload.get("original_text")
+    user_id = payload.get("user_id")
+
+    if not summary:
+        return {"error": "No summary provided"}
+
+    summaries = request.app.state.summaries
+
+    doc = {
+        "user_id": user_id,
+        "original_text": original_text,
+        "summary": summary,
+        "created_at": datetime.utcnow(),
+    }
+
+    result = await summaries.insert_one(doc)
+
+    return {"status": "saved", "summary_id": str(result.inserted_id)}
