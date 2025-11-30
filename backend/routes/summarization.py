@@ -107,3 +107,22 @@ async def save_summary(
     result = await summaries.insert_one(doc)
 
     return {"status": "saved", "summary_id": str(result.inserted_id)}
+
+
+@router.get("/history")
+async def get_summary_history(
+    request: Request,
+    current_user: dict = Depends(get_current_user),  # noqa: B008
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    summaries = request.app.state.summaries
+    cursor = summaries.find({"userId": str(current_user["_id"])}).sort("created_at", -1)
+
+    history = []
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        history.append(doc)
+
+    return {"history": history}

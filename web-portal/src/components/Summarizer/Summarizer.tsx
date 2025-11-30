@@ -1,6 +1,10 @@
 import { useState } from "react";
 
-export default function Summarizer() {
+interface SummarizerProps {
+  onSaveSuccess?: () => void;
+}
+
+export default function Summarizer({ onSaveSuccess }: SummarizerProps) {
   const [textToSummarize, setTextToSummarize] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
   const [summaryLength, setSummaryLength] = useState<string>("medium");
@@ -76,19 +80,17 @@ export default function Summarizer() {
   const handleSaveSummary = async (summaryText: string) => {
     const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
 
-    // 1. User must be logged in
     if (!token) {
       alert("You must be logged in to save a summary.");
       return;
     }
 
     try {
-      // 2. Make sure we send the token in the Authorization header
       const response = await fetch("/api/summarize/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // <--- critical
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           summary: summaryText,
@@ -96,7 +98,6 @@ export default function Summarizer() {
         }),
       });
 
-      // 3. Show error if fail
       if (!response.ok) {
         const err = await response.text();
         console.error("Backend returned:", err);
@@ -104,6 +105,7 @@ export default function Summarizer() {
       }
 
       alert("Summary saved!");
+      if (onSaveSuccess) onSaveSuccess();
     } catch (error) {
       console.error("Error saving summary:", error);
       alert("Failed to save summary.");
