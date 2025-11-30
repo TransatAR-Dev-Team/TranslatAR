@@ -13,6 +13,7 @@ public class TranscriptionResponse
 {
     public string original_text;
     public string translated_text;
+    public string conversation_id;
 }
 
 public class WebSocketManager : MonoBehaviour
@@ -238,6 +239,7 @@ public class WebSocketManager : MonoBehaviour
     /// <summary>
     /// Parses the JSON transcription response from the backend and updates the subtitle display.
     /// Prioritizes translated text over original text if both are present.
+    /// Also adds the translation to the conversation list UI.
     /// </summary>
     /// <param name="json">The JSON string containing transcription results.</param>
     public void HandleTranscriptionResponse(string json)
@@ -248,11 +250,32 @@ public class WebSocketManager : MonoBehaviour
 
             if (!string.IsNullOrEmpty(response.translated_text))
             {
+                // Update subtitle
                 UpdateSubtitle(response.translated_text);
+
+                // Add translation to conversation list
+                if (ConversationListUI.Instance != null)
+                {
+                    ConversationListUI.Instance.AddTranslation(
+                        response.original_text,
+                        response.translated_text,
+                        response.conversation_id
+                    );
+                }
             }
             else if (!string.IsNullOrEmpty(response.original_text))
             {
                 UpdateSubtitle(response.original_text);
+
+                // Add to list even if only original text is available
+                if (ConversationListUI.Instance != null)
+                {
+                    ConversationListUI.Instance.AddTranslation(
+                        response.original_text,
+                        "",
+                        response.conversation_id
+                    );
+                }
             }
         }
         catch (Exception e)

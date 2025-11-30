@@ -16,6 +16,7 @@ from routes.summarization import router as summarization_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
 from routes.transcripts import router as transcripts_router
+from routes.conversations import router as conversations_router
 
 
 # --- Logging Configuration ---
@@ -55,6 +56,7 @@ router.include_router(summarization_router, prefix="/summarize", tags=["Summariz
 router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 router.include_router(transcripts_router, prefix="/transcripts", tags=["Transcripts"])
+router.include_router(conversations_router, prefix="/conversations", tags=["Conversations"])
 
 
 # --- Database Connection ---

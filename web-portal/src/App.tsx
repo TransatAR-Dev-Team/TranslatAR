@@ -8,6 +8,7 @@ import { loginWithGoogleApi, getMeApi } from "./api/auth";
 import Header from "./components/Header/Header";
 import Summarizer from "./components/Summarizer/Summarizer";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
+import ConversationList from "./components/ConversationList/ConversationList";
 import SettingsMenu, {
   type Settings,
 } from "./components/SettingsMenu/SettingsMenu";
@@ -212,13 +213,7 @@ function App() {
 
           {activeTab === "summarization" && <Summarizer />}
 
-          {activeTab === "conversations" && (
-            <HistoryPanel
-              history={history}
-              isLoading={isHistoryLoading}
-              error={historyError}
-            />
-          )}
+          {activeTab === "conversations" && <ConversationList />}
 
           {activeTab === "logs" && (
             <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
