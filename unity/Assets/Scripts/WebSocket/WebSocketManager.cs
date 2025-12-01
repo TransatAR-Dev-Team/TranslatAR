@@ -13,6 +13,8 @@ public class TranscriptionResponse
 {
     public string original_text;
     public string translated_text;
+    public string detected_language;
+    public float language_probability;
 }
 
 public class WebSocketManager : MonoBehaviour
@@ -247,6 +249,12 @@ public class WebSocketManager : MonoBehaviour
         try
         {
             TranscriptionResponse response = JsonUtility.FromJson<TranscriptionResponse>(json);
+
+            // Log detected language info
+            if (!string.IsNullOrEmpty(response.detected_language))
+            {
+                Debug.Log($"Detected language: {response.detected_language} (confidence: {response.language_probability:F2})");
+            }
 
             if (!string.IsNullOrEmpty(response.translated_text))
             {

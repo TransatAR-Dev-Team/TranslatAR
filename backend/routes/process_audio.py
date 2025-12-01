@@ -46,13 +46,27 @@ async def process_audio_and_translate(
             }
             stt_response = await client.post(f"{STT_SERVICE_URL}/transcribe", files=stt_files)
             stt_response.raise_for_status()
-            original_text = stt_response.json().get("transcription")
+            stt_data = stt_response.json()
+            
+            original_text = stt_data.get("transcription")
+            detected_language = stt_data.get("detected_language", source_lang)
+            language_probability = stt_data.get("language_probability", 0.0)
+            
             if not original_text:
                 logger.warning("STT service returned an empty transcription.")
                 raise HTTPException(
                     status_code=400, detail="Transcription failed (no speech detected)."
                 )
-            logger.info("Successfully transcribed text: '%s'", original_text)
+            logger.info(
+                "Successfully transcribed text: '%s' (detected: %s, prob: %.2f)",
+                original_text,
+                detected_language,
+                language_probability,
+            )
+            
+            # Use detected language if confidence is high
+            effective_source_lang = detected_language if language_probability > 0.5 else source_lang
+            
         except Exception as e:
             logger.error("Error calling STT service: %s", e, exc_info=True)
             raise HTTPException(status_code=502, detail=f"Error in STT service: {e}") from e
@@ -62,7 +76,7 @@ async def process_audio_and_translate(
             logger.info("Forwarding text to translation service at %s", TRANSLATION_SERVICE_URL)
             translation_payload = {
                 "text": original_text,
-                "source_lang": source_lang,
+                "source_lang": effective_source_lang,
                 "target_lang": target_lang,
             }
             translation_response = await client.post(
@@ -84,8 +98,10 @@ async def process_audio_and_translate(
             translation_log = {
                 "original_text": original_text,
                 "translated_text": translated_text,
-                "source_lang": source_lang,
+                "source_lang": effective_source_lang,
                 "target_lang": target_lang,
+                "detected_language": detected_language,
+                "language_probability": language_probability,
                 "userId": str(current_user["_id"]),
                 "timestamp": datetime.now(UTC),
             }
