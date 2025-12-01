@@ -14,7 +14,7 @@ export function useTranslationWebSocket() {
     ws.onopen = () => {
       console.log("WebSocket connected");
       setIsConnected(true);
-      setLastMessage("Connected. Hold button to record.");
+      setLastMessage("Connected.");
     };
 
     ws.onmessage = (event) => {
