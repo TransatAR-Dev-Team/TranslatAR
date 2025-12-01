@@ -104,4 +104,35 @@ describe("App Component", () => {
     expect(screen.getByText(/Hello/i)).toBeInTheDocument();
     expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
   });
+
+  it("displays summary history after successful fetch", async () => {
+    localStorage.setItem("translatar_jwt", mockToken);
+
+    fetchMock.mockImplementation((url) => {
+      if (url.includes("/api/summarize/history")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              history: [
+                { _id: "s1", summary: "Summary 1", original_text: "Text 1" },
+                { _id: "s2", summary: "Summary 2", original_text: "Text 2" },
+              ],
+            }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
+    const summaryHistoryButton = await screen.findByRole("button", {
+      name: /summary history/i,
+    });
+    fireEvent.click(summaryHistoryButton);
+
+    expect(await screen.findByText(/Summary 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Summary 2/i)).toBeInTheDocument();
+  });
 });
