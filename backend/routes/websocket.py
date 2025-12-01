@@ -3,12 +3,12 @@ import json
 import logging
 import os
 from datetime import UTC, datetime
+from uuid import uuid4
 
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from security.auth import verify_jwt_token
-from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,10 @@ async def websocket_endpoint(websocket: WebSocket):
         source_lang = metadata.get("source_lang", "en")
         target_lang = metadata.get("target_lang", "es")
         conversation_id = metadata.get("conversation_id")
-        asyncio.create_task(
-            process_audio_chunk(
-                websocket, audio_data, source_lang, target_lang, user_id, conversation_id
-            )
+
+        # Process sequentially - await this before accepting next message
+        await process_audio_chunk(
+            websocket, audio_data, source_lang, target_lang, user_id, conversation_id
         )
 
         # Continue receiving subsequent messages
@@ -79,10 +79,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 target_lang,
             )
 
-            asyncio.create_task(
-                process_audio_chunk(
-                    websocket, audio_data, source_lang, target_lang, user_id, conversation_id
-                )
+            # This ensures we don't start the next chunk until this one is done.
+            # It prevents the server from getting stuck/overloaded and ensures order.
+            await process_audio_chunk(
+                websocket, audio_data, source_lang, target_lang, user_id, conversation_id
             )
 
     except WebSocketDisconnect:
@@ -115,8 +115,7 @@ async def process_audio_chunk(
             original_text = stt_response.json().get("transcription", "")
 
             if not original_text or not original_text.strip():
-                logger.info("No transcription detected in chunk.")
-                await websocket.send_json({"original_text": "", "translated_text": ""})
+                # Just return silently if silence is detected to keep logs clean
                 return
 
             logger.info("STT result: '%s'", original_text)
@@ -155,7 +154,7 @@ async def process_audio_chunk(
                     "Failed to save WebSocket translation to database: %s", e, exc_info=True
                 )
 
-            # Step 4: Send result back to Unity
+            # Step 4: Send result back
             response = {
                 "original_text": original_text,
                 "translated_text": translated_text,
@@ -170,8 +169,3 @@ async def process_audio_chunk(
 
     except Exception as e:
         logger.error("Error processing audio chunk: %s", e, exc_info=True)
-        try:
-            error_response = {"original_text": "", "translated_text": f"Processing error: {str(e)}"}
-            await websocket.send_json(error_response)
-        except WebSocketDisconnect:
-            logger.warning("Could not send error to client as they disconnected.")

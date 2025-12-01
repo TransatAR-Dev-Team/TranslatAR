@@ -108,7 +108,21 @@ export default function TranslationView({ settings }: TranslationViewProps) {
 
       // 3. Listen for messages (raw audio data) from the worklet
       workletNode.port.onmessage = (event) => {
-        audioBufferRef.current = event.data;
+        const newChunk = event.data; // Float32Array
+        const currentBuffer = audioBufferRef.current;
+
+        // Create a new buffer large enough for both
+        const newBuffer = new Float32Array(
+          currentBuffer.length + newChunk.length,
+        );
+
+        // Copy old data
+        newBuffer.set(currentBuffer);
+        // Append new data
+        newBuffer.set(newChunk, currentBuffer.length);
+
+        // Update ref
+        audioBufferRef.current = newBuffer;
       };
 
       const source = context.createMediaStreamSource(stream);

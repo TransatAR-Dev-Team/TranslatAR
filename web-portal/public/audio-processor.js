@@ -21,7 +21,10 @@ class AudioProcessor extends AudioWorkletProcessor {
 
       // Send the entire current buffer back to the main thread.
       // The main thread will be responsible for chunking and sending it.
-      this.port.postMessage(this._buffer);
+      if (channel && channel.length > 0) {
+        // The main thread is responsible for buffering.
+        this.port.postMessage(channel);
+      }
     }
 
     // Return true to keep the processor alive.
