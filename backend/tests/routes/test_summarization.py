@@ -1,3 +1,6 @@
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock
+
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -472,3 +475,173 @@ Paragraph 2"""
     response = client.post("/api/summarize", json={"text": multiline_text})
 
     assert response.status_code == 200
+
+
+def test_save_summary_success(client, monkeypatch):
+    """
+    Test successful saving of a summary when user is authenticated.
+    """
+
+    async def mock_user_dependency():
+        return {"_id": "user123"}  # return a user
+
+    monkeypatch.setattr(
+        summarization_route,
+        "get_current_user",
+        mock_user_dependency,
+    )
+
+    # Mock MongoDB insert_one
+    mock_insert = AsyncMock()
+    mock_insert.inserted_id = "abc123"
+
+    # Mock DB collection on app state
+    client.app.state.summaries = AsyncMock()
+    client.app.state.summaries.insert_one = AsyncMock(return_value=mock_insert)
+
+    payload = {"summary": "Short summary", "original_text": "Full text here"}
+
+    response = client.post("/api/summarize/save", json=payload)
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "saved", "summary_id": "abc123"}
+
+    client.app.state.summaries.insert_one.assert_awaited_once()
+
+
+def test_save_summary_unauthorized(client, monkeypatch):
+    """
+    Test that unauthorized users cannot save summaries.
+    """
+
+    async def mock_none():
+        return None
+
+    monkeypatch.setattr(
+        summarization_route,
+        "get_current_user",
+        mock_none,
+    )
+
+    response = client.post(
+        "/api/summarize/save",
+        json={"summary": "x", "original_text": "y"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_save_summary_missing_fields(client, monkeypatch):
+    """
+    Test that backend returns 400 if summary or original_text is missing.
+    """
+
+    async def mock_user_dependency():
+        return {"_id": "user123"}
+
+    monkeypatch.setattr(
+        summarization_route,
+        "get_current_user",
+        mock_user_dependency,
+    )
+
+    response = client.post(
+        "/api/summarize/save",
+        json={"summary": "Only summary"},
+    )
+
+    assert response.status_code == 400
+    assert "Missing summary or original_text" in response.json()["detail"]
+
+
+def test_get_history_success(client, monkeypatch):
+    """
+    Test fetching summary history successfully.
+    """
+
+    mock_user = {"_id": "abc123"}
+
+    async def mock_user_dependency():
+        return mock_user
+
+    monkeypatch.setattr(
+        summarization_route,
+        "get_current_user",
+        mock_user_dependency,
+    )
+
+    # Mock DB finder
+    mock_doc = {
+        "_id": "xyz789",
+        "userId": "abc123",
+        "original_text": "Full text",
+        "summary": "Short summary",
+        "created_at": datetime.now(UTC),
+    }
+
+    async def mock_cursor():
+        yield mock_doc
+
+    mock_find = AsyncMock()
+    mock_find.sort.return_value = mock_cursor()
+
+    client.app.state.summaries = AsyncMock()
+    client.app.state.summaries.find.return_value = mock_find
+
+    response = client.get("/api/summarize/history")
+
+    assert response.status_code == 200
+    data = response.json()["history"]
+
+    assert len(data) == 1
+    assert data[0]["summary"] == "Short summary"
+    assert data[0]["_id"] == "xyz789"  # converted to string
+
+
+def test_get_history_unauthorized(client, monkeypatch):
+    """
+    Test history returns 401 if no authenticated user.
+    """
+
+    async def mock_none():
+        return None
+
+    monkeypatch.setattr(
+        summarization_route,
+        "get_current_user",
+        mock_none,
+    )
+
+    response = client.get("/api/summarize/history")
+
+    assert response.status_code == 401
+
+
+def test_get_history_empty(client, monkeypatch):
+    """
+    Test empty history returns an empty array.
+    """
+
+    async def mock_user_dependency():
+        return {"_id": "u1"}
+
+    monkeypatch.setattr(
+        summarization_route,
+        "get_current_user",
+        mock_user_dependency,
+    )
+
+    async def empty_cursor():
+        if False:
+            yield
+
+    mock_find = AsyncMock()
+    mock_find.sort.return_value = empty_cursor()
+
+    client.app.state.summaries = AsyncMock()
+    client.app.state.summaries.find.return_value = mock_find
+
+    response = client.get("/api/summarize/history")
+
+    assert response.status_code == 200
+    assert response.json()["history"] == []
