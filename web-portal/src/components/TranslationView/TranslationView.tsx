@@ -49,6 +49,18 @@ export default function TranslationView({ settings }: TranslationViewProps) {
 
   const buttonText = isRecording ? "Stop Recording" : "Start Recording";
 
+  // 5. Dynamic Styles Calculation
+  const isHighContrast = settings.subtitle_style === "high-contrast";
+  const isBold = settings.subtitle_style === "bold" || isHighContrast;
+
+  const containerClasses = `absolute bottom-0 left-0 right-0 p-4 transition-colors duration-300 ${
+    isHighContrast ? "bg-black" : "bg-black/50"
+  }`;
+
+  const textClasses = `text-center drop-shadow-lg transition-all duration-300 ${
+    isHighContrast ? "text-yellow-300" : "text-slate-200"
+  } ${isBold ? "font-bold" : "font-normal"}`;
+
   return (
     <div className="bg-slate-800 rounded-lg p-6 shadow-lg text-center">
       <h2 className="text-2xl font-semibold mb-2">Live Translation</h2>
@@ -74,11 +86,20 @@ export default function TranslationView({ settings }: TranslationViewProps) {
           style={{ transform: "scaleX(-1)" }}
         ></video>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50">
-          <p className="text-2xl text-slate-200 text-center drop-shadow-lg">
-            {lastMessage || "..."}
-          </p>
-        </div>
+        {/* Subtitles Overlay */}
+        {settings.subtitles_enabled && (
+          <div className={containerClasses}>
+            <p
+              className={textClasses}
+              style={{
+                fontSize: `${settings.subtitle_font_size}px`,
+                lineHeight: 1.4,
+              }}
+            >
+              {lastMessage || "..."}
+            </p>
+          </div>
+        )}
       </div>
 
       <button

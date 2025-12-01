@@ -2,9 +2,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import TranslationView from "./TranslationView";
 import type { Settings } from "../SettingsMenu/SettingsMenu";
+// 1. Import hooks directly so we can use vi.mocked() on them
 import { useAudioRecorder } from "../../hooks/useAudioRecorder";
 
-// Mock the Hooks
+// 2. Mock the Hooks
+// We define the spies globally so we can check if they were called
 const mockStartRecording = vi.fn();
 const mockStopRecording = vi.fn();
 const mockSendData = vi.fn();
@@ -19,6 +21,7 @@ vi.mock("../../hooks/useTranslationWebSocket", () => ({
 }));
 
 // Mock Recorder Hook
+// IMPORTANT: We use vi.fn() here so that we can use .mockReturnValue() in the tests
 vi.mock("../../hooks/useAudioRecorder", () => ({
   useAudioRecorder: vi.fn(() => ({
     isRecording: false,
@@ -75,7 +78,7 @@ describe("TranslationView Component", () => {
   });
 
   it("displays stop button when recording is active", () => {
-    // CHANGE: Use vi.mocked(...).mockReturnValue to simulate recording state
+    // Simulate recording state
     vi.mocked(useAudioRecorder).mockReturnValue({
       isRecording: true,
       startRecording: mockStartRecording,
@@ -94,7 +97,7 @@ describe("TranslationView Component", () => {
   });
 
   it("displays error message from recorder hook", () => {
-    // CHANGE: Simulate an error state
+    // Simulate an error state
     vi.mocked(useAudioRecorder).mockReturnValue({
       isRecording: false,
       startRecording: mockStartRecording,
@@ -105,5 +108,35 @@ describe("TranslationView Component", () => {
 
     render(<TranslationView settings={mockSettings} />);
     expect(screen.getByText("Microphone access denied")).toBeInTheDocument();
+  });
+
+  it("applies font size from settings", () => {
+    const customSettings = { ...mockSettings, subtitle_font_size: 32 };
+    render(<TranslationView settings={customSettings} />);
+
+    const message = screen.getByText("Hello World");
+    expect(message).toHaveStyle({ fontSize: "32px" });
+  });
+
+  it("hides subtitles when disabled", () => {
+    const customSettings = { ...mockSettings, subtitles_enabled: false };
+    render(<TranslationView settings={customSettings} />);
+
+    const message = screen.queryByText("Hello World");
+    expect(message).not.toBeInTheDocument();
+  });
+
+  it("applies high contrast styling", () => {
+    const customSettings: Settings = {
+      ...mockSettings,
+      subtitle_style: "high-contrast",
+    };
+    render(<TranslationView settings={customSettings} />);
+
+    const message = screen.getByText("Hello World");
+    // Check for yellow text (Tailwind class)
+    expect(message).toHaveClass("text-yellow-300");
+    // High contrast should also force bold
+    expect(message).toHaveClass("font-bold");
   });
 });
