@@ -65,3 +65,27 @@ export function createWavBlob(
   const header = writeWavHeader(pcmSamples, sampleRate, numChannels);
   return new Blob([header, pcmSamples], { type: "audio/wav" });
 }
+
+export async function packageAudioData(
+  audioBlob: Blob,
+  settings: Settings,
+): Promise<Blob> {
+  const token = localStorage.getItem("translatar_jwt");
+  const metadata = {
+    source_lang: settings.source_language,
+    target_lang: settings.target_language,
+    jwt_token: token || null,
+    sample_rate: settings.target_sample_rate,
+    channels: 1,
+  };
+  const metadataJson = JSON.stringify(metadata);
+  const metadataBytes = new TextEncoder().encode(metadataJson);
+  const metadataLength = new ArrayBuffer(4);
+  new DataView(metadataLength).setUint32(0, metadataBytes.length, true);
+
+  return new Blob([
+    metadataLength,
+    metadataBytes,
+    await audioBlob.arrayBuffer(),
+  ]);
+}
