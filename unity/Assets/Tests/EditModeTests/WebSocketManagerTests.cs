@@ -80,7 +80,7 @@ public class WebSocketManagerTests
         byte[] audioData = new byte[] { 1, 2, 3 };
 
         // Act
-        manager.SendAudioChunk(audioData);
+        manager.SendAudioChunk(audioData, "test_conversation_id");
 
         // Assert
         Assert.AreEqual(1, mockWebSocket.SendCallCount);

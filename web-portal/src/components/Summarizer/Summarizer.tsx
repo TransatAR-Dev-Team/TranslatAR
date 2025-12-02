@@ -10,11 +10,13 @@ export default function Summarizer({ onSaveSuccess }: SummarizerProps) {
   const [summaryLength, setSummaryLength] = useState<string>("medium");
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  
   const [advice, setAdvice] = useState<string>("");
   const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
   const [adviceError, setAdviceError] = useState<string | null>(null);
+
   const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
-  const [isLoggedIn, setIsLoggedIn] = useState<string | null>(null);
+
   const handleSummarize = async () => {
     if (!textToSummarize.trim()) {
       setSummaryError("Please enter some text to summarize.");
