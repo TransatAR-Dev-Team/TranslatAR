@@ -282,7 +282,6 @@ public class WebSocketManager : MonoBehaviour
     public void SetTranslationEnabled(bool enabled)
     {
         isTranslationEnabled = enabled;
-        Debug.Log($"[WebSocketManager] Translation {(enabled ? "enabled" : "disabled")}.");
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using UnityEngine;
+using UnityEngine.UI;
 
-// toggles the visibility of the subtitle display (text and background panel)
+// toggles subtitle visibility on/off
 public class SubtitleToggle : MonoBehaviour
 {
     [Header("Subtitle UI Reference")]
@@ -8,9 +9,23 @@ public class SubtitleToggle : MonoBehaviour
     [SerializeField] private GameObject subtitlePanel;
 
     private bool isSubtitleVisible = true;
+    private Toggle uiToggle;
+    private bool isUpdatingToggle = false; // prevent recursive updates
+    
+    // key for saving subtitle visibility state
+    private const string SUBTITLE_VISIBILITY_KEY = "SubtitleVisibility";
 
     void Start()
     {
+        // try to find the toggle component
+        uiToggle = GetComponent<Toggle>();
+        
+        // connect to toggle if it exists
+        if (uiToggle != null)
+        {
+            uiToggle.onValueChanged.AddListener(OnToggleValueChanged);
+        }
+
         // try to find subtitle panel if not assigned
         if (subtitlePanel == null)
         {
@@ -19,7 +34,19 @@ public class SubtitleToggle : MonoBehaviour
 
         if (subtitlePanel != null)
         {
-            isSubtitleVisible = subtitlePanel.activeSelf;
+            // load saved state if it exists, otherwise use current panel state
+            if (PlayerPrefs.HasKey(SUBTITLE_VISIBILITY_KEY))
+            {
+                isSubtitleVisible = PlayerPrefs.GetInt(SUBTITLE_VISIBILITY_KEY) == 1;
+            }
+            else
+            {
+                isSubtitleVisible = subtitlePanel.activeSelf;
+            }
+            
+            // apply the state (saved or current)
+            subtitlePanel.SetActive(isSubtitleVisible);
+            UpdateToggleVisualState();
             Debug.Log($"[SubtitleToggle] Subtitle panel found. Initial state: {(isSubtitleVisible ? "Visible" : "Hidden")}");
         }
         else
@@ -30,19 +57,72 @@ public class SubtitleToggle : MonoBehaviour
 
     void Update()
     {
-        // retry finding subtitle panel if not found yet
+        // keep trying to find subtitle panel if not found yet
         if (subtitlePanel == null)
         {
             FindSubtitlePanel();
             if (subtitlePanel != null)
             {
                 isSubtitleVisible = subtitlePanel.activeSelf;
+                UpdateToggleVisualState();
                 Debug.Log($"[SubtitleToggle] Subtitle panel found in Update. Initial state: {(isSubtitleVisible ? "Visible" : "Hidden")}");
             }
         }
     }
 
-    // attempts to find the subtitle panel GameObject through WebSocketManager
+    void OnDestroy()
+    {
+        // clean up to prevent memory leaks
+        if (uiToggle != null)
+        {
+            uiToggle.onValueChanged.RemoveListener(OnToggleValueChanged);
+        }
+    }
+
+    // called when the toggle value changes
+    private void OnToggleValueChanged(bool isOn)
+    {
+        if (isUpdatingToggle) return; // prevent recursive updates
+
+        if (subtitlePanel == null)
+        {
+            Debug.LogWarning("[SubtitleToggle] Cannot toggle: subtitle panel not assigned. Trying to find it...");
+            FindSubtitlePanel();
+            
+            if (subtitlePanel == null)
+            {
+                Debug.LogError("[SubtitleToggle] Cannot toggle: subtitle panel not found.");
+                // revert the toggle back to previous state
+                isUpdatingToggle = true;
+                if (uiToggle != null)
+                {
+                    uiToggle.isOn = isSubtitleVisible;
+                }
+                isUpdatingToggle = false;
+                return;
+            }
+        }
+
+        isSubtitleVisible = isOn;
+        subtitlePanel.SetActive(isSubtitleVisible);
+        
+        // save the state so it persists when app restarts
+        PlayerPrefs.SetInt(SUBTITLE_VISIBILITY_KEY, isSubtitleVisible ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    // updates the toggle visual to match the actual state
+    private void UpdateToggleVisualState()
+    {
+        if (uiToggle != null && !isUpdatingToggle)
+        {
+            isUpdatingToggle = true;
+            uiToggle.isOn = isSubtitleVisible;
+            isUpdatingToggle = false;
+        }
+    }
+
+    // tries to find the subtitle panel through WebSocketManager
     private void FindSubtitlePanel()
     {
         if (WebSocketManager.Instance == null)
@@ -57,7 +137,7 @@ public class SubtitleToggle : MonoBehaviour
             return;
         }
 
-        // get the parent panel GameObject (contains both text and background)
+        // get the parent panel (contains both text and background)
         subtitlePanel = WebSocketManager.Instance.subtitleText.transform.parent?.gameObject;
         
         if (subtitlePanel == null)
@@ -72,29 +152,8 @@ public class SubtitleToggle : MonoBehaviour
         }
     }
 
-    // toggles the subtitle visibility on/off
-    // translation continues normally
-    // call this method from a UI button's onClick event
-    public void ToggleSubtitle()
-    {
-        if (subtitlePanel == null)
-        {
-            Debug.LogWarning("[SubtitleToggle] Cannot toggle: subtitle panel not assigned. Trying to find it...");
-            FindSubtitlePanel();
-            
-            if (subtitlePanel == null)
-            {
-                Debug.LogError("[SubtitleToggle] Cannot toggle: subtitle panel not found.");
-                return;
-            }
-        }
-
-        isSubtitleVisible = !isSubtitleVisible;
-        subtitlePanel.SetActive(isSubtitleVisible);
-    }
-
-    // sets the subtitle visibility explicitly
-    // true to show subtitles, false to hide them
+    // sets subtitle visibility
+    // pass true to show, false to hide
     public void SetSubtitleVisible(bool visible)
     {
         if (subtitlePanel == null)
@@ -109,10 +168,15 @@ public class SubtitleToggle : MonoBehaviour
 
         isSubtitleVisible = visible;
         subtitlePanel.SetActive(isSubtitleVisible);
+        UpdateToggleVisualState();
+        
+        // save the state so it persists when app restarts
+        PlayerPrefs.SetInt(SUBTITLE_VISIBILITY_KEY, isSubtitleVisible ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
-    // gets the current subtitle visibility state
-    // returns true if subtitles are visible, false otherwise
+    // gets the current subtitle visibility
+    // returns true if visible, false if hidden
     public bool IsSubtitleVisible()
     {
         return isSubtitleVisible;
