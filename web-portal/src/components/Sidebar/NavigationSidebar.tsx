@@ -1,9 +1,6 @@
-import React from "react";
-
 export type TabKey =
   | "dashboard"
   | "live_translation"
-  | "summarization"
   | "conversations";
 
 interface SideNavigationProps {
@@ -16,7 +13,6 @@ interface SideNavigationProps {
 const tabs: { key: TabKey; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
   { key: "live_translation", label: "Live Translation" },
-  { key: "summarization", label: "Summarization" },
   { key: "conversations", label: "Conversations / History" },
 ];
 
@@ -28,17 +24,15 @@ export default function SideNavigation({
 }: SideNavigationProps) {
   return (
     <div
-      className={`fixed inset-0 z-40 transition-opacity duration-300 ${
-        isOpen
-          ? "opacity-100 pointer-events-auto"
-          : "opacity-0 pointer-events-none"
-      }`}
+      className={`fixed inset-0 z-40 transition-opacity duration-300 ${isOpen
+        ? "opacity-100 pointer-events-auto"
+        : "opacity-0 pointer-events-none"
+        }`}
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"
+          }`}
         onClick={onClose}
       />
 
@@ -68,17 +62,16 @@ export default function SideNavigation({
                 onTabChange(tab.key);
                 onClose();
               }}
-              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                activeTab === tab.key
-                  ? "bg-slate-700 text-white"
-                  : "text-slate-300 hover:bg-slate-700/70"
-              }`}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors ${activeTab === tab.key
+                ? "bg-slate-700 text-white"
+                : "text-slate-300 hover:bg-slate-700/70"
+                }`}
             >
               {tab.label}
             </button>
           ))}
         </nav>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

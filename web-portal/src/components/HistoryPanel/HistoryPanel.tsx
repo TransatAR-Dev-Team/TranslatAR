@@ -14,6 +14,7 @@ interface HistoryPanelProps {
   history: HistoryItem[];
   isLoading: boolean;
   error: string | null;
+  onSummarySaved?: () => void;
 }
 
 interface Conversation {
@@ -32,14 +33,11 @@ interface Conversation {
 const languageNames: Record<string, string> = {
   en: "English",
   es: "Spanish",
-  ko: "Korean",
-  ja: "Japanese",
-  zh: "Chinese",
   fr: "French",
   de: "German",
-  pt: "Portuguese",
-  it: "Italian",
-  ru: "Russian",
+  ja: "Japanese",
+  ko: "Korean",
+  zh: "Chinese",
 };
 
 /**
@@ -105,8 +103,14 @@ export default function HistoryPanel({
   history,
   isLoading,
   error,
+  onSummarySaved,
 }: HistoryPanelProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string>("");
+  const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 
   const conversations = buildConversationTranscripts(history);
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
@@ -134,6 +138,80 @@ export default function HistoryPanel({
       minute: "2-digit",
       second: "2-digit",
     });
+  };
+
+  /**
+   * Handle summarizing the selected conversation
+   */
+  const handleSummarize = async () => {
+    if (!selectedConversation) return;
+
+    setIsSummarizing(true);
+    setSummaryError(null);
+    setSummary("");
+
+    try {
+      const response = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          text: selectedConversation.originalTranscript, 
+          length: "short" 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (error) {
+      console.error("Error summarizing conversation:", error);
+      setSummaryError("Failed to generate summary. Please try again.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  /**
+   * Handle saving the summary
+   */
+  const handleSaveSummary = async () => {
+    if (!summary || !selectedConversation) return;
+
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+
+    if (!token) {
+      alert("You must be logged in to save a summary.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/summarize/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          summary: summary,
+          original_text: selectedConversation.originalTranscript,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        console.error("Backend returned:", err);
+        throw new Error("Failed to save summary");
+      }
+
+      alert("Summary saved!");
+      if (onSummarySaved) onSummarySaved();
+    } catch (error) {
+      console.error("Error saving summary:", error);
+      alert("Failed to save summary.");
+    }
   };
 
   return (
@@ -171,7 +249,11 @@ export default function HistoryPanel({
                 {conversations.map((conv) => (
                   <div
                     key={conv.id}
-                    onClick={() => setSelectedConversationId(conv.id)}
+                    onClick={() => {
+                      setSelectedConversationId(conv.id);
+                      setSummary("");
+                      setSummaryError(null);
+                    }}
                     className={`p-3 rounded-lg cursor-pointer transition ${
                       selectedConversationId === conv.id
                         ? "bg-blue-600"
@@ -200,12 +282,46 @@ export default function HistoryPanel({
         {/* Conversation detail panel */}
         <div className="lg:w-2/3 w-full">
           <div className="bg-slate-700 rounded-lg p-4 min-h-[500px] max-h-[500px] overflow-y-auto">
-            <h3 className="text-lg font-medium text-slate-200 mb-3">
-              Conversation Content
-            </h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium text-slate-200">
+                Conversation Content
+              </h3>
+              {selectedConversation && (
+                <button
+                  onClick={handleSummarize}
+                  disabled={isSummarizing}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors duration-200"
+                >
+                  {isSummarizing ? "Summarizing..." : "Summarize"}
+                </button>
+              )}
+            </div>
 
             {selectedConversation ? (
               <div className="space-y-3">
+                {/* Display summary if available */}
+                {summaryError && (
+                  <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-3">
+                    {summaryError}
+                  </div>
+                )}
+
+                {summary && (
+                  <div className="bg-slate-600 p-4 rounded-lg mb-3 border-l-4 border-blue-500">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-blue-300">Summary:</h4>
+                      <button
+                        onClick={handleSaveSummary}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition-colors duration-200"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    <p className="text-slate-100">{summary}</p>
+                  </div>
+                )}
+
+                {/* Display conversation translations */}
                 {selectedConversation.items.length === 0 ? (
                   <p className="text-slate-400 text-center py-8">
                     No translations in this conversation.
@@ -254,4 +370,4 @@ export default function HistoryPanel({
       </div>
     </div>
   );
-}
+} 

@@ -7,7 +7,6 @@ import { loginWithGoogleApi, getMeApi } from "./api/auth";
 
 import DashboardOverview from "./components/DashboardOverview/DashboardOverview";
 import Header from "./components/Header/Header";
-import Summarizer from "./components/Summarizer/Summarizer";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import SettingsMenu, {
   type Settings,
@@ -51,7 +50,6 @@ function App() {
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
-  // Note: Logs state removed as the feature is deprecated
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -132,8 +130,6 @@ function App() {
     }
   }, []);
 
-  // loadLogs removed here to resolve conflict
-
   const loadSettings = useCallback(async () => {
     setSettingsError(null);
     const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
@@ -207,9 +203,6 @@ function App() {
     switch (activeTab) {
       case "live_translation":
         return <LiveTranslationView settings={settings} />;
-
-      case "summarization":
-        return <Summarizer />;
 
       case "conversations":
         return (
