@@ -14,6 +14,7 @@ import SettingsMenu, {
 import SideNavigation, {
   type TabKey,
 } from "./components/Sidebar/NavigationSidebar";
+import SummaryHistory from "./components/SummaryHistory/SummaryHistory";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -51,6 +52,7 @@ function App() {
 
   const [showNavigation, setShowNavigation] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
+  const [summaryHistory, setSummaryHistory] = useState<any[]>([]);
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -136,6 +138,7 @@ function App() {
       }
       await loadSettings();
       await loadHistory();
+      await loadSummaryHistory();
     };
     void initialize();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,6 +147,7 @@ function App() {
   useEffect(() => {
     if (appUser) {
       loadHistory();
+      loadSummaryHistory();
     }
   }, [appUser, loadHistory]);
 
@@ -185,6 +189,29 @@ function App() {
     [fetchUserProfile, handleLogout],
   );
 
+  const loadSummaryHistory = useCallback(async () => {
+    try {
+      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+      if (!token) {
+        setSummaryHistory([]);
+        return;
+      }
+
+      const response = await fetch("/api/summarize/history", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to load summary history");
+
+      const data = await response.json();
+      setSummaryHistory(data.history || []);
+    } catch (err) {
+      console.error("Failed to fetch summary history:", err);
+    }
+  }, []);
+
   // --- RENDER ---
   return (
     <GoogleOAuthProvider clientId={googleClientId || ""}>
@@ -204,13 +231,15 @@ function App() {
             <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
               <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
               <p className="text-slate-300 text-sm">
-                Overview coming soon. Use the sidebar to jump to Summarization or
-                Conversations.
+                Overview coming soon. Use the sidebar to jump to Summarization
+                or Conversations.
               </p>
             </div>
           )}
 
-          {activeTab === "summarization" && <Summarizer />}
+          {activeTab === "summarization" && (
+            <Summarizer onSaveSuccess={loadSummaryHistory} />
+          )}
 
           {activeTab === "conversations" && (
             <HistoryPanel
@@ -220,16 +249,10 @@ function App() {
             />
           )}
 
-          {activeTab === "logs" && (
-            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-2">Logs</h2>
-              <p className="text-slate-300 text-sm">
-                Logs page placeholder – this will eventually show transcript logs.
-              </p>
-            </div>
+          {activeTab === "summaryHistory" && (
+            <SummaryHistory history={summaryHistory} />
           )}
         </div>
-
         {/* Settings modal */}
         {showSettings && (
           <SettingsMenu

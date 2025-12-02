@@ -8,3 +8,8 @@ class SummarizationRequest(BaseModel):
 
 class SummarizationResponse(BaseModel):
     summary: str
+
+
+class SummarySaveRequest(BaseModel):
+    summary: str
+    original_text: str

@@ -1,9 +1,33 @@
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock
+
 import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from main import app
 from routes import summarization as summarization_route
+
+
+class MockCursor:
+    def __init__(self, docs):
+        self.docs = docs
+
+    def sort(self, *args, **kwargs):
+        # Optionally sort by created_at descending
+        self.docs.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        return self
+
+    def __aiter__(self):
+        self._iter = iter(self.docs)
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._iter)
+        except StopIteration:
+            raise StopAsyncIteration from None
+
 
 # --- Fixtures ---
 
@@ -472,3 +496,128 @@ Paragraph 2"""
     response = client.post("/api/summarize", json={"text": multiline_text})
 
     assert response.status_code == 200
+
+
+def test_save_summary_success(client):
+    """Test successful saving of a summary when user is authenticated."""
+
+    async def mock_user_dependency():
+        return {"_id": "user123"}
+
+    client.app.dependency_overrides[summarization_route.get_current_user] = mock_user_dependency
+
+    mock_insert = AsyncMock()
+    mock_insert.inserted_id = "abc123"
+
+    client.app.state.summaries = AsyncMock()
+    client.app.state.summaries.insert_one = AsyncMock(return_value=mock_insert)
+
+    payload = {"summary": "Short summary", "original_text": "Full text here"}
+
+    response = client.post("/api/summarize/save", json=payload)
+    assert response.status_code == 200
+    assert response.json() == {"status": "saved", "summary_id": "abc123"}
+
+    client.app.state.summaries.insert_one.assert_awaited_once()
+
+    client.app.dependency_overrides = {}
+
+
+def test_save_summary_unauthorized(client):
+    """Test that unauthorized users cannot save summaries."""
+
+    async def mock_none():
+        return None
+
+    client.app.dependency_overrides[summarization_route.get_current_user] = mock_none
+
+    response = client.post(
+        "/api/summarize/save",
+        json={"summary": "x", "original_text": "y"},
+    )
+
+    assert response.status_code == 401
+
+    client.app.dependency_overrides = {}
+
+
+def test_save_summary_missing_fields(client):
+    """Test backend returns 422 if summary or original_text is missing."""
+
+    async def mock_user_dependency():
+        return {"_id": "user123"}
+
+    client.app.dependency_overrides[summarization_route.get_current_user] = mock_user_dependency
+
+    response = client.post("/api/summarize/save", json={"summary": "Only summary"})
+    assert response.status_code == 422
+
+    detail = response.json()["detail"]
+    assert any(
+        err["loc"] == ["body", "original_text"] and err["type"] == "missing" for err in detail
+    )
+
+    client.app.dependency_overrides = {}
+
+
+def test_get_history_success(client):
+    """Test fetching summary history successfully."""
+
+    mock_user = {"_id": "abc123"}
+
+    async def mock_user_dependency():
+        return mock_user
+
+    client.app.dependency_overrides[summarization_route.get_current_user] = mock_user_dependency
+
+    mock_doc = {
+        "_id": "xyz789",
+        "userId": "abc123",
+        "original_text": "Full text",
+        "summary": "Short summary",
+        "created_at": datetime.now(UTC),
+    }
+
+    client.app.state.summaries = type("obj", (), {})()
+    client.app.state.summaries.find = lambda query: MockCursor([mock_doc])
+
+    response = client.get("/api/summarize/history")
+    assert response.status_code == 200
+
+    data = response.json()["history"]
+    assert len(data) == 1
+    assert data[0]["summary"] == "Short summary"
+    assert data[0]["_id"] == "xyz789"
+
+    client.app.dependency_overrides = {}
+
+
+def test_get_history_unauthorized(client):
+    """Test history returns 401 if no authenticated user."""
+
+    async def mock_none():
+        return None
+
+    client.app.dependency_overrides[summarization_route.get_current_user] = mock_none
+
+    response = client.get("/api/summarize/history")
+    assert response.status_code == 401
+
+    client.app.dependency_overrides = {}
+
+
+def test_get_history_empty(client):
+    """Test empty history returns an empty array."""
+
+    async def mock_user_dependency():
+        return {"_id": "u1"}
+
+    client.app.dependency_overrides[summarization_route.get_current_user] = mock_user_dependency
+
+    client.app.state.summaries = type("obj", (), {})()
+    client.app.state.summaries.find = lambda query: MockCursor([])
+    response = client.get("/api/summarize/history")
+    assert response.status_code == 200
+    assert response.json()["history"] == []
+
+    client.app.dependency_overrides = {}
