@@ -43,7 +43,7 @@ export default function Header({
             <img
               src={melvinLogo}
               alt="TranslatAR logo"
-              className="h-10 w-10 rounded-md object-contain"
+              className="h-24 w-24 rounded-md object-contain"
             />
             <div>
               <h1 className="text-2xl font-bold leading-tight">
