@@ -25,6 +25,21 @@ describe("App Component", () => {
     localStorage.clear();
   });
 
+  it("should render the Landing Page when not logged in", async () => {
+    // 1. Render without a token in localStorage
+    render(<App />);
+
+    // 2. Assert that the landing page text is visible
+    expect(
+      await screen.findByText("Please sign in to access your dashboard."),
+    ).toBeInTheDocument();
+
+    // 3. Assert that the main app's navigation button is NOT visible
+    expect(
+      screen.queryByRole("button", { name: /open navigation menu/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("should render the dashboard by default when logged in", async () => {
     localStorage.setItem("translatar_jwt", mockToken);
     globalThis.fetchMock.mockImplementation((url) => {
