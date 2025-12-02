@@ -22,7 +22,7 @@ if (!googleClientId) {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  // Backend-related (keep as-is)
+  // Backend-related
   source_language: "en",
   target_language: "es",
   chunk_duration_seconds: 8.0,
@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS: Settings = {
   chunk_overlap_seconds: 0.5,
   websocket_url: "ws://localhost:8000/ws",
 
-  // UX-facing settings (already added earlier)
+  // UX-facing
   subtitles_enabled: true,
   translation_enabled: true,
   subtitle_font_size: 18,
@@ -80,12 +80,12 @@ function App() {
         alert("Missing required token from Google!");
         return handleLogout();
       }
+
       try {
         const { access_token } = await loginWithGoogleApi(googleIdToken);
         localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
         await fetchUserProfile(access_token);
-        // Once logged in, refresh history
-        await loadHistory();
+        await loadHistory(); // refresh history once logged in
       } catch (error) {
         console.error("Login process failed:", error);
         alert("Login failed. Please try again.");
@@ -95,7 +95,7 @@ function App() {
     [fetchUserProfile, handleLogout],
   );
 
-  // --- API HANDLERS ---
+  // --- DATA FETCHING ---
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     setHistoryError(null);
@@ -146,7 +146,7 @@ function App() {
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
-      // keep current (defaults) if it fails
+      // keep defaults if backend not reachable
     }
   }, []);
 
@@ -182,23 +182,41 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchUserProfile]);
 
+  // --- RENDER HELPERS ---
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case "summarization":
+        return <Summarizer />;
+
+      case "conversations":
+        return (
+          <HistoryPanel
+            history={history}
+            isLoading={isHistoryLoading}
+            error={historyError}
+          />
+        );
+
+      case "dashboard":
+      default:
+        return (
+          <>
+            <DashboardOverview
+              appUser={appUser}
+              history={history}
+              onOpenSummarization={() => setActiveTab("summarization")}
+              onOpenHistory={() => setActiveTab("conversations")}
+            />
+          </>
+        );
+    }
+  };
+
   // --- RENDER ---
   return (
     <GoogleOAuthProvider clientId={googleClientId || ""}>
-      <main className="bg-slate-900 min-h-screen text-white">
-        {/* Sidebar */}
-        <SideNavigation
-          isOpen={showNavigation}
-          activeTab={activeTab}
-          onClose={() => setShowNavigation(false)}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setShowNavigation(false);
-          }}
-        />
-
-        {/* Main content container */}
-        <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
+      <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
+        <div className="w-full max-w-5xl">
           <Header
             appUser={appUser}
             onLoginSuccess={handleLoginSuccess}
@@ -208,31 +226,9 @@ function App() {
             onShowNavigation={() => setShowNavigation(true)}
           />
 
-          <div className="space-y-6">
-            {/* DASHBOARD */}
-            {activeTab === "dashboard" && (
-              <DashboardOverview
-                onGoSummarization={() => setActiveTab("summarization")}
-                onGoConversations={() => setActiveTab("conversations")}
-                onOpenSettings={() => setShowSettings(true)}
-              />
-            )}
-
-            {/* SUMMARIZATION */}
-            {activeTab === "summarization" && <Summarizer />}
-
-            {/* CONVERSATIONS / HISTORY */}
-            {activeTab === "conversations" && (
-              <HistoryPanel
-                history={history}
-                isLoading={isHistoryLoading}
-                error={historyError}
-              />
-            )}
-          </div>
+          {renderMainContent()}
         </div>
 
-        {/* SETTINGS MODAL */}
         {showSettings && (
           <SettingsMenu
             initialSettings={settings}
@@ -241,118 +237,135 @@ function App() {
             error={settingsError}
           />
         )}
+
+        <SideNavigation
+          isOpen={showNavigation}
+          activeTab={activeTab}
+          onClose={() => setShowNavigation(false)}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setShowNavigation(false);
+          }}
+        />
       </main>
     </GoogleOAuthProvider>
   );
 }
 
-/**
- * Dashboard hero + quick actions
- * - Logo + name (style B)
- * - Warm/professional copy about what the portal does
- * - Buttons to jump to Summarization / Conversations / Settings
- */
 function DashboardOverview({
-  onGoSummarization,
-  onGoConversations,
-  onOpenSettings,
+  appUser,
+  history,
+  onOpenSummarization,
+  onOpenHistory,
 }: {
-  onGoSummarization: () => void;
-  onGoConversations: () => void;
-  onOpenSettings: () => void;
+  appUser: User | null;
+  history: any[];
+  onOpenSummarization: () => void;
+  onOpenHistory: () => void;
 }) {
-  return (
-    <section className="bg-gradient-to-br from-slate-800/90 via-slate-800 to-slate-900 rounded-2xl border border-slate-700/70 shadow-2xl p-6 md:p-8 space-y-6">
-      {/* Top row: logo + title/description */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <div className="h-14 w-14 rounded-xl bg-slate-900/80 border border-slate-600/80 flex items-center justify-center overflow-hidden">
-            {/* Change src to your actual logo path */}
-            <img
-              src="/translatar-logo.png"
-              alt="TranslatAR logo"
-              className="h-12 w-12 object-contain"
-            />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              TranslatAR Web Portal
-            </h1>
-            <p className="text-sm md:text-base text-slate-300 mt-1">
-              Manage your conversations, summaries, and language settings for
-              the TranslatAR headset—all in one place.
-            </p>
-          </div>
-        </div>
+  const recentCount = history.length;
+  const lastItem = history[0];
 
-        {/* Quick actions */}
-        <div className="flex flex-wrap gap-2 md:justify-end">
-          <button
-            onClick={onGoSummarization}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
-          >
-            Open Summarization
-          </button>
-          <button
-            onClick={onGoConversations}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
-          >
-            View Conversation History
-          </button>
-          <button
-            onClick={onOpenSettings}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-600 hover:border-slate-400 hover:bg-slate-800/60 transition-colors"
-          >
-            Settings
-          </button>
-        </div>
+  return (
+    <section className="bg-slate-800 rounded-lg p-6 shadow-xl space-y-6 border border-slate-700">
+      {/* Title + intro */}
+      <div>
+        <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
+        <p className="text-sm text-slate-300">
+          {appUser
+            ? "Welcome back. From here you can manage your headset data, review translations, and generate summaries — all from the web portal."
+            : "Log in with your Google account to sync your headset activity, review translations, and generate summaries from your conversations."}
+        </p>
       </div>
 
-      {/* Body copy */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="md:col-span-2 space-y-2">
-          <h2 className="text-lg font-semibold">What you can do here</h2>
-          <p className="text-sm text-slate-200">
-            The web portal is your control center for TranslatAR. Review
-            translated conversations, generate AI-powered summaries, and adjust
-            how subtitles and translations behave on your headset.
+      {/* What you can do here (paragraph style) */}
+      <div className="bg-slate-900/40 rounded-lg p-4 border border-slate-700 shadow">
+        <h3 className="text-lg font-semibold mb-2">What you can do here</h3>
+        <p className="text-xs text-slate-300 leading-relaxed">
+          The TranslatAR web portal is your companion to the headset experience.
+          You can revisit translated conversations, quickly generate AI-powered
+          summaries of long meetings, and adjust your default language settings
+          so that the Unity app feels personalized the moment you put the headset
+          on. Over time, this becomes the place where you review what happened,
+          not just what was said.
+        </p>
+      </div>
+
+      {/* Highlights at a glance (bullets with colored dots) */}
+      <div className="bg-slate-900/40 rounded-lg p-4 border border-slate-700 shadow">
+        <h3 className="text-lg font-semibold mb-2">Highlights at a glance</h3>
+        <ul className="space-y-2">
+          <li className="flex items-start gap-2 text-xs text-slate-200">
+            <span className="mt-1 h-2 w-2 rounded-full bg-blue-400" />
+            <span>Real-time subtitles and translations captured from your headset sessions.</span>
+          </li>
+          <li className="flex items-start gap-2 text-xs text-slate-200">
+            <span className="mt-1 h-2 w-2 rounded-full bg-emerald-400" />
+            <span>Conversation logs stored for later review and learning.</span>
+          </li>
+          <li className="flex items-start gap-2 text-xs text-slate-200">
+            <span className="mt-1 h-2 w-2 rounded-full bg-amber-300" />
+            <span>AI-generated summaries to condense long or complex discussions.</span>
+          </li>
+          <li className="flex items-start gap-2 text-xs text-slate-200">
+            <span className="mt-1 h-2 w-2 rounded-full bg-pink-400" />
+            <span>Accessibility-focused controls for subtitles and translation preferences.</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Quick actions + Activity snapshot (moved below) */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Quick Actions */}
+        <div className="bg-slate-900/40 rounded-lg p-4 border border-slate-700 shadow">
+          <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
+          <p className="text-xs text-slate-300 mb-3">
+            Jump straight into the tools you’ll use most often:
           </p>
-          <p className="text-sm text-slate-300">
-            Changes you make here—like language pairs and subtitle preferences—
-            are designed to sync with the backend so your next AR session feels
-            ready out of the box.
-          </p>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={onOpenSummarization}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-md"
+            >
+              Open Summarization
+            </button>
+            <button
+              onClick={onOpenHistory}
+              className="w-full bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium py-2 rounded-md"
+            >
+              View Translation History
+            </button>
+          </div>
         </div>
 
-        {/* Feature highlights (static, not recent-activity) */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-slate-200">
-            Highlights at a glance
-          </h3>
-          <ul className="space-y-2 text-xs text-slate-300">
-            <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              <span>
-                Real-time AR subtitles and translations tailored to your
-                preferred languages.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-400" />
-              <span>
-                Conversation logs and summaries so you never lose important
-                meeting details.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-violet-400" />
-              <span>
-                Accessibility options like subtitle size, style, and language
-                pairing presets.
-              </span>
-            </li>
-          </ul>
+        {/* Activity Snapshot */}
+        <div className="bg-slate-900/40 rounded-lg p-4 border border-slate-700 shadow">
+          <h3 className="text-lg font-semibold mb-2">Activity Snapshot</h3>
+
+          {recentCount === 0 ? (
+            <p className="text-xs text-slate-300">
+              No conversations logged yet — once you start using your headset,
+              your most recent translations will appear here.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-slate-300 mb-2">
+                You have{" "}
+                <span className="font-semibold">{recentCount}</span> saved
+                translation{recentCount === 1 ? "" : "s"}.
+              </p>
+              <div className="mt-2 p-3 rounded-md bg-slate-800 border border-slate-700 text-xs">
+                <div className="text-slate-400 mb-1">Most recent conversation:</div>
+                <div className="text-slate-100 line-clamp-2">
+                  {lastItem?.original_text}
+                </div>
+                <div className="mt-1 text-slate-400">
+                  → {lastItem?.translated_text}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>
