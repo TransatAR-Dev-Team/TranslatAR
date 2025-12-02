@@ -10,6 +10,7 @@ export default function Summarizer() {
   const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
   const [adviceError, setAdviceError] = useState<string | null>(null);
 
+
   const handleSummarize = async () => {
     if (!textToSummarize.trim()) {
       setSummaryError("Please enter some text to summarize.");

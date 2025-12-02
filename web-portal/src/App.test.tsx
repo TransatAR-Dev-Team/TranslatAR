@@ -23,9 +23,9 @@ describe("App Component", () => {
     });
     fireEvent.click(conversationsButton);
 
-    // For a logged-out user, it should show the empty state, not the loading state.
+    // For a logged-out user, it should show the empty state
     expect(
-      await screen.findByText(/no translations found in the database/i),
+      await screen.findByText(/no saved conversations/i),
     ).toBeInTheDocument();
   });
 
@@ -58,6 +58,7 @@ describe("App Component", () => {
         translated_text: "Hola",
         source_lang: "en",
         target_lang: "es",
+        conversationId: "conv-1",
         timestamp: new Date().toISOString(),
       },
       {
@@ -66,6 +67,7 @@ describe("App Component", () => {
         translated_text: "Adiós",
         source_lang: "en",
         target_lang: "es",
+        conversationId: "conv-1",
         timestamp: new Date().toISOString(),
       },
     ];
@@ -83,11 +85,19 @@ describe("App Component", () => {
     });
     fireEvent.click(conversationsButton);
 
-    // Wait for the component to finish loading and check for the data
+    // Wait for the component to finish loading and check for the session list
     await waitFor(() => {
-      expect(screen.queryByText(/Loading history.../i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
     });
 
+    // Check that session card is displayed (shows translation count)
+    expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
+
+    // Click on the session to view details
+    const sessionCard = screen.getByText(/2 translations/i).closest("div");
+    fireEvent.click(sessionCard!);
+
+    // Now the translation details should be visible
     expect(screen.getByText(/Hello/i)).toBeInTheDocument();
     expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
   });
@@ -129,6 +139,6 @@ describe("App Component", () => {
       /Failed to load translation history./i,
     );
     expect(errorMessage).toBeInTheDocument();
-    expect(screen.queryByText(/Loading history.../i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
   });
 });
