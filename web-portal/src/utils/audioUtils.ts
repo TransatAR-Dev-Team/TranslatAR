@@ -69,15 +69,19 @@ export function createWavBlob(
 export async function packageAudioData(
   audioBlob: Blob,
   settings: Settings,
+  conversationId: string,
 ): Promise<Blob> {
   const token = localStorage.getItem("translatar_jwt");
+
   const metadata = {
     source_lang: settings.source_language,
     target_lang: settings.target_language,
     jwt_token: token || null,
     sample_rate: settings.target_sample_rate,
+    conversation_id: conversationId,
     channels: 1,
   };
+
   const metadataJson = JSON.stringify(metadata);
   const metadataBytes = new TextEncoder().encode(metadataJson);
   const metadataLength = new ArrayBuffer(4);

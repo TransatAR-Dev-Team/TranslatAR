@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react"; // Added useState
 import { useTranslationWebSocket } from "../../hooks/useTranslationWebSocket";
 import { useAudioRecorder } from "../../hooks/useAudioRecorder";
 import { packageAudioData } from "../../utils/audioUtils";
@@ -9,18 +9,24 @@ interface TranslationViewProps {
 }
 
 export default function TranslationView({ settings }: TranslationViewProps) {
-  // 1. Connection Logic
   const { isConnected, lastMessage, sendData } = useTranslationWebSocket();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // 2. Audio Logic (abstracted via hook)
+  // --- Generate a stable Conversation ID for this session ---
+  const [conversationId] = useState(() => crypto.randomUUID());
+
   const handleAudioChunk = async (wavBlob: Blob) => {
     if (!isConnected) return;
 
-    const packagedBlob = await packageAudioData(wavBlob, settings);
+    const packagedBlob = await packageAudioData(
+      wavBlob,
+      settings,
+      conversationId,
+    );
+
     sendData(packagedBlob);
     console.log(
-      `Sent audio chunk (${settings.source_language} -> ${settings.target_language})`,
+      `Sent chunk (${settings.source_language}->${settings.target_language}) ID: ${conversationId}`,
     );
   };
 

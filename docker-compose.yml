@@ -68,16 +68,25 @@ services:
     environment:
       - LIBRETRANSLATE_URL=http://libretranslate:5000
     depends_on:
-      - libretranslate
+      libretranslate:
+        condition: service_healthy
 
   libretranslate:
     container_name: libretranslate
     image: libretranslate/libretranslate:latest
     ports:
       - "5001:5000"
-    # Pre-load only a few common languages to save RAM and speed up startup.
-    # Add any other language codes you need (e.g., "ja", "zh", "ru").
-    command: ["--load-only", "en,es,fr,de,ja,ko,zh"]
+    environment:
+      - LT_HOST=0.0.0.0
+    command: ["--load-only", "en,es,fr,de,ja,ko,zh,it,ru,pt"]
+    healthcheck:
+      # Use Python since curl is missing.
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/frontend/settings')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # Takes forever to load models into memory, 10 minutes
+      start_period: 600s
 
   summarization:
     container_name: summarization

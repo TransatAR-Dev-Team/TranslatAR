@@ -80,9 +80,15 @@ describe("audioUtils", () => {
       const audioContent = new Uint8Array([1, 2, 3, 4]);
       const audioBlob = new Blob([audioContent], { type: "audio/wav" });
       localStorage.setItem("translatar_jwt", "fake-token-123");
+      const testConversationId = "conv-uuid-999";
 
       // 2. Act
-      const resultBlob = await packageAudioData(audioBlob, mockSettings);
+      // Pass the conversation ID here
+      const resultBlob = await packageAudioData(
+        audioBlob,
+        mockSettings,
+        testConversationId,
+      );
 
       // 3. Assert
       // Convert result back to ArrayBuffer to inspect bytes
@@ -106,6 +112,7 @@ describe("audioUtils", () => {
         jwt_token: "fake-token-123",
         sample_rate: 48000,
         channels: 1,
+        conversation_id: testConversationId, // Verify ID is present
       });
 
       // C. Check the Audio Data
@@ -119,16 +126,17 @@ describe("audioUtils", () => {
 
     it("handles missing JWT token gracefully", async () => {
       const audioBlob = new Blob(["test"], { type: "audio/wav" });
-
       // Ensure no token exists
       localStorage.removeItem("translatar_jwt");
 
-      const resultBlob = await packageAudioData(audioBlob, mockSettings);
-
+      const resultBlob = await packageAudioData(
+        audioBlob,
+        mockSettings,
+        "conv-id",
+      );
       const buffer = await resultBlob.arrayBuffer();
       const view = new DataView(buffer);
       const metadataLen = view.getUint32(0, true);
-
       const metadataBytes = buffer.slice(4, 4 + metadataLen);
       const metadata = JSON.parse(new TextDecoder().decode(metadataBytes));
 
