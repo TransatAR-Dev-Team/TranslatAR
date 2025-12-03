@@ -2,6 +2,7 @@ import React from "react";
 
 export type TabKey =
   | "dashboard"
+  | "live_translation"
   | "summarization"
   | "conversations"
   | "summaryHistory";
@@ -15,6 +16,7 @@ interface SideNavigationProps {
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
+  { key: "live_translation", label: "Live Translation" },
   { key: "summarization", label: "Summarization" },
   { key: "conversations", label: "Conversations / History" },
   { key: "summaryHistory", label: "Summary History" },
@@ -78,10 +80,6 @@ export default function SideNavigation({
             </button>
           ))}
         </nav>
-
-        <div className="mt-6 px-4 text-xs text-slate-400">
-          Tabs are placeholders for now.
-        </div>
       </div>
     </div>
   );
