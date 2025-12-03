@@ -3,7 +3,7 @@ import type { User } from "../../models/User";
 import GoogleLoginButton from "../GoogleLoginButton/GoogleLoginButton";
 
 // adjust path if your logo lives somewhere else
-import melvinLogo from "../../melvinLogo.png";
+import melvinLogo from "../../../public/melvinLogo.png";
 
 interface HeaderProps {
   appUser: User | null;
