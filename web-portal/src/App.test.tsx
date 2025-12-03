@@ -12,34 +12,11 @@ declare let fetchMock: typeof vi & {
 
 describe("App Component", () => {
   const mockToken = "fake-jwt-token";
-
-  const mockUser = {
-    email: "test@example.com",
-    id: "user123",
-    name: "Test User",
-  };
-
+  const mockUser = { email: "test@example.com", id: "user123", name: "Test User" };
   const mockSettings = { settings: {} };
-
   const mockHistory = [
-    {
-      _id: "1",
-      original_text: "Hello",
-      translated_text: "Hola",
-      source_lang: "en",
-      target_lang: "es",
-      conversationId: "conv-1",
-      timestamp: new Date().toISOString(),
-    },
-    {
-      _id: "2",
-      original_text: "Goodbye",
-      translated_text: "Adiós",
-      source_lang: "en",
-      target_lang: "es",
-      conversationId: "conv-1",
-      timestamp: new Date().toISOString(),
-    },
+    { _id: "1", original_text: "Hello", translated_text: "Hola", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
+    { _id: "2", original_text: "Goodbye", translated_text: "Adiós", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
   ];
 
   beforeEach(() => {
@@ -48,85 +25,73 @@ describe("App Component", () => {
     localStorage.clear();
   });
 
-  it("should render the main heading and the dashboard by default", async () => {
+  it("should render the Landing Page when not logged in", async () => {
+    // 1. Render without a token in localStorage
     render(<App />);
 
-    // Use getByRole 'heading' to specifically find the title, avoiding paragraph text
+    // 2. Assert that the landing page text is visible
     expect(
-      screen.getByRole("heading", { name: /TranslatAR Web Portal/i }),
+      await screen.findByText("Please sign in to access your dashboard."),
     ).toBeInTheDocument();
 
-    // Check that we default to the Dashboard by looking for its specific header
+    // 3. Assert that the main app's navigation button is NOT visible
     expect(
-      screen.getByRole("heading", { name: /^Dashboard$/i }),
-    ).toBeInTheDocument();
-
-    expect(screen.getByText(/What you can do here/i)).toBeInTheDocument();
+      screen.queryByRole("button", { name: /open navigation menu/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("should navigate to translation history via sidebar and display data", async () => {
+  it("should render the dashboard by default when logged in", async () => {
+    localStorage.setItem("translatar_jwt", mockToken);
+    globalThis.fetchMock.mockImplementation((url) => {
+      if (url.toString().includes("/api/users/me")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
+      }
+      if (url.toString().includes("/api/settings")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
+      }
+      if (url.toString().includes("/api/history")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: [] }) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: /TranslatAR Web Portal/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Dashboard$/i })).toBeInTheDocument();
+  });
+
+  it("should navigate to translation history and display data when logged in", async () => {
     localStorage.setItem("translatar_jwt", mockToken);
 
     // @ts-ignore
     globalThis.fetchMock.mockImplementation((url) => {
       const u = url.toString();
-
       if (u.includes("/api/users/me")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        });
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
       }
-
       if (u.includes("/api/settings")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSettings),
-        });
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
       }
-
       if (u.includes("/api/history")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ history: mockHistory }),
-        });
+        // Use the mockHistory with data for this test
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: mockHistory }) });
       }
-
-      if (u.includes("/api/summarize/history")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ history: [] }),
-        });
-      }
-
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({}),
-      });
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
 
     render(<App />);
 
-    // 1. Open Sidebar using the hamburger button
-    const navButton = screen.getByRole("button", {
-      name: /open navigation menu/i,
-    });
+    const navButton = await screen.findByRole("button", { name: /open navigation menu/i });
     fireEvent.click(navButton);
-
-    // 2. Click the specific history tab
-    const conversationsButton = await screen.findByRole("button", {
-      name: /conversations \/ history/i,
-    });
+    const conversationsButton = await screen.findByRole("button", { name: /conversations \/ history/i });
     fireEvent.click(conversationsButton);
 
-    // 3. Wait for data to load
     await waitFor(() => {
       expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
     });
 
-    // 4. Verify content matches mockHistory
     expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
-
     const sessionCard = screen.getByText(/2 translations/i).closest("div");
     fireEvent.click(sessionCard!);
 

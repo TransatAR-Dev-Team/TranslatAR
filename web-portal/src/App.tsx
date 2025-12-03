@@ -16,8 +16,11 @@ import SideNavigation, {
   type TabKey,
 } from "./components/Sidebar/NavigationSidebar";
 import LiveTranslationView from "./components/TranslationView/TranslationView";
+import LandingPage from "./components/LandingPage/LandingPage";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
+const LOCAL_STORAGE_TAB_KEY = "translatar_active_tab";
+
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 if (!googleClientId) {
   console.error("Error: VITE_GOOGLE_CLIENT_ID env variable not set.");
@@ -42,6 +45,7 @@ const DEFAULT_SETTINGS: Settings = {
 
 function App() {
   const [appUser, setAppUser] = useState<User | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true); // Prevents flashing landing page on reload
 
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
@@ -53,8 +57,14 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   const [showNavigation, setShowNavigation] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
+  // Initialize from LocalStorage
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    return (
+      (localStorage.getItem(LOCAL_STORAGE_TAB_KEY) as TabKey) || "dashboard"
+    );
+  });
 
+  // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
     setAppUser(null);
     localStorage.removeItem(LOCAL_STORAGE_JWT_KEY);
@@ -169,20 +179,27 @@ function App() {
         console.error("Error saving settings:", error);
         setSettingsError("Failed to save settings. Please try again.");
       }
-    }, [loadSettings],
+    },
+    [loadSettings],
   );
 
   // --- INITIALIZE ---
   useEffect(() => {
     const initialize = async () => {
+      // Add this from "Incoming"
+      setIsAuthChecking(true);
       const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
       if (token) {
         await fetchUserProfile(token);
       }
+      // These are from "Current"
       await loadSettings();
       await loadHistory();
+      // Add this from "Incoming"
+      setIsAuthChecking(false);
     };
     void initialize();
+    // Keep dependencies from "Current"
   }, [fetchUserProfile, loadSettings, loadHistory]);
 
   // --- RENDER HELPERS ---
@@ -216,41 +233,58 @@ function App() {
     }
   };
 
+  // --- RENDER ---
+  if (isAuthChecking) {
+    // spinner while loading
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <GoogleOAuthProvider clientId={googleClientId || ""}>
-      <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
-        <div className="w-full max-w-5xl">
-          <Header
-            appUser={appUser}
-            onLoginSuccess={handleLoginSuccess}
-            onLoginError={handleLogout}
-            onLogout={handleLogout}
-            onShowSettings={() => setShowSettings(true)}
-            onShowNavigation={() => setShowNavigation(true)}
-          />
-
-          {renderMainContent()}
-        </div>
-
-        {showSettings && (
-          <SettingsMenu
-            initialSettings={settings}
-            onSave={saveSettings}
-            onClose={() => setShowSettings(false)}
-            error={settingsError}
-          />
-        )}
-
-        <SideNavigation
-          isOpen={showNavigation}
-          activeTab={activeTab}
-          onClose={() => setShowNavigation(false)}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setShowNavigation(false);
-          }}
+      {!appUser ? (
+        <LandingPage
+          onLoginSuccess={handleLoginSuccess}
+          onLoginError={handleLogout}
         />
-      </main>
+      ) : (
+        <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
+          <div className="w-full max-w-5xl">
+            <Header
+              appUser={appUser}
+              onLoginSuccess={handleLoginSuccess}
+              onLoginError={handleLogout}
+              onLogout={handleLogout}
+              onShowSettings={() => setShowSettings(true)}
+              onShowNavigation={() => setShowNavigation(true)}
+            />
+
+            {renderMainContent()}
+          </div>
+
+          {showSettings && (
+            <SettingsMenu
+              initialSettings={settings}
+              onSave={saveSettings}
+              onClose={() => setShowSettings(false)}
+              error={settingsError}
+            />
+          )}
+
+          <SideNavigation
+            isOpen={showNavigation}
+            activeTab={activeTab}
+            onClose={() => setShowNavigation(false)}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              setShowNavigation(false);
+            }}
+          />
+        </main>
+      )}
     </GoogleOAuthProvider>
   );
 }
