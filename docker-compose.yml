@@ -26,6 +26,7 @@ services:
       - STT_URL=http://stt:9000
       - TRANSLATION_URL=http://translation:9001
       - SUMMARIZATION_URL=http://summarization:9002
+      - ADVICE_URL=http://advice:9003
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}

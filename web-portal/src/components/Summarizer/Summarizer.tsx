@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { parseMarkdown } from "../../utils/markdown";
 
 interface SummarizerProps {
   onSaveSuccess?: () => void;
@@ -59,11 +60,18 @@ export default function Summarizer({ onSaveSuccess }: SummarizerProps) {
     setAdvice("");
 
     try {
+      // Create AbortController for 10-minute timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes
+
       const response = await fetch("/api/advice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: textToSummarize }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Server responded with status: ${response.status}`);
@@ -73,7 +81,11 @@ export default function Summarizer({ onSaveSuccess }: SummarizerProps) {
       setAdvice(data.advice);
     } catch (error) {
       console.error("Error getting advice:", error);
-      setAdviceError("Failed to generate advice. Please try again.");
+      if (error instanceof Error && error.name === "AbortError") {
+        setAdviceError("Request timed out. Please try again.");
+      } else {
+        setAdviceError("Failed to generate advice. Please try again.");
+      }
     } finally {
       setIsGettingAdvice(false);
     }
@@ -174,7 +186,7 @@ export default function Summarizer({ onSaveSuccess }: SummarizerProps) {
       {advice && (
         <div className="mt-4 bg-slate-700 p-4 rounded-md">
           <h3 className="font-semibold mb-2">Learning Advice:</h3>
-          <p>{advice}</p>
+          <div className="text-white">{parseMarkdown(advice)}</div>
         </div>
       )}
     </div>
