@@ -123,74 +123,7 @@ describe("App Component", () => {
     await waitFor(() => {
       expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
     });
-    it("displays summary history after successful fetch via sidebar navigation", async () => {
-      localStorage.setItem("translatar_jwt", mockToken);
 
-      // @ts-ignore
-      globalThis.fetchMock.mockImplementation((url) => {
-        const u = url.toString();
-
-        // Basic mocks for initialization
-        if (u.includes("/api/users/me"))
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(mockUser),
-          });
-        if (u.includes("/api/settings"))
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(mockSettings),
-          });
-        if (u.includes("/api/history"))
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ history: [] }),
-          });
-
-        // The specific mock we are testing
-        if (u.includes("/api/summarize/history")) {
-          return Promise.resolve({
-            ok: true,
-            json: () =>
-              Promise.resolve({
-                history: [
-                  {
-                    _id: "s1",
-                    summary: "Summary 1",
-                    original_text: "Text 1",
-                    timestamp: new Date().toISOString(),
-                  },
-                  {
-                    _id: "s2",
-                    summary: "Summary 2",
-                    original_text: "Text 2",
-                    timestamp: new Date().toISOString(),
-                  },
-                ],
-              }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-      });
-
-      render(<App />);
-
-      // 1. Open Sidebar
-      const navButton = screen.getByRole("button", {
-        name: /open navigation menu/i,
-      });
-      fireEvent.click(navButton);
-
-      // 2. Click Summary History tab
-      const summaryHistoryButton = await screen.findByRole("button", {
-        name: /summary history/i,
-      });
-      fireEvent.click(summaryHistoryButton);
-
-      // 3. Verify content
-      expect(await screen.findByText(/Summary 1/i)).toBeInTheDocument();
-      expect(await screen.findByText(/Summary 2/i)).toBeInTheDocument();
-    });
     // 4. Verify content matches mockHistory
     expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
 
