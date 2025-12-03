@@ -5,6 +5,7 @@ import type { CredentialResponse } from "@react-oauth/google";
 import type { User } from "./models/User";
 import { loginWithGoogleApi, getMeApi } from "./api/auth";
 
+import DashboardOverview from "./components/DashboardOverview/DashboardOverview";
 import Header from "./components/Header/Header";
 import Summarizer from "./components/Summarizer/Summarizer";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
@@ -14,7 +15,6 @@ import SettingsMenu, {
 import SideNavigation, {
   type TabKey,
 } from "./components/Sidebar/NavigationSidebar";
-import SummaryHistory from "./components/SummaryHistory/SummaryHistory";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -23,7 +23,7 @@ if (!googleClientId) {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  // Backend-related (unchanged)
+  // Backend-related
   source_language: "en",
   target_language: "es",
   chunk_duration_seconds: 8.0,
@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS: Settings = {
   chunk_overlap_seconds: 0.5,
   websocket_url: "ws://localhost:8000/ws",
 
-  // New UX-facing fields
+  // UX-facing
   subtitles_enabled: true,
   translation_enabled: true,
   subtitle_font_size: 18,
@@ -52,7 +52,6 @@ function App() {
 
   const [showNavigation, setShowNavigation] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
-  const [summaryHistory, setSummaryHistory] = useState<any[]>([]);
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -61,7 +60,6 @@ function App() {
     console.log("User logged out.");
   }, []);
 
-  // --- DATA FETCHING & SIDE EFFECTS ---
   const fetchUserProfile = useCallback(
     async (token: string) => {
       try {
@@ -76,13 +74,35 @@ function App() {
     [handleLogout],
   );
 
+  const handleLoginSuccess = useCallback(
+    async (credentialResponse: CredentialResponse) => {
+      const googleIdToken = credentialResponse.credential;
+      if (!googleIdToken) {
+        alert("Missing required token from Google!");
+        return handleLogout();
+      }
+
+      try {
+        const { access_token } = await loginWithGoogleApi(googleIdToken);
+        localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
+        await fetchUserProfile(access_token);
+        await loadHistory(); // refresh history once logged in
+      } catch (error) {
+        console.error("Login process failed:", error);
+        alert("Login failed. Please try again.");
+        handleLogout();
+      }
+    },
+    [fetchUserProfile, handleLogout],
+  );
+
+  // --- DATA FETCHING ---
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     setHistoryError(null);
 
     try {
       const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-
       if (!token) {
         setHistory([]);
         setIsHistoryLoading(false);
@@ -127,29 +147,9 @@ function App() {
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
+      // keep defaults if backend not reachable
     }
   }, []);
-
-  useEffect(() => {
-    const initialize = async () => {
-      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-      if (token) {
-        await fetchUserProfile(token);
-      }
-      await loadSettings();
-      await loadHistory();
-      await loadSummaryHistory();
-    };
-    void initialize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchUserProfile]);
-
-  useEffect(() => {
-    if (appUser) {
-      loadHistory();
-      loadSummaryHistory();
-    }
-  }, [appUser, loadHistory]);
 
   const saveSettings = useCallback(async (newSettings: Settings) => {
     setSettingsError(null);
@@ -169,54 +169,53 @@ function App() {
     }
   }, []);
 
-  const handleLoginSuccess = useCallback(
-    async (credentialResponse: CredentialResponse) => {
-      const googleIdToken = credentialResponse.credential;
-      if (!googleIdToken) {
-        alert("Missing required token from Google!");
-        return handleLogout();
-      }
-      try {
-        const { access_token } = await loginWithGoogleApi(googleIdToken);
-        localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
-        await fetchUserProfile(access_token);
-      } catch (error) {
-        console.error("Login process failed:", error);
-        alert("Login failed. Please try again.");
-        handleLogout();
-      }
-    },
-    [fetchUserProfile, handleLogout],
-  );
-
-  const loadSummaryHistory = useCallback(async () => {
-    try {
+  // --- INITIALIZE ---
+  useEffect(() => {
+    const initialize = async () => {
       const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-      if (!token) {
-        setSummaryHistory([]);
-        return;
+      if (token) {
+        await fetchUserProfile(token);
       }
+      await loadSettings();
+      await loadHistory();
+    };
+    void initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchUserProfile]);
 
-      const response = await fetch("/api/summarize/history", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  // --- RENDER HELPERS ---
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case "summarization":
+        return <Summarizer />;
 
-      if (!response.ok) throw new Error("Failed to load summary history");
+      case "conversations":
+        return (
+          <HistoryPanel
+            history={history}
+            isLoading={isHistoryLoading}
+            error={historyError}
+          />
+        );
 
-      const data = await response.json();
-      setSummaryHistory(data.history || []);
-    } catch (err) {
-      console.error("Failed to fetch summary history:", err);
+      case "dashboard":
+      default:
+        return (
+          <DashboardOverview
+            appUser={appUser}
+            history={history}
+            onOpenSummarization={() => setActiveTab("summarization")}
+            onOpenHistory={() => setActiveTab("conversations")}
+          />
+        );
     }
-  }, []);
+  };
 
   // --- RENDER ---
   return (
     <GoogleOAuthProvider clientId={googleClientId || ""}>
       <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-5xl">
           <Header
             appUser={appUser}
             onLoginSuccess={handleLoginSuccess}
@@ -226,34 +225,9 @@ function App() {
             onShowNavigation={() => setShowNavigation(true)}
           />
 
-          {/* ---------- PAGE CONTENT BY TAB ---------- */}
-          {activeTab === "dashboard" && (
-            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
-              <p className="text-slate-300 text-sm">
-                Overview coming soon. Use the sidebar to jump to Summarization
-                or Conversations.
-              </p>
-            </div>
-          )}
-
-          {activeTab === "summarization" && (
-            <Summarizer onSaveSuccess={loadSummaryHistory} />
-          )}
-
-          {activeTab === "conversations" && (
-            <HistoryPanel
-              history={history}
-              isLoading={isHistoryLoading}
-              error={historyError}
-            />
-          )}
-
-          {activeTab === "summaryHistory" && (
-            <SummaryHistory history={summaryHistory} />
-          )}
+          {renderMainContent()}
         </div>
-        {/* Settings modal */}
+
         {showSettings && (
           <SettingsMenu
             initialSettings={settings}
@@ -263,7 +237,6 @@ function App() {
           />
         )}
 
-        {/* Sidebar navigation */}
         <SideNavigation
           isOpen={showNavigation}
           activeTab={activeTab}
