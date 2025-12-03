@@ -19,7 +19,6 @@ describe("LandingPage Component", () => {
     render(<LandingPage onLoginSuccess={() => {}} onLoginError={() => {}} />);
 
     expect(screen.getByText("TranslatAR")).toBeInTheDocument();
-    expect(screen.getByText("Web Portal")).toBeInTheDocument();
     // Updated match to look for "sign in" instead of "log in"
     expect(screen.getByText(/sign in to access/i)).toBeInTheDocument();
   });

@@ -179,7 +179,8 @@ function App() {
         console.error("Error saving settings:", error);
         setSettingsError("Failed to save settings. Please try again.");
       }
-    }, [loadSettings],
+    },
+    [loadSettings],
   );
 
   // --- INITIALIZE ---
@@ -232,9 +233,9 @@ function App() {
     }
   };
 
-
   // --- RENDER ---
-  if (isAuthChecking) { // spinner while loading
+  if (isAuthChecking) {
+    // spinner while loading
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
