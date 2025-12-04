@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SummaryHistory from "../SummaryHistory/SummaryHistory";
 
+// ... (interfaces and helper functions remain the same) ...
 interface HistoryItem {
   _id: string;
   original_text: string;
@@ -116,11 +117,14 @@ export default function HistoryPanel({
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryLength, setSummaryLength] = useState<string>("medium");
-
   // --- State for save button ---
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle",
   );
+
+  const [advice, setAdvice] = useState<string>("");
+  const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
+  const [adviceError, setAdviceError] = useState<string | null>(null);
 
   const [conversationSummaries, setConversationSummaries] = useState<any[]>([]);
   const [isSummaryHistoryLoading, setIsSummaryHistoryLoading] =
@@ -198,7 +202,7 @@ export default function HistoryPanel({
     setIsSummarizing(true);
     setSummaryError(null);
     setSummary("");
-    setSaveStatus("idle"); // --- MODIFIED: Reset save status ---
+    setSaveStatus("idle");
 
     try {
       const response = await fetch("/api/summarize", {
@@ -265,7 +269,35 @@ export default function HistoryPanel({
     }
   };
 
-  // ---  Helper to get button text and style ---
+  // --- Logic for getting advice ---
+  const handleGetAdvice = async () => {
+    if (!selectedConversation) return;
+
+    setIsGettingAdvice(true);
+    setAdviceError(null);
+    setAdvice("");
+
+    try {
+      const response = await fetch("/api/advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: selectedConversation.originalTranscript }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAdvice(data.advice);
+    } catch (error) {
+      console.error("Error getting advice:", error);
+      setAdviceError("Failed to generate advice. Please try again.");
+    } finally {
+      setIsGettingAdvice(false);
+    }
+  };
+
   const getSaveButtonProps = () => {
     switch (saveStatus) {
       case "saving":
@@ -323,8 +355,10 @@ export default function HistoryPanel({
                       setSelectedConversationId(conv.id);
                       setSummary("");
                       setSummaryError(null);
+                      setAdvice(""); // --- Reset advice ---
+                      setAdviceError(null); // --- Reset advice error ---
                       setIsHistoryVisible(false);
-                      setSaveStatus("idle"); // --- MODIFIED: Reset save status ---
+                      setSaveStatus("idle");
                       void fetchConversationSummaries(conv.id);
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition ${
@@ -362,7 +396,7 @@ export default function HistoryPanel({
               </h3>
 
               {selectedConversation && (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="summary-length"
@@ -388,6 +422,15 @@ export default function HistoryPanel({
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors duration-200"
                   >
                     {isSummarizing ? "Summarizing..." : "Summarize"}
+                  </button>
+
+                  {/* --- Advice Button --- */}
+                  <button
+                    onClick={handleGetAdvice}
+                    disabled={isGettingAdvice}
+                    className="bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors duration-200"
+                  >
+                    {isGettingAdvice ? "Getting Advice..." : "Give Me Advice"}
                   </button>
                 </div>
               )}
@@ -425,6 +468,31 @@ export default function HistoryPanel({
                       </div>
                     </div>
                     <p className="text-slate-100">{summary}</p>
+                  </div>
+                )}
+
+                {adviceError && (
+                  <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-3">
+                    {adviceError}
+                  </div>
+                )}
+                {advice && (
+                  <div className="bg-slate-600 p-4 rounded-lg mb-3 border-l-4 border-teal-500">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-teal-300">
+                        Learning Advice:
+                      </h4>
+                      <button
+                        onClick={() => setAdvice("")}
+                        className="text-slate-400 hover:text-white text-xl leading-none"
+                        aria-label="Close advice"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                    <p className="text-slate-100 whitespace-pre-wrap">
+                      {advice}
+                    </p>
                   </div>
                 )}
 
