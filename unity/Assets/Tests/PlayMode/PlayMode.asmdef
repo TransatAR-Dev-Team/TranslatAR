@@ -2,17 +2,18 @@
     "name": "PlayMode",
     "rootNamespace": "",
     "references": [
+        "GameRuntime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "LanguageUI",
-        "Unity.TextMeshPro",
-        "GameRuntime"
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
+        "websocket-sharp.dll",
         "nunit.framework.dll"
     ],
     "autoReferenced": false,
