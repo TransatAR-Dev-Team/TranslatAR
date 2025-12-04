@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from datetime import UTC, datetime
+from uuid import uuid4
 
 import httpx
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -51,8 +52,11 @@ async def websocket_endpoint(websocket: WebSocket):
         audio_data = first_data[4 + metadata_length :]
         source_lang = metadata.get("source_lang", "en")
         target_lang = metadata.get("target_lang", "es")
-        asyncio.create_task(
-            process_audio_chunk(websocket, audio_data, source_lang, target_lang, user_id)
+        conversation_id = metadata.get("conversation_id")
+
+        # Process sequentially - await this before accepting next message
+        await process_audio_chunk(
+            websocket, audio_data, source_lang, target_lang, user_id, conversation_id
         )
 
         # Continue receiving subsequent messages
@@ -65,6 +69,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
+            
+            conversation_id = metadata.get("conversation_id", conversation_id)
 
             logger.info(
                 "Received audio chunk from user %s: %d bytes, lang: %s -> %s",
@@ -74,8 +80,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 target_lang,
             )
 
-            asyncio.create_task(
-                process_audio_chunk(websocket, audio_data, source_lang, target_lang, user_id)
+            # This ensures we don't start the next chunk until this one is done.
+            # It prevents the server from getting stuck/overloaded and ensures order.
+            await process_audio_chunk(
+                websocket, audio_data, source_lang, target_lang, user_id, conversation_id
             )
 
     except WebSocketDisconnect:
@@ -93,9 +101,10 @@ async def process_audio_chunk(
     source_lang: str,
     target_lang: str,
     user_id: str,
+    conversation_id: str,
 ):
     """
-    Process audio chunk: transcribe, translate, and save to database
+    Process audio chunk: transcribe, detect language, translate, and save to database
     """
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -104,19 +113,44 @@ async def process_audio_chunk(
 
             stt_response = await client.post(f"{STT_SERVICE_URL}/transcribe", files=files)
             stt_response.raise_for_status()
-            original_text = stt_response.json().get("transcription", "")
+            stt_data = stt_response.json()
+            
+            original_text = stt_data.get("transcription", "")
+            detected_language = stt_data.get("detected_language", source_lang)
+            language_probability = stt_data.get("language_probability", 0.0)
 
             if not original_text or not original_text.strip():
                 logger.info("No transcription detected in chunk.")
-                await websocket.send_json({"original_text": "", "translated_text": ""})
+                await websocket.send_json({
+                    "original_text": "",
+                    "translated_text": "",
+                    "detected_language": detected_language,
+                    "language_probability": language_probability,
+                })
                 return
 
-            logger.info("STT result: '%s'", original_text)
+            logger.info(
+                "STT result: '%s' (detected language: %s, probability: %.2f)",
+                original_text,
+                detected_language,
+                language_probability,
+            )
+
+            # Use detected language if confidence is reasonable (>0.3 instead of 0.5)
+            effective_source_lang = detected_language if language_probability > 0.3 else source_lang
+
+            logger.info(
+                "Language decision: using '%s' (detected: '%s' with %.2f confidence, provided: '%s')",
+                effective_source_lang,
+                detected_language,
+                language_probability,
+                source_lang,
+            )
 
             # Step 2: Translate the text
             translation_payload = {
                 "text": original_text,
-                "source_lang": source_lang,
+                "source_lang": effective_source_lang,
                 "target_lang": target_lang,
             }
 
@@ -129,27 +163,38 @@ async def process_audio_chunk(
 
             # Step 3: Save to database
             try:
-                db = websocket.app.state.db
-                translations_collection = db.get_collection("translations")
-                translation_log = {
-                    "original_text": original_text,
-                    "translated_text": translated_text,
-                    "source_lang": source_lang,
-                    "target_lang": target_lang,
-                    "userId": user_id,
-                    "timestamp": datetime.now(UTC),
-                }
-                await translations_collection.insert_one(translation_log)
-                logger.info(f"Saved translation to database (userId: {user_id})")
+                # Ensure db is available
+                if hasattr(websocket.app.state, "db"):
+                    db = websocket.app.state.db
+                    translations_collection = db.get_collection("translations")
+                    translation_log = {
+                        "original_text": original_text,
+                        "translated_text": translated_text,
+                        "source_lang": effective_source_lang,
+                        "target_lang": target_lang,
+                        "detected_language": detected_language,
+                        "language_probability": language_probability,
+                        "userId": user_id,
+                        # Fallback to generating a new ID if one wasn't provided
+                        "conversationId": conversation_id or str(uuid4()),
+                        "timestamp": datetime.now(UTC),
+                    }
+                    await translations_collection.insert_one(translation_log)
+                    logger.info(
+                        f"Saved translation to database (userId: {user_id}, "
+                        f"detected_lang: {detected_language}, confidence: {language_probability:.2f})"
+                    )
             except Exception as e:
                 logger.warning(
                     "Failed to save WebSocket translation to database: %s", e, exc_info=True
                 )
 
-            # Step 4: Send result back to Unity
+            # Step 4: Send result back
             response = {
                 "original_text": original_text,
                 "translated_text": translated_text,
+                "detected_language": detected_language,
+                "language_probability": language_probability,
             }
 
             await websocket.send_json(response)

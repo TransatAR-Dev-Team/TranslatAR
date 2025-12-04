@@ -15,6 +15,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
+      - APP_ENV=test
+      - JWT_SECRET_KEY=fake_secret_key_for_testing
       - DATABASE_URL=mongodb://mongodb_test:27017
       - STT_URL=http://mock_stt:9000
       - TRANSLATION_URL=http://mock_translation:9001
@@ -25,15 +27,12 @@ services:
       - mock_stt
       - mock_translation
       - mock_advice
-    # This tells Docker how to determine if the backend is ready.
     healthcheck:
-      # The command runs INSIDE the container. 'curl -f' fails with a non-zero
-      # exit code if the HTTP status is an error (like 4xx or 5xx).
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 5s       # Check every 5 seconds
-      timeout: 10s       # Wait up to 10 seconds for a response
-      retries: 5         # Try up to 5 times before marking as unhealthy
-      start_period: 20s  # Grace period for startup to avoid premature failures
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
   mongodb_test:
     container_name: mongodb_integration_test

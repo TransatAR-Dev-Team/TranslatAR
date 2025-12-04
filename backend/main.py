@@ -13,10 +13,9 @@ from routes.history import router as history_router
 from routes.process_audio import router as process_audio_router
 from routes.settings import router as settings_router
 from routes.summarization import router as summarization_router
+from routes.transcripts import router as transcripts_router
 from routes.users import router as users_router
 from routes.websocket import router as websocket_router
-from routes.transcripts import router as transcripts_router
-
 
 # --- Logging Configuration ---
 logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
@@ -56,11 +55,19 @@ router.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 router.include_router(transcripts_router, prefix="/transcripts", tags=["Transcripts"])
 
+# --- Include Test Routers Conditionally ---
+if os.getenv("APP_ENV") == "test":
+    from routes.auth_testing import router as test_auth_router
+
+    router.include_router(test_auth_router, prefix="/test-auth", tags=["Testing"])
+
 
 # --- Database Connection ---
 translations_collection = db.get_collection("translations")
+summaries_collection = db.get_collection("summaries")
 settings_collection = db.get_collection("settings")
 app.state.db = db
+app.state.summaries = summaries_collection
 
 
 app.include_router(router, prefix="/api")

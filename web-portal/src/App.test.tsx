@@ -1,107 +1,101 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "./App";
 
+// Mock the global fetch
 declare let fetchMock: typeof vi & {
-  mockResponseOnce: (body: string, init?: ResponseInit) => void;
+  mockReset: () => void;
+  mockImplementation: (
+    fn: (url: string | Request) => Promise<Response>,
+  ) => void;
 };
 
 describe("App Component", () => {
+  const mockToken = "fake-jwt-token";
+  const mockUser = { email: "test@example.com", id: "user123", name: "Test User" };
+  const mockSettings = { settings: {} };
+  const mockHistory = [
+    { _id: "1", original_text: "Hello", translated_text: "Hola", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
+    { _id: "2", original_text: "Goodbye", translated_text: "Adiós", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
+  ];
+
   beforeEach(() => {
-    fetchMock.resetMocks();
-    localStorage.clear(); // Clean up localStorage between tests
+    // @ts-ignore - fetchMock is global in setup
+    globalThis.fetchMock.resetMocks();
+    localStorage.clear();
   });
 
-  it("should render the main heading and show the initial loading state", () => {
+  it("should render the Landing Page when not logged in", async () => {
+    // 1. Render without a token in localStorage
     render(<App />);
-    expect(screen.getByText(/TranslatAR Web Portal/i)).toBeInTheDocument();
-    expect(screen.getByText(/Loading history.../i)).toBeInTheDocument();
+
+    // 2. Assert that the landing page text is visible
+    expect(
+      await screen.findByText("Please sign in to access your dashboard."),
+    ).toBeInTheDocument();
+
+    // 3. Assert that the main app's navigation button is NOT visible
+    expect(
+      screen.queryByRole("button", { name: /open navigation menu/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("should display the translation history after a successful fetch", async () => {
-    // Mock localStorage to have a token
-    const mockToken = "fake-jwt-token";
+  it("should render the dashboard by default when logged in", async () => {
     localStorage.setItem("translatar_jwt", mockToken);
-
-    // Mock the /api/me call (getUserProfile)
-    fetchMock.mockResponseOnce(
-      JSON.stringify({
-        email: "test@example.com",
-        id: "user123",
-        name: "Test User",
-      }),
-    );
-
-    // Mock the /api/settings call
-    fetchMock.mockResponseOnce(
-      JSON.stringify({
-        settings: {},
-      }),
-    );
-
-    // Mock the /api/history call
-    const mockHistory = [
-      {
-        _id: "1",
-        original_text: "Hello",
-        translated_text: "Hola",
-        source_lang: "en",
-        target_lang: "es",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        _id: "2",
-        original_text: "Goodbye",
-        translated_text: "Adiós",
-        source_lang: "en",
-        target_lang: "es",
-        timestamp: new Date().toISOString(),
-      },
-    ];
-    fetchMock.mockResponseOnce(JSON.stringify({ history: mockHistory }));
-
-    render(<App />);
-
-    // Wait for the component to finish loading
-    await waitFor(() => {
-      expect(screen.queryByText(/Loading history.../i)).not.toBeInTheDocument();
+    globalThis.fetchMock.mockImplementation((url) => {
+      if (url.toString().includes("/api/users/me")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
+      }
+      if (url.toString().includes("/api/settings")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
+      }
+      if (url.toString().includes("/api/history")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: [] }) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
 
-    // Check that our mock data is now on the screen
-    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
-    expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: /TranslatAR Web Portal/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Dashboard$/i })).toBeInTheDocument();
   });
 
-  it("should display an error message if the fetch fails", async () => {
-    // Mock localStorage to have a token
-    const mockToken = "fake-jwt-token";
+  it("should navigate to translation history and display data when logged in", async () => {
     localStorage.setItem("translatar_jwt", mockToken);
 
-    // Mock the /api/me call to succeed
-    fetchMock.mockResponseOnce(
-      JSON.stringify({
-        email: "test@example.com",
-        id: "user123",
-      }),
-    );
-
-    // Mock the /api/settings call to succeed
-    fetchMock.mockResponseOnce(
-      JSON.stringify({
-        settings: {},
-      }),
-    );
-
-    // Mock the /api/history call to fail
-    fetchMock.mockReject(new Error("API is unavailable"));
+    // @ts-ignore
+    globalThis.fetchMock.mockImplementation((url) => {
+      const u = url.toString();
+      if (u.includes("/api/users/me")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
+      }
+      if (u.includes("/api/settings")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
+      }
+      if (u.includes("/api/history")) {
+        // Use the mockHistory with data for this test
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: mockHistory }) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
 
     render(<App />);
 
-    // Wait for the error message to appear in the UI
-    const errorMessage = await screen.findByText(
-      /Failed to load translation history./i,
-    );
-    expect(errorMessage).toBeInTheDocument();
-    expect(screen.queryByText(/Loading history.../i)).not.toBeInTheDocument();
+    const navButton = await screen.findByRole("button", { name: /open navigation menu/i });
+    fireEvent.click(navButton);
+    const conversationsButton = await screen.findByRole("button", { name: /conversations \/ history/i });
+    fireEvent.click(conversationsButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
+    const sessionCard = screen.getByText(/2 translations/i).closest("div");
+    fireEvent.click(sessionCard!);
+
+    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
+    expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
   });
 });

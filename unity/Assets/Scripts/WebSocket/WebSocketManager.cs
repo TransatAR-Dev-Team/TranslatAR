@@ -13,6 +13,8 @@ public class TranscriptionResponse
 {
     public string original_text;
     public string translated_text;
+    public string detected_language;
+    public float language_probability;
 }
 
 public class WebSocketManager : MonoBehaviour
@@ -184,7 +186,8 @@ public class WebSocketManager : MonoBehaviour
     /// The data is packaged as: [4-byte length][JSON metadata][raw audio bytes].
     /// </summary>
     /// <param name="audioData">The raw audio data bytes to transmit.</param>
-    public void SendAudioChunk(byte[] audioData)
+    /// <param name="conversationId">The unique identifier for the current conversation session.</param>
+    public void SendAudioChunk(byte[] audioData, string conversationId = null)
     {
         if (!isConnected || ws == null || ws.ReadyState != WebSocketState.Open)
         {
@@ -195,9 +198,9 @@ public class WebSocketManager : MonoBehaviour
         try
         {
             string jwtToken = AuthManager.Instance?.CurrentJwt;
-            byte[] packagedData = PackageAudioData(audioData, jwtToken);
+            byte[] packagedData = PackageAudioData(audioData, jwtToken, conversationId);
             ws.Send(packagedData);
-            Debug.Log($"Sent audio chunk: {audioData.Length} bytes (authenticated: {!string.IsNullOrEmpty(jwtToken)})");
+            Debug.Log($"Sent audio chunk: {audioData.Length} bytes (authenticated: {!string.IsNullOrEmpty(jwtToken)})| conversationId: {conversationId}");
         }
         catch (Exception e)
         {
@@ -211,7 +214,7 @@ public class WebSocketManager : MonoBehaviour
     /// </summary>
     /// <param name="audioData">The raw audio data bytes.</param>
     /// <returns>The fully packaged byte array ready for transmission.</returns>
-    public byte[] PackageAudioData(byte[] audioData, string jwtToken = null)
+    public byte[] PackageAudioData(byte[] audioData, string jwtToken = null, string conversationId = null)
     {
         // Create metadata JSON
         string metadata = JsonUtility.ToJson(new MetadataPayload
@@ -220,7 +223,8 @@ public class WebSocketManager : MonoBehaviour
             target_lang = targetLanguage,
             sample_rate = AudioSettings.outputSampleRate,
             channels = 1,
-            jwt_token = jwtToken
+            jwt_token = jwtToken,
+            conversation_id = conversationId
         });
 
         byte[] metadataBytes = Encoding.UTF8.GetBytes(metadata);
@@ -245,6 +249,12 @@ public class WebSocketManager : MonoBehaviour
         try
         {
             TranscriptionResponse response = JsonUtility.FromJson<TranscriptionResponse>(json);
+
+            // Log detected language info
+            if (!string.IsNullOrEmpty(response.detected_language))
+            {
+                Debug.Log($"Detected language: {response.detected_language} (confidence: {response.language_probability:F2})");
+            }
 
             if (!string.IsNullOrEmpty(response.translated_text))
             {
@@ -295,4 +305,5 @@ public class MetadataPayload
     public int sample_rate;
     public int channels;
     public string jwt_token;
+    public string conversation_id;
 }
