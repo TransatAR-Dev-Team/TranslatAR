@@ -3,7 +3,7 @@ import os
 from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from models.summarization import SummarizationRequest, SummarizationResponse, SummarySaveRequest
 from security.auth import get_current_user
@@ -104,6 +104,9 @@ async def save_summary(
         "created_at": datetime.now(UTC),
     }
 
+    if payload.conversationId:
+        doc["conversationId"] = payload.conversationId
+
     result = await summaries.insert_one(doc)
 
     return {"status": "saved", "summary_id": str(result.inserted_id)}
@@ -112,13 +115,19 @@ async def save_summary(
 @router.get("/history")
 async def get_summary_history(
     request: Request,
+    conversationId: str | None = Query(None),
     current_user: dict = Depends(get_current_user),  # noqa: B008
 ):
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     summaries = request.app.state.summaries
-    cursor = summaries.find({"userId": str(current_user["_id"])}).sort("created_at", -1)
+
+    query = {"userId": str(current_user["_id"])}
+    if conversationId:
+        query["conversationId"] = conversationId
+
+    cursor = summaries.find(query).sort("created_at", -1)
 
     history = []
     async for doc in cursor:

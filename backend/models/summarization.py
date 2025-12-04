@@ -13,3 +13,4 @@ class SummarizationResponse(BaseModel):
 class SummarySaveRequest(BaseModel):
     summary: str
     original_text: str
+    conversationId: str | None = None

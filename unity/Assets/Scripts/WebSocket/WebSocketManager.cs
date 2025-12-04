@@ -13,6 +13,8 @@ public class TranscriptionResponse
 {
     public string original_text;
     public string translated_text;
+    public string detected_language;
+    public float language_probability;
 }
 
 public class WebSocketManager : MonoBehaviour
@@ -48,6 +50,12 @@ public class WebSocketManager : MonoBehaviour
     /// A flag indicating whether the websocket endpoint is connected.
     /// </summary>
     private bool isConnected = false;
+
+    /// <summary>
+    /// A flag indicating whether translation processing is enabled.
+    /// When false, new translation responses are ignored but subtitle display remains visible.
+    /// </summary>
+    public bool isTranslationEnabled { get; private set; } = true;
 
     // Queue for main thread execution
     private Queue<Action> mainThreadActions = new Queue<Action>();
@@ -240,13 +248,26 @@ public class WebSocketManager : MonoBehaviour
     /// <summary>
     /// Parses the JSON transcription response from the backend and updates the subtitle display.
     /// Prioritizes translated text over original text if both are present.
+    /// Only processes responses when translation is enabled.
     /// </summary>
     /// <param name="json">The JSON string containing transcription results.</param>
     public void HandleTranscriptionResponse(string json)
     {
+        // ignore translation responses when translation is disabled
+        if (!isTranslationEnabled)
+        {
+            return;
+        }
+
         try
         {
             TranscriptionResponse response = JsonUtility.FromJson<TranscriptionResponse>(json);
+
+            // Log detected language info
+            if (!string.IsNullOrEmpty(response.detected_language))
+            {
+                Debug.Log($"Detected language: {response.detected_language} (confidence: {response.language_probability:F2})");
+            }
 
             if (!string.IsNullOrEmpty(response.translated_text))
             {
@@ -261,6 +282,16 @@ public class WebSocketManager : MonoBehaviour
         {
             Debug.LogError("Error parsing transcription: " + e.Message);
         }
+    }
+
+    /// <summary>
+    /// Sets whether translation processing is enabled.
+    /// When disabled, new translation responses are ignored but subtitle display remains visible.
+    /// </summary>
+    /// <param name="enabled">True to enable translation, false to disable it.</param>
+    public void SetTranslationEnabled(bool enabled)
+    {
+        isTranslationEnabled = enabled;
     }
 
     /// <summary>

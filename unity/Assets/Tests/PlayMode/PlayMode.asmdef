@@ -2,6 +2,7 @@
     "name": "PlayMode",
     "rootNamespace": "",
     "references": [
+        "GameRuntime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "LanguageUI",
@@ -12,6 +13,7 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
+        "websocket-sharp.dll",
         "nunit.framework.dll"
     ],
     "autoReferenced": false,

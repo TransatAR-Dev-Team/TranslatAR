@@ -14,7 +14,7 @@ def _pack(meta: dict, audio: bytes) -> bytes:
 def test_ws_route_parses_and_calls_processor(monkeypatch):
     called = {}
 
-    async def fake_proc(ws, audio, src, tgt, userId, conversationId):
+    async def fake_proc(ws, audio, src, tgt, userId, conversation_id):
         called["audio"] = audio
         await ws.send_json({"original_text": "a", "translated_text": "b"})
 

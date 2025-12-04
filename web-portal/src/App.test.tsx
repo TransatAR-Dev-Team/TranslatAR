@@ -6,41 +6,17 @@ import App from "./App";
 declare let fetchMock: typeof vi & {
   mockReset: () => void;
   mockImplementation: (
-    fn: (url: string | Request) => Promise<Response>
+    fn: (url: string | Request) => Promise<Response>,
   ) => void;
 };
 
 describe("App Component", () => {
   const mockToken = "fake-jwt-token";
-
-  const mockUser = {
-    email: "test@example.com",
-    id: "user123",
-    name: "Test User",
-  };
-
+  const mockUser = { email: "test@example.com", id: "user123", name: "Test User" };
   const mockSettings = { settings: {} };
-
-  // DATA FROM MAIN: Includes conversationId needed for the new HistoryPanel
   const mockHistory = [
-    {
-      _id: "1",
-      original_text: "Hello",
-      translated_text: "Hola",
-      source_lang: "en",
-      target_lang: "es",
-      conversationId: "conv-1",
-      timestamp: new Date().toISOString(),
-    },
-    {
-      _id: "2",
-      original_text: "Goodbye",
-      translated_text: "Adiós",
-      source_lang: "en",
-      target_lang: "es",
-      conversationId: "conv-1",
-      timestamp: new Date().toISOString(),
-    },
+    { _id: "1", original_text: "Hello", translated_text: "Hola", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
+    { _id: "2", original_text: "Goodbye", translated_text: "Adiós", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
   ];
 
   beforeEach(() => {
@@ -49,152 +25,77 @@ describe("App Component", () => {
     localStorage.clear();
   });
 
-  it("should render the main heading and show the initial history state", async () => {
+  it("should render the Landing Page when not logged in", async () => {
+    // 1. Render without a token in localStorage
     render(<App />);
-    expect(screen.getByText(/TranslatAR Web Portal/i)).toBeInTheDocument();
 
-    // Navigate to the history panel (Logic from MAIN)
-    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
-    const conversationsButton = await screen.findByRole("button", {
-      name: /conversations \/ history/i,
-    });
-    fireEvent.click(conversationsButton);
-
-    // LOGIC FROM MAIN: Expect the new empty state message
+    // 2. Assert that the landing page text is visible
     expect(
-      await screen.findByText(/no saved conversations/i)
+      await screen.findByText("Please sign in to access your dashboard."),
     ).toBeInTheDocument();
+
+    // 3. Assert that the main app's navigation button is NOT visible
+    expect(
+      screen.queryByRole("button", { name: /open navigation menu/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("should display the translation history after a successful fetch", async () => {
+  it("should render the dashboard by default when logged in", async () => {
     localStorage.setItem("translatar_jwt", mockToken);
-
-    // LOGIC FROM REDESIGNSUMMARY: More robust mocking for multiple endpoints
-    // @ts-ignore
     globalThis.fetchMock.mockImplementation((url) => {
-      const u = url.toString();
-
-      if (u.includes("/api/users/me")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        });
+      if (url.toString().includes("/api/users/me")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
       }
-
-      if (u.includes("/api/settings")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSettings),
-        });
+      if (url.toString().includes("/api/settings")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
       }
-
-      if (u.includes("/api/history")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ history: mockHistory }),
-        });
-      }
-
-      if (u.includes("/api/summarize/history")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ history: [] }),
-        });
-      }
-
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({}),
-      });
-    });
-
-    render(<App />);
-
-    // Navigate (Logic from MAIN)
-    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
-    const conversationsButton = await screen.findByRole("button", {
-      name: /conversations \/ history/i,
-    });
-    fireEvent.click(conversationsButton);
-
-    // Wait for loading to finish
-    await waitFor(() => {
-      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
-    });
-
-    // ASSERTIONS FROM MAIN: Check for session card and grouped translations
-    expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
-
-    // Click on the session to view details
-    const sessionCard = screen.getByText(/2 translations/i).closest("div");
-    fireEvent.click(sessionCard!);
-
-    // Now the translation details should be visible
-    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
-    expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
-  });
-
-  // NEW TEST FROM REDESIGNSUMMARY
-  it("displays summary history after successful fetch", async () => {
-    localStorage.setItem("translatar_jwt", mockToken);
-
-    // @ts-ignore
-    globalThis.fetchMock.mockImplementation((url) => {
-      const u = url.toString();
-
-      // Basic mocks for initialization
-      if (u.includes("/api/users/me"))
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        });
-      if (u.includes("/api/settings"))
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSettings),
-        });
-      if (u.includes("/api/history"))
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ history: [] }),
-        });
-
-      // The specific mock we are testing
-      if (u.includes("/api/summarize/history")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              history: [
-                {
-                  _id: "s1",
-                  summary: "Summary 1",
-                  original_text: "Text 1",
-                  timestamp: new Date().toISOString(),
-                },
-                {
-                  _id: "s2",
-                  summary: "Summary 2",
-                  original_text: "Text 2",
-                  timestamp: new Date().toISOString(),
-                },
-              ],
-            }),
-        });
+      if (url.toString().includes("/api/history")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: [] }) });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
 
     render(<App />);
 
-    // Navigate to Summary History
-    fireEvent.click(screen.getByRole("button", { name: /^navigation$/i }));
-    const summaryHistoryButton = await screen.findByRole("button", {
-      name: /summary history/i,
-    });
-    fireEvent.click(summaryHistoryButton);
+    expect(await screen.findByRole("heading", { name: /TranslatAR Web Portal/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Dashboard$/i })).toBeInTheDocument();
+  });
 
-    expect(await screen.findByText(/Summary 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Summary 2/i)).toBeInTheDocument();
+  it("should navigate to translation history and display data when logged in", async () => {
+    localStorage.setItem("translatar_jwt", mockToken);
+
+    // @ts-ignore
+    globalThis.fetchMock.mockImplementation((url) => {
+      const u = url.toString();
+      if (u.includes("/api/users/me")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
+      }
+      if (u.includes("/api/settings")) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
+      }
+      if (u.includes("/api/history")) {
+        // Use the mockHistory with data for this test
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: mockHistory }) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    render(<App />);
+
+    const navButton = await screen.findByRole("button", { name: /open navigation menu/i });
+    fireEvent.click(navButton);
+    const conversationsButton = await screen.findByRole("button", { name: /conversations \/ history/i });
+    fireEvent.click(conversationsButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
+    const sessionCard = screen.getByText(/2 translations/i).closest("div");
+    fireEvent.click(sessionCard!);
+
+    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
+    expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
   });
 });

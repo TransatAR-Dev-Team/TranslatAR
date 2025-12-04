@@ -5,8 +5,8 @@ import type { CredentialResponse } from "@react-oauth/google";
 import type { User } from "./models/User";
 import { loginWithGoogleApi, getMeApi } from "./api/auth";
 
+import DashboardOverview from "./components/DashboardOverview/DashboardOverview";
 import Header from "./components/Header/Header";
-import Summarizer from "./components/Summarizer/Summarizer";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import SettingsMenu, {
   type Settings,
@@ -14,16 +14,19 @@ import SettingsMenu, {
 import SideNavigation, {
   type TabKey,
 } from "./components/Sidebar/NavigationSidebar";
-import SummaryHistory from "./components/SummaryHistory/SummaryHistory";
+import LiveTranslationView from "./components/TranslationView/TranslationView";
+import LandingPage from "./components/LandingPage/LandingPage";
 
 const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
+const LOCAL_STORAGE_TAB_KEY = "translatar_active_tab";
+
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 if (!googleClientId) {
   console.error("Error: VITE_GOOGLE_CLIENT_ID env variable not set.");
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  // Backend-related (unchanged)
+  // Backend-related
   source_language: "en",
   target_language: "es",
   chunk_duration_seconds: 8.0,
@@ -32,7 +35,7 @@ const DEFAULT_SETTINGS: Settings = {
   chunk_overlap_seconds: 0.5,
   websocket_url: "ws://localhost:8000/ws",
 
-  // New UX-facing fields
+  // UX-facing
   subtitles_enabled: true,
   translation_enabled: true,
   subtitle_font_size: 18,
@@ -41,6 +44,7 @@ const DEFAULT_SETTINGS: Settings = {
 
 function App() {
   const [appUser, setAppUser] = useState<User | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true); // Prevents flashing landing page on reload
 
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
@@ -51,8 +55,12 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   const [showNavigation, setShowNavigation] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
-  const [summaryHistory, setSummaryHistory] = useState<any[]>([]);
+  // Initialize from LocalStorage
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    return (
+      (localStorage.getItem(LOCAL_STORAGE_TAB_KEY) as TabKey) || "dashboard"
+    );
+  });
 
   // --- AUTH HANDLERS ---
   const handleLogout = useCallback(() => {
@@ -61,7 +69,6 @@ function App() {
     console.log("User logged out.");
   }, []);
 
-  // --- DATA FETCHING & SIDE EFFECTS ---
   const fetchUserProfile = useCallback(
     async (token: string) => {
       try {
@@ -76,33 +83,43 @@ function App() {
     [handleLogout],
   );
 
+  const handleLoginSuccess = useCallback(
+    async (credentialResponse: CredentialResponse) => {
+      const googleIdToken = credentialResponse.credential;
+      if (!googleIdToken) {
+        alert("Missing required token from Google!");
+        return handleLogout();
+      }
+
+      try {
+        const { access_token } = await loginWithGoogleApi(googleIdToken);
+        localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
+        await fetchUserProfile(access_token);
+        await loadHistory(); // refresh history once logged in
+      } catch (error) {
+        console.error("Login process failed:", error);
+        alert("Login failed. Please try again.");
+        handleLogout();
+      }
+    },
+    [fetchUserProfile, handleLogout],
+  );
+
+  // --- DATA FETCHING ---
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     setHistoryError(null);
-
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+    if (!token) {
+      setHistory([]);
+      setIsHistoryLoading(false);
+      return;
+    }
     try {
-      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-
-      if (!token) {
-        setHistory([]);
-        setIsHistoryLoading(false);
-        return;
-      }
-
       const response = await fetch("/api/history", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setHistory([]);
-          return;
-        }
-        throw new Error("Network response was not ok");
-      }
-
+      if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       setHistory(data.history);
     } catch (error) {
@@ -115,165 +132,152 @@ function App() {
 
   const loadSettings = useCallback(async () => {
     setSettingsError(null);
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+    if (!token) {
+      setSettings(DEFAULT_SETTINGS);
+      return;
+    }
     try {
-      const response = await fetch("/api/settings");
+      const response = await fetch("/api/settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-
-      setSettings({
-        ...DEFAULT_SETTINGS,
-        ...(data.settings ?? {}),
-      });
+      setSettings({ ...DEFAULT_SETTINGS, ...(data.settings ?? {}) });
     } catch (error) {
       console.error("Error fetching settings:", error);
       setSettingsError("Failed to load settings.");
+      // keep defaults if backend not reachable
     }
   }, []);
 
+  const saveSettings = useCallback(
+    async (newSettings: Settings) => {
+      setSettingsError(null);
+      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+      if (!token) {
+        setSettingsError("You must be logged in to save settings.");
+        return;
+      }
+      try {
+        const response = await fetch("/api/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newSettings),
+        });
+        if (!response.ok) throw new Error("Failed to save settings");
+        await loadSettings(); // Re-fetch after saving
+        setShowSettings(false);
+      } catch (error) {
+        console.error("Error saving settings:", error);
+        setSettingsError("Failed to save settings. Please try again.");
+      }
+    },
+    [loadSettings],
+  );
+
+  // --- INITIALIZE ---
   useEffect(() => {
     const initialize = async () => {
+      // Add this from "Incoming"
+      setIsAuthChecking(true);
       const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
       if (token) {
         await fetchUserProfile(token);
       }
+      // These are from "Current"
       await loadSettings();
       await loadHistory();
-      await loadSummaryHistory();
+      // Add this from "Incoming"
+      setIsAuthChecking(false);
     };
     void initialize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchUserProfile]);
+    // Keep dependencies from "Current"
+  }, [fetchUserProfile, loadSettings, loadHistory]);
 
-  useEffect(() => {
-    if (appUser) {
-      loadHistory();
-      loadSummaryHistory();
+  // --- RENDER HELPERS ---
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case "live_translation":
+        return <LiveTranslationView settings={settings} />;
+
+      case "conversations":
+        return (
+          <HistoryPanel
+            history={history}
+            isLoading={isHistoryLoading}
+            error={historyError}
+          />
+        );
+
+      case "dashboard":
+      default:
+        return (
+          <DashboardOverview
+            appUser={appUser}
+            history={history}
+            onOpenSummarization={() => setActiveTab("summarization")}
+            onOpenHistory={() => setActiveTab("conversations")}
+          />
+        );
     }
-  }, [appUser, loadHistory]);
-
-  const saveSettings = useCallback(async (newSettings: Settings) => {
-    setSettingsError(null);
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSettings),
-      });
-      if (!response.ok) throw new Error("Failed to save settings");
-      const data = await response.json();
-      setSettings(data.settings);
-      setShowSettings(false);
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      setSettingsError("Failed to save settings. Please try again.");
-    }
-  }, []);
-
-  const handleLoginSuccess = useCallback(
-    async (credentialResponse: CredentialResponse) => {
-      const googleIdToken = credentialResponse.credential;
-      if (!googleIdToken) {
-        alert("Missing required token from Google!");
-        return handleLogout();
-      }
-      try {
-        const { access_token } = await loginWithGoogleApi(googleIdToken);
-        localStorage.setItem(LOCAL_STORAGE_JWT_KEY, access_token);
-        await fetchUserProfile(access_token);
-      } catch (error) {
-        console.error("Login process failed:", error);
-        alert("Login failed. Please try again.");
-        handleLogout();
-      }
-    },
-    [fetchUserProfile, handleLogout],
-  );
-
-  const loadSummaryHistory = useCallback(async () => {
-    try {
-      const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-      if (!token) {
-        setSummaryHistory([]);
-        return;
-      }
-
-      const response = await fetch("/api/summarize/history", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error("Failed to load summary history");
-
-      const data = await response.json();
-      setSummaryHistory(data.history || []);
-    } catch (err) {
-      console.error("Failed to fetch summary history:", err);
-    }
-  }, []);
+  };
 
   // --- RENDER ---
+  if (isAuthChecking) {
+    // spinner while loading
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <GoogleOAuthProvider clientId={googleClientId || ""}>
-      <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
-        <div className="w-full max-w-2xl">
-          <Header
-            appUser={appUser}
-            onLoginSuccess={handleLoginSuccess}
-            onLoginError={handleLogout}
-            onLogout={handleLogout}
-            onShowSettings={() => setShowSettings(true)}
-            onShowNavigation={() => setShowNavigation(true)}
-          />
+      {!appUser ? (
+        <LandingPage
+          onLoginSuccess={handleLoginSuccess}
+          onLoginError={handleLogout}
+        />
+      ) : (
+        <main className="bg-slate-900 min-h-screen flex flex-col items-center font-sans p-4 text-white">
+          <div className="w-full max-w-5xl">
+            <Header
+              appUser={appUser}
+              onLoginSuccess={handleLoginSuccess}
+              onLoginError={handleLogout}
+              onLogout={handleLogout}
+              onShowSettings={() => setShowSettings(true)}
+              onShowNavigation={() => setShowNavigation(true)}
+            />
 
-          {/* ---------- PAGE CONTENT BY TAB ---------- */}
-          {activeTab === "dashboard" && (
-            <div className="bg-slate-800 rounded-lg p-6 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
-              <p className="text-slate-300 text-sm">
-                Overview coming soon. Use the sidebar to jump to Summarization
-                or Conversations.
-              </p>
-            </div>
-          )}
+            {renderMainContent()}
+          </div>
 
-          {activeTab === "summarization" && (
-            <Summarizer onSaveSuccess={loadSummaryHistory} />
-          )}
-
-          {activeTab === "conversations" && (
-            <HistoryPanel
-              history={history}
-              isLoading={isHistoryLoading}
-              error={historyError}
+          {showSettings && (
+            <SettingsMenu
+              initialSettings={settings}
+              onSave={saveSettings}
+              onClose={() => setShowSettings(false)}
+              error={settingsError}
             />
           )}
 
-          {activeTab === "summaryHistory" && (
-            <SummaryHistory history={summaryHistory} />
-          )}
-        </div>
-        {/* Settings modal */}
-        {showSettings && (
-          <SettingsMenu
-            initialSettings={settings}
-            onSave={saveSettings}
-            onClose={() => setShowSettings(false)}
-            error={settingsError}
+          <SideNavigation
+            isOpen={showNavigation}
+            activeTab={activeTab}
+            onClose={() => setShowNavigation(false)}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              setShowNavigation(false);
+            }}
           />
-        )}
-
-        {/* Sidebar navigation */}
-        <SideNavigation
-          isOpen={showNavigation}
-          activeTab={activeTab}
-          onClose={() => setShowNavigation(false)}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setShowNavigation(false);
-          }}
-        />
-      </main>
+        </main>
+      )}
     </GoogleOAuthProvider>
   );
 }
