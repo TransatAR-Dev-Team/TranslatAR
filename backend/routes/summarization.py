@@ -1,10 +1,12 @@
 import logging
 import os
+from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from models.summarization import SummarizationRequest, SummarizationResponse
+from models.summarization import SummarizationRequest, SummarizationResponse, SummarySaveRequest
+from security.auth import get_current_user
 
 # --- Configuration ---
 SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
@@ -32,9 +34,7 @@ async def get_summary(request: SummarizationRequest):
                 "Forwarding request to summarization service at %s/summarize",
                 SUMMARIZATION_SERVICE_URL,
             )
-            response = await client.post(
-                f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload
-            )
+            response = await client.post(f"{SUMMARIZATION_SERVICE_URL}/summarize", json=payload)
 
             logger.info(
                 "Received response with status code %d from summarization service.",
@@ -77,6 +77,61 @@ async def get_summary(request: SummarizationRequest):
             f"An unexpected error occurred while processing the summarization request: {e}",
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=500, detail=f"Error during summarization: {e}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Error during summarization: {e}") from e
+
+
+@router.post("/save")
+async def save_summary(
+    payload: SummarySaveRequest,
+    request: Request,
+    current_user: dict = Depends(get_current_user),  # noqa: B008
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    summary = payload.summary
+    original_text = payload.original_text
+
+    if not summary or not original_text:
+        raise HTTPException(status_code=400, detail="Missing summary or original_text")
+
+    summaries = request.app.state.summaries
+
+    doc = {
+        "userId": str(current_user["_id"]),
+        "original_text": original_text,
+        "summary": summary,
+        "created_at": datetime.now(UTC),
+    }
+
+    if payload.conversationId:
+        doc["conversationId"] = payload.conversationId
+
+    result = await summaries.insert_one(doc)
+
+    return {"status": "saved", "summary_id": str(result.inserted_id)}
+
+
+@router.get("/history")
+async def get_summary_history(
+    request: Request,
+    conversationId: str | None = Query(None),
+    current_user: dict = Depends(get_current_user),  # noqa: B008
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    summaries = request.app.state.summaries
+
+    query = {"userId": str(current_user["_id"])}
+    if conversationId:
+        query["conversationId"] = conversationId
+
+    cursor = summaries.find(query).sort("created_at", -1)
+
+    history = []
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        history.append(doc)
+
+    return {"history": history}

@@ -53,8 +53,10 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):  # noqa: B008
             - 503: If the Whisper model is not loaded or ready.
             - 500: If an error occurs during the transcription process.
     Returns:
-        - dict: A dictionary containing the transcription of the audio, with the key
-        'transcription' and the corresponding transcribed text as the value.
+        - dict: A dictionary containing:
+            - 'transcription': the transcribed text
+            - 'detected_language': the ISO language code detected by Whisper
+            - 'language_probability': confidence score for the detected language
     """
 
     if "whisper_model" not in ml_models:
@@ -72,10 +74,13 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):  # noqa: B008
             lambda: ml_models["whisper_model"].transcribe(audio_stream, vad_filter=True),
         )
 
+        detected_language = info.language
+        language_probability = info.language_probability
+
         logger.info(
             "Detected language '%s' with probability %f",
-            info.language,
-            info.language_probability,
+            detected_language,
+            language_probability,
         )
 
         transcription_parts = [segment.text for segment in segments if segment.no_speech_prob < 0.6]
@@ -85,7 +90,12 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):  # noqa: B008
             "Successfully transcribed audio. Result length: %d chars.",
             len(transcription),
         )
-        return {"transcription": transcription}
+        
+        return {
+            "transcription": transcription,
+            "detected_language": detected_language,
+            "language_probability": language_probability,
+        }
 
     except Exception as e:
         logger.error("Error during transcription: %s", e, exc_info=True)

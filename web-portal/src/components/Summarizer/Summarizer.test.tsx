@@ -68,4 +68,78 @@ describe("Summarizer Component", () => {
       await screen.findByText(/failed to generate summary/i),
     ).toBeInTheDocument();
   });
+
+  it("alerts when trying to save without being logged in", async () => {
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+
+    render(<Summarizer />);
+
+    const textarea = screen.getByPlaceholderText(/paste or type text here/i);
+    fireEvent.change(textarea, { target: { value: "Some text" } });
+
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ summary: "Generated summary" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /summarize/i }));
+
+    const saveButton = await screen.findByText(/save/i);
+    fireEvent.click(saveButton);
+
+    expect(window.alert).toHaveBeenCalledWith(
+      "You must be logged in to save a summary.",
+    );
+  });
+
+  it("calls API to save summary when logged in", async () => {
+    localStorage.setItem("translatar_jwt", "fake-token");
+
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ summary: "Generated summary" }),
+    ); // For summarization
+    fetchMock.mockResponseOnce(JSON.stringify({})); // For save API
+
+    render(<Summarizer />);
+
+    const textarea = screen.getByPlaceholderText(/paste or type text here/i);
+    fireEvent.change(textarea, { target: { value: "Some text" } });
+    fireEvent.click(screen.getByRole("button", { name: /summarize/i }));
+
+    const saveButton = await screen.findByText(/save/i);
+
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/summarize/save",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer fake-token",
+          }),
+        }),
+      );
+    });
+  });
+
+  it("fetches and displays advice on success", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ advice: "Do this!" }));
+    render(<Summarizer />);
+    fireEvent.change(screen.getByPlaceholderText(/paste or type text here/i), {
+      target: { value: "Some text" },
+    });
+    fireEvent.click(screen.getByText(/give me advice/i));
+    expect(await screen.findByText(/Do this!/i)).toBeInTheDocument();
+  });
+
+  it("displays error if advice API call fails", async () => {
+    fetchMock.mockResponseOnce("Error", { status: 500 });
+    render(<Summarizer />);
+    fireEvent.change(screen.getByPlaceholderText(/paste or type text here/i), {
+      target: { value: "Some text" },
+    });
+    fireEvent.click(screen.getByText(/give me advice/i));
+    expect(
+      await screen.findByText(/failed to generate advice/i),
+    ).toBeInTheDocument();
+  });
 });
