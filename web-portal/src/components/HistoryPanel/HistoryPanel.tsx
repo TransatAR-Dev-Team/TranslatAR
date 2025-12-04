@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SummaryHistory from "../SummaryHistory/SummaryHistory";
 
 interface HistoryItem {
   _id: string;
@@ -56,7 +57,7 @@ export function buildConversationTranscripts(
 
   // Group items by conversationId
   for (const item of history) {
-    const id = item.conversationId || item._id; // fallback
+    const id = item.conversationId || item._id;
     if (!convMap.has(id)) convMap.set(id, []);
     convMap.get(id)!.push(item);
   }
@@ -116,6 +117,13 @@ export default function HistoryPanel({
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryLength, setSummaryLength] = useState<string>("medium");
 
+  const [conversationSummaries, setConversationSummaries] = useState<any[]>([]);
+  const [isSummaryHistoryLoading, setIsSummaryHistoryLoading] =
+    useState<boolean>(false);
+
+  // --- State for collapsible section ---
+  const [isHistoryVisible, setIsHistoryVisible] = useState<boolean>(false);
+
   const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 
   const conversations = buildConversationTranscripts(history);
@@ -146,6 +154,34 @@ export default function HistoryPanel({
       minute: "2-digit",
       second: "2-digit",
     });
+  };
+
+  const fetchConversationSummaries = async (conversationId: string) => {
+    setIsSummaryHistoryLoading(true);
+    setConversationSummaries([]);
+    const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
+    if (!token) {
+      setIsSummaryHistoryLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/summarize/history?conversationId=${conversationId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch summary history for conversation.");
+      }
+      const data = await response.json();
+      setConversationSummaries(data.history);
+    } catch (error) {
+      console.error("Error fetching conversation summaries:", error);
+    } finally {
+      setIsSummaryHistoryLoading(false);
+    }
   };
 
   /**
@@ -217,6 +253,7 @@ export default function HistoryPanel({
 
       alert("Summary saved!");
       if (onSummarySaved) onSummarySaved();
+      void fetchConversationSummaries(selectedConversation.id);
     } catch (error) {
       console.error("Error saving summary:", error);
       alert("Failed to save summary.");
@@ -262,6 +299,8 @@ export default function HistoryPanel({
                       setSelectedConversationId(conv.id);
                       setSummary("");
                       setSummaryError(null);
+                      setIsHistoryVisible(false);
+                      void fetchConversationSummaries(conv.id);
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition ${
                       selectedConversationId === conv.id
@@ -299,7 +338,6 @@ export default function HistoryPanel({
 
               {selectedConversation && (
                 <div className="flex items-center gap-4">
-                  {/* Container for the label and dropdown */}
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="summary-length"
@@ -332,7 +370,6 @@ export default function HistoryPanel({
 
             {selectedConversation ? (
               <div className="space-y-3">
-                {/* Display summary if available */}
                 {summaryError && (
                   <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-3">
                     {summaryError}
@@ -342,19 +379,59 @@ export default function HistoryPanel({
                 {summary && (
                   <div className="bg-slate-600 p-4 rounded-lg mb-3 border-l-4 border-blue-500">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-blue-300">Summary:</h4>
-                      <button
-                        onClick={handleSaveSummary}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition-colors duration-200"
-                      >
-                        Save
-                      </button>
+                      <h4 className="font-semibold text-blue-300">
+                        Generated Summary:
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={handleSaveSummary}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition-colors duration-200"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setSummary("")}
+                          className="text-slate-400 hover:text-white text-xl leading-none"
+                          aria-label="Close summary"
+                        >
+                          &times;
+                        </button>
+                      </div>
                     </div>
                     <p className="text-slate-100">{summary}</p>
                   </div>
                 )}
 
-                {/* Display conversation translations */}
+                {/* --- Collapsible Summary History Section --- */}
+                <div className="border-t border-slate-600 pt-4">
+                  <button
+                    onClick={() => setIsHistoryVisible(!isHistoryVisible)}
+                    disabled={conversationSummaries.length === 0}
+                    className="w-full text-left text-sm font-medium text-slate-300 hover:text-white disabled:text-slate-500 disabled:cursor-not-allowed flex justify-between items-center"
+                  >
+                    <span>
+                      View Saved Summaries ({conversationSummaries.length})
+                    </span>
+                    <span
+                      className={`transform transition-transform ${isHistoryVisible ? "rotate-180" : ""}`}
+                    >
+                      ▼
+                    </span>
+                  </button>
+
+                  {isHistoryVisible && (
+                    <div className="mt-2">
+                      <SummaryHistory
+                        history={conversationSummaries}
+                        loading={isSummaryHistoryLoading}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <h4 className="text-base font-semibold pt-4 border-t border-slate-600">
+                  Full Transcript
+                </h4>
                 {selectedConversation.items.length === 0 ? (
                   <p className="text-slate-400 text-center py-8">
                     No translations in this conversation.
