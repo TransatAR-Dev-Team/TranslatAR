@@ -6,7 +6,8 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "LanguageUI",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "GameRuntime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
