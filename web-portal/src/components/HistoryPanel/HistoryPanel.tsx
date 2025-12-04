@@ -117,6 +117,11 @@ export default function HistoryPanel({
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryLength, setSummaryLength] = useState<string>("medium");
 
+  // --- State for save button ---
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+
   const [conversationSummaries, setConversationSummaries] = useState<any[]>([]);
   const [isSummaryHistoryLoading, setIsSummaryHistoryLoading] =
     useState<boolean>(false);
@@ -193,6 +198,7 @@ export default function HistoryPanel({
     setIsSummarizing(true);
     setSummaryError(null);
     setSummary("");
+    setSaveStatus("idle"); // --- MODIFIED: Reset save status ---
 
     try {
       const response = await fetch("/api/summarize", {
@@ -218,16 +224,16 @@ export default function HistoryPanel({
     }
   };
 
-  /**
-   * Handle saving the summary
-   */
+  // --- Updated save handler ---
   const handleSaveSummary = async () => {
-    if (!summary || !selectedConversation) return;
+    if (!summary || !selectedConversation || saveStatus !== "idle") return;
+
+    setSaveStatus("saving");
 
     const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
-
     if (!token) {
       alert("You must be logged in to save a summary.");
+      setSaveStatus("idle");
       return;
     }
 
@@ -246,19 +252,37 @@ export default function HistoryPanel({
       });
 
       if (!response.ok) {
-        const err = await response.text();
-        console.error("Backend returned:", err);
         throw new Error("Failed to save summary");
       }
 
-      alert("Summary saved!");
+      setSaveStatus("saved"); // Set to 'saved' on success
       if (onSummarySaved) onSummarySaved();
       void fetchConversationSummaries(selectedConversation.id);
     } catch (error) {
       console.error("Error saving summary:", error);
       alert("Failed to save summary.");
+      setSaveStatus("idle"); // Reset on error
     }
   };
+
+  // ---  Helper to get button text and style ---
+  const getSaveButtonProps = () => {
+    switch (saveStatus) {
+      case "saving":
+        return { text: "Saving...", disabled: true, className: "bg-gray-500" };
+      case "saved":
+        return { text: "Saved ✔", disabled: true, className: "bg-green-600" };
+      case "idle":
+      default:
+        return {
+          text: "Save",
+          disabled: false,
+          className: "bg-blue-600 hover:bg-blue-700",
+        };
+    }
+  };
+
+  const saveButtonProps = getSaveButtonProps();
 
   return (
     <div id="history-panel" className="bg-slate-800 rounded-lg p-6 shadow-lg">
@@ -300,6 +324,7 @@ export default function HistoryPanel({
                       setSummary("");
                       setSummaryError(null);
                       setIsHistoryVisible(false);
+                      setSaveStatus("idle"); // --- MODIFIED: Reset save status ---
                       void fetchConversationSummaries(conv.id);
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition ${
@@ -385,9 +410,10 @@ export default function HistoryPanel({
                       <div className="flex items-center gap-3">
                         <button
                           onClick={handleSaveSummary}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition-colors duration-200"
+                          disabled={saveButtonProps.disabled}
+                          className={`text-white text-xs font-semibold py-1 px-3 rounded-md transition-colors duration-200 ${saveButtonProps.className}`}
                         >
-                          Save
+                          {saveButtonProps.text}
                         </button>
                         <button
                           onClick={() => setSummary("")}
@@ -402,7 +428,6 @@ export default function HistoryPanel({
                   </div>
                 )}
 
-                {/* --- Collapsible Summary History Section --- */}
                 <div className="border-t border-slate-600 pt-4">
                   <button
                     onClick={() => setIsHistoryVisible(!isHistoryVisible)}
