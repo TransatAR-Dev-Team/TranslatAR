@@ -125,12 +125,9 @@ export default function HistoryPanel({
   const [advice, setAdvice] = useState<string>("");
   const [isGettingAdvice, setIsGettingAdvice] = useState<boolean>(false);
   const [adviceError, setAdviceError] = useState<string | null>(null);
-
   const [conversationSummaries, setConversationSummaries] = useState<any[]>([]);
   const [isSummaryHistoryLoading, setIsSummaryHistoryLoading] =
     useState<boolean>(false);
-
-  // --- State for collapsible section ---
   const [isHistoryVisible, setIsHistoryVisible] = useState<boolean>(false);
 
   const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
@@ -140,22 +137,14 @@ export default function HistoryPanel({
     (c) => c.id === selectedConversationId,
   );
 
-  /**
-   * Format date
-   */
   const formatDate = (date: Date): string => {
     return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric",
     });
   };
 
-  /**
-   * Format time (short)
-   */
   const formatTime = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-US", {
@@ -193,17 +182,12 @@ export default function HistoryPanel({
     }
   };
 
-  /**
-   * Handle summarizing the selected conversation
-   */
   const handleSummarize = async () => {
     if (!selectedConversation) return;
-
     setIsSummarizing(true);
     setSummaryError(null);
     setSummary("");
     setSaveStatus("idle");
-
     try {
       const response = await fetch("/api/summarize", {
         method: "POST",
@@ -213,11 +197,9 @@ export default function HistoryPanel({
           length: summaryLength,
         }),
       });
-
       if (!response.ok) {
         throw new Error(`Server responded with status: ${response.status}`);
       }
-
       const data = await response.json();
       setSummary(data.summary);
     } catch (error) {
@@ -228,19 +210,16 @@ export default function HistoryPanel({
     }
   };
 
-  // --- Updated save handler ---
+  // --- Save handler ---
   const handleSaveSummary = async () => {
     if (!summary || !selectedConversation || saveStatus !== "idle") return;
-
     setSaveStatus("saving");
-
     const token = localStorage.getItem(LOCAL_STORAGE_JWT_KEY);
     if (!token) {
       alert("You must be logged in to save a summary.");
       setSaveStatus("idle");
       return;
     }
-
     try {
       const response = await fetch("/api/summarize/save", {
         method: "POST",
@@ -254,40 +233,33 @@ export default function HistoryPanel({
           conversationId: selectedConversation.id,
         }),
       });
-
       if (!response.ok) {
         throw new Error("Failed to save summary");
       }
-
-      setSaveStatus("saved"); // Set to 'saved' on success
+      setSaveStatus("saved");
       if (onSummarySaved) onSummarySaved();
       void fetchConversationSummaries(selectedConversation.id);
     } catch (error) {
       console.error("Error saving summary:", error);
       alert("Failed to save summary.");
-      setSaveStatus("idle"); // Reset on error
+      setSaveStatus("idle");
     }
   };
 
-  // --- Logic for getting advice ---
   const handleGetAdvice = async () => {
     if (!selectedConversation) return;
-
     setIsGettingAdvice(true);
     setAdviceError(null);
     setAdvice("");
-
     try {
       const response = await fetch("/api/advice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: selectedConversation.originalTranscript }),
       });
-
       if (!response.ok) {
         throw new Error(`Server responded with status: ${response.status}`);
       }
-
       const data = await response.json();
       setAdvice(data.advice);
     } catch (error) {
@@ -319,13 +291,11 @@ export default function HistoryPanel({
   return (
     <div id="history-panel" className="bg-slate-800 rounded-lg p-6 shadow-lg">
       <h2 className="text-2xl font-semibold mb-4">Conversations</h2>
-
       {error && (
         <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
-
       <div className="flex gap-4 flex-col lg:flex-row">
         {/* Conversation list panel */}
         <div className="lg:w-1/3 w-full">
@@ -336,7 +306,6 @@ export default function HistoryPanel({
                 {conversations.length} total
               </span>
             </div>
-
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -355,8 +324,8 @@ export default function HistoryPanel({
                       setSelectedConversationId(conv.id);
                       setSummary("");
                       setSummaryError(null);
-                      setAdvice(""); // --- Reset advice ---
-                      setAdviceError(null); // --- Reset advice error ---
+                      setAdvice("");
+                      setAdviceError(null);
                       setIsHistoryVisible(false);
                       setSaveStatus("idle");
                       void fetchConversationSummaries(conv.id);
@@ -369,7 +338,13 @@ export default function HistoryPanel({
                   >
                     <div className="flex justify-between items-start">
                       <div className="text-sm text-slate-300">
-                        {formatDate(conv.startedAt)}
+                        {conv.startedAt.toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
                     <div className="text-xs text-slate-400 mt-1">
@@ -386,17 +361,26 @@ export default function HistoryPanel({
             )}
           </div>
         </div>
-
         {/* Conversation detail panel */}
         <div className="lg:w-2/3 w-full">
           <div className="bg-slate-700 rounded-lg p-4 min-h-[500px] max-h-[500px] overflow-y-auto">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium text-slate-200">
-                Conversation Content
-              </h3>
+            {/* --- Dynamic Title and Actions Section --- */}
+            {selectedConversation && (
+              <div className="mb-4">
+                {/* Dynamic Title */}
+                <div className="pb-3 border-b border-slate-600">
+                  <h3 className="text-lg font-semibold text-white">
+                    Conversation from{" "}
+                    {formatDate(selectedConversation.startedAt)}
+                  </h3>
+                  <p className="text-sm text-slate-400">
+                    {getLanguageName(selectedConversation.source_lang)} →{" "}
+                    {getLanguageName(selectedConversation.target_lang)}
+                  </p>
+                </div>
 
-              {selectedConversation && (
-                <div className="flex items-center gap-4 flex-wrap">
+                {/* Action Buttons */}
+                <div className="flex items-center gap-4 flex-wrap pt-3">
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="summary-length"
@@ -415,7 +399,6 @@ export default function HistoryPanel({
                       <option value="long">Long</option>
                     </select>
                   </div>
-
                   <button
                     onClick={handleSummarize}
                     disabled={isSummarizing}
@@ -423,8 +406,6 @@ export default function HistoryPanel({
                   >
                     {isSummarizing ? "Summarizing..." : "Summarize"}
                   </button>
-
-                  {/* --- Advice Button --- */}
                   <button
                     onClick={handleGetAdvice}
                     disabled={isGettingAdvice}
@@ -433,8 +414,8 @@ export default function HistoryPanel({
                     {isGettingAdvice ? "Getting Advice..." : "Give Me Advice"}
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {selectedConversation ? (
               <div className="space-y-3">
@@ -443,7 +424,6 @@ export default function HistoryPanel({
                     {summaryError}
                   </div>
                 )}
-
                 {summary && (
                   <div className="bg-slate-600 p-4 rounded-lg mb-3 border-l-4 border-blue-500">
                     <div className="flex justify-between items-start mb-2">
@@ -470,7 +450,6 @@ export default function HistoryPanel({
                     <p className="text-slate-100">{summary}</p>
                   </div>
                 )}
-
                 {adviceError && (
                   <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-3">
                     {adviceError}
@@ -495,7 +474,6 @@ export default function HistoryPanel({
                     </p>
                   </div>
                 )}
-
                 <div className="border-t border-slate-600 pt-4">
                   <button
                     onClick={() => setIsHistoryVisible(!isHistoryVisible)}
@@ -511,7 +489,6 @@ export default function HistoryPanel({
                       ▼
                     </span>
                   </button>
-
                   {isHistoryVisible && (
                     <div className="mt-2">
                       <SummaryHistory
@@ -521,7 +498,6 @@ export default function HistoryPanel({
                     </div>
                   )}
                 </div>
-
                 <h4 className="text-base font-semibold pt-4 border-t border-slate-600">
                   Full Transcript
                 </h4>
