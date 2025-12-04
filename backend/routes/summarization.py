@@ -8,13 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from models.summarization import SummarizationRequest, SummarizationResponse, SummarySaveRequest
 from security.auth import get_current_user
 
-# --- Configuration ---
 SUMMARIZATION_SERVICE_URL = os.getenv("SUMMARIZATION_URL", "http://summarization:9002")
 
-# --- Logger Setup ---
 logger = logging.getLogger(__name__)
 
-# Minimum word counts for each summary length
 MIN_WORDS_MEDIUM = 100
 MIN_WORDS_LONG = 300
 
@@ -22,16 +19,8 @@ router = APIRouter()
 
 
 def determine_appropriate_length(text: str, requested_length: str) -> tuple[str, str | None]:
-    """
-    Determines the appropriate summary length based on text size.
-    Auto-downgrades if the requested length is too long for the input text.
-
-    Returns:
-        tuple: (actual_length, notification_message)
-    """
     word_count = len(text.split())
 
-    # Determine the maximum appropriate length for this text
     if word_count < MIN_WORDS_MEDIUM:
         max_appropriate = "short"
     elif word_count < MIN_WORDS_LONG:
@@ -39,7 +28,6 @@ def determine_appropriate_length(text: str, requested_length: str) -> tuple[str,
     else:
         max_appropriate = "long"
 
-    # Auto-downgrade if requested length is too long
     length_order = {"short": 1, "medium": 2, "long": 3}
     requested_level = length_order.get(requested_length, 2)
     max_level = length_order.get(max_appropriate, 2)
@@ -57,10 +45,6 @@ def determine_appropriate_length(text: str, requested_length: str) -> tuple[str,
 
 @router.post("", response_model=SummarizationResponse)
 async def get_summary(request: SummarizationRequest):
-    """
-    Receives text and a desired length, then forwards to the summarization service.
-    Auto-downgrades the length if the input text is too short for the requested length.
-    """
     logger.info(
         "Received request: summarize text of length %d with length '%s'.",
         len(request.text),
