@@ -11,7 +11,7 @@ public class OpacityController : MonoBehaviour
 
     private const string OPACITY_KEY = "SubtitleOpacity";
 
-    void Start()
+    public void Start()
     {
         // default is 100%
         float savedOpacity = PlayerPrefs.GetFloat(OPACITY_KEY, 1f);

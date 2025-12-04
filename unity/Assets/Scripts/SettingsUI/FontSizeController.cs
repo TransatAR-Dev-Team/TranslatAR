@@ -15,7 +15,7 @@ public class FontSizeController : MonoBehaviour
     public float minSize = 18f;
     public float maxSize = 72f;
 
-    void Start()
+    public void Start()
     {
         /* temp hardcoded font value for testing (remove after controllers work)
            works in 2d editor
