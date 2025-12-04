@@ -110,18 +110,13 @@ public class AudioRecordingManager : MonoBehaviour
 
         if (!permissionGranted) return;
 
-        // Button input
-        bool inputIsActive = Input.GetKey(KeyCode.JoystickButton0) || Input.GetKey(KeyCode.B);
+        // Keyboard/Controller input (toggle on key press)
+        bool keyPressed = Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.B);
 
-        // Start recording
-        if (!isRecording && inputIsActive)
+        // Toggle recording on key press
+        if (keyPressed)
         {
-            StartRecording();
-        }
-        // Stop recording
-        else if (isRecording && !inputIsActive)
-        {
-            StopRecording();
+            ToggleRecording();
         }
 
         // While recording, capture and send chunks periodically
@@ -139,7 +134,7 @@ public class AudioRecordingManager : MonoBehaviour
     /// <summary>
     /// Begins continuous microphone recording into a circular buffer.
     /// </summary>
-    void StartRecording()
+    public void StartRecording()
     {
         if (isRecording) return;
         if (WebSocketManager.Instance == null || !WebSocketManager.Instance.IsConnected)
@@ -170,7 +165,7 @@ public class AudioRecordingManager : MonoBehaviour
     /// <summary>
     /// Stops microphone recording, sends any remaining audio chunk, and cleans up resources.
     /// </summary>
-    void StopRecording()
+    public void StopRecording()
     {
         if (!isRecording) return;
 
@@ -186,6 +181,26 @@ public class AudioRecordingManager : MonoBehaviour
         lastSamplePosition = 0;
         chunkTimer = 0f; // Reset timer
     }
+
+  
+    // Toggles recording on/off. If currently recording, stops. If not recording, starts.
+   
+    public void ToggleRecording()
+    {
+        if (isRecording)
+        {
+            StopRecording();
+        }
+        else
+        {
+            StartRecording();
+        }
+    }
+
+  
+    //Returns whether the microphone is currently recording.
+  
+    public bool IsRecording => isRecording;
 
     private float[] ReadSamplesWrap(AudioClip clip, int startSample, int totalSamples)
     {
