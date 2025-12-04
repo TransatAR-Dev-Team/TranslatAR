@@ -47,7 +47,9 @@ const getLanguageName = (code: string): string => {
   return languageNames[code] || code.toUpperCase();
 };
 
-export function buildConversationTranscripts(history: HistoryItem[]): Conversation[] {
+export function buildConversationTranscripts(
+  history: HistoryItem[],
+): Conversation[] {
   if (!history.length) return [];
 
   const convMap = new Map<string, HistoryItem[]>();
@@ -64,7 +66,8 @@ export function buildConversationTranscripts(history: HistoryItem[]): Conversati
   for (const [id, items] of convMap.entries()) {
     // Sort by time
     items.sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
     const startedAt = new Date(items[0].timestamp);
@@ -105,15 +108,20 @@ export default function HistoryPanel({
   error,
   onSummarySaved,
 }: HistoryPanelProps) {
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
   const [summary, setSummary] = useState<string>("");
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [summaryLength, setSummaryLength] = useState<string>("medium");
 
   const LOCAL_STORAGE_JWT_KEY = "translatar_jwt";
 
   const conversations = buildConversationTranscripts(history);
-  const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
+  const selectedConversation = conversations.find(
+    (c) => c.id === selectedConversationId,
+  );
 
   /**
    * Format date
@@ -154,9 +162,9 @@ export default function HistoryPanel({
       const response = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          text: selectedConversation.originalTranscript, 
-          length: "short" 
+        body: JSON.stringify({
+          text: selectedConversation.originalTranscript,
+          length: summaryLength,
         }),
       });
 
@@ -197,6 +205,7 @@ export default function HistoryPanel({
         body: JSON.stringify({
           summary: summary,
           original_text: selectedConversation.originalTranscript,
+          conversationId: selectedConversation.id,
         }),
       });
 
@@ -270,7 +279,8 @@ export default function HistoryPanel({
                       {getLanguageName(conv.target_lang)}
                     </div>
                     <div className="text-xs text-slate-400 mt-1">
-                      {conv.items.length} translation{conv.items.length !== 1 ? "s" : ""}
+                      {conv.items.length} translation
+                      {conv.items.length !== 1 ? "s" : ""}
                     </div>
                   </div>
                 ))}
@@ -286,14 +296,37 @@ export default function HistoryPanel({
               <h3 className="text-lg font-medium text-slate-200">
                 Conversation Content
               </h3>
+
               {selectedConversation && (
-                <button
-                  onClick={handleSummarize}
-                  disabled={isSummarizing}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors duration-200"
-                >
-                  {isSummarizing ? "Summarizing..." : "Summarize"}
-                </button>
+                <div className="flex items-center gap-4">
+                  {/* Container for the label and dropdown */}
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="summary-length"
+                      className="text-sm font-medium text-slate-300"
+                    >
+                      Summary Length:
+                    </label>
+                    <select
+                      id="summary-length"
+                      value={summaryLength}
+                      onChange={(e) => setSummaryLength(e.target.value)}
+                      className="bg-slate-600 p-2 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="short">Short</option>
+                      <option value="medium">Medium</option>
+                      <option value="long">Long</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={handleSummarize}
+                    disabled={isSummarizing}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors duration-200"
+                  >
+                    {isSummarizing ? "Summarizing..." : "Summarize"}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -370,4 +403,4 @@ export default function HistoryPanel({
       </div>
     </div>
   );
-} 
+}
