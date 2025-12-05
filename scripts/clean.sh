@@ -164,6 +164,7 @@ if [[ "$PYTHON" == true ]]; then
   )
   PYTHON_FILES=(
     ".coverage"
+    "*.lcov"
   )
 
   ROOT_DIRS=(
@@ -171,7 +172,7 @@ if [[ "$PYTHON" == true ]]; then
     "stt-service"
     "translation-service"
     "summarization-service"
-    "advice_service" # Added new service
+    "advice_service"
     "scripts"
     "."
   )
