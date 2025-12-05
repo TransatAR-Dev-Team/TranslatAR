@@ -57,6 +57,9 @@ test-integration: ## Run backend integration tests.
 test-unity: ## Run Unity tests (macOS/Windows only).
 	@./scripts/run_unity_tests.sh
 
+coverage: ## Generate and open test coverage report by installing all dependencies and running tests locally
+	@./scripts/generate_coverage.sh
+
 validate: format lint ## Validate code. Alias for `format` + `lint`.
 
 format: ## Format all source code with Black, Ruff Formatter, and Prettier.

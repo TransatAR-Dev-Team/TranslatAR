@@ -11,6 +11,10 @@ __pycache__/
 htmlcov/
 .coverage
 
+# Coverage Reports
+coverage-report/
+coverage.json
+
 # VSCode settings
 .vscode/
 

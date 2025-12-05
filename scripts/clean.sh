@@ -88,6 +88,8 @@ show_help() {
   cat <<EOF
 TranslatAR Cleanup Utility
 
+Deletes temporary files.
+
 Usage:
   ./scripts/clean_temp_files.sh [options]
 
@@ -147,6 +149,14 @@ for arg in "$@"; do
 done
 
 echo "🧹 Cleaning temporary and build files..."
+
+# ----------------------------------------------------------------------
+# General cleanup
+# ----------------------------------------------------------------------
+
+echo "Cleaning test coverage reports..."
+
+rm -rf coverage-report
 
 # ----------------------------------------------------------------------
 # Python cleanup
