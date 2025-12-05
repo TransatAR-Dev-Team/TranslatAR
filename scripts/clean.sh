@@ -74,6 +74,83 @@ echo "🧹 Cleaning temporary and build files..."
 # ----------------------------------------------------------------------
 # Python cleanup
 # ----------------------------------------------------------------------
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ----------------------------------------------------------------------
+# Clean temporary and build files for TranslatAR
+# Usage:
+#   ./scripts/clean_temp_files.sh [--python] [--node] [--docker] [--unity] [--deep]
+# ----------------------------------------------------------------------
+
+show_help() {
+  cat <<EOF
+TranslatAR Cleanup Utility
+
+Usage:
+  ./scripts/clean_temp_files.sh [options]
+
+Options:
+  --python     Clean Python caches (.venv, __pycache__, .ruff_cache, etc.)
+  --node       Clean Node.js caches (node_modules, .next, dist, etc.)
+  --docker     Clean Docker system data (images, containers, caches)
+  --unity      Clean Unity temporary and build files (asks for confirmation)
+  --deep       Perform a full cleanup (Python, Node, Docker, Unity)
+  --help       Show this help message
+
+Examples:
+  ./scripts/clean_temp_files.sh --python
+  ./scripts/clean_temp_files.sh --node
+  ./scripts/clean_temp_files.sh --docker --node --python
+  ./scripts/clean_temp_files.sh --deep
+EOF
+
+  exit 0
+}
+
+PYTHON=false
+NODE=false
+DOCKER=false
+UNITY=false
+
+# ----------------------------------------------------------------------
+# Parse flags
+# ----------------------------------------------------------------------
+if [[ $# -eq 0 ]]; then
+  show_help
+fi
+
+for arg in "$@"; do
+  case "$arg" in
+    --python) PYTHON=true ;;
+    --node) NODE=true ;;
+    --docker) DOCKER=true ;;
+    --unity) UNITY=true ;;
+    --deep)
+      PYTHON=true
+      NODE=true
+      DOCKER=true
+      UNITY=true
+      ;;
+    --help|-h)
+      show_help
+      exit 0
+      ;;
+    *)
+      echo "❌ Unknown option: $arg"
+      echo
+      show_help
+      exit 1
+      ;;
+  esac
+done
+
+echo "🧹 Cleaning temporary and build files..."
+
+# ----------------------------------------------------------------------
+# Python cleanup
+# ----------------------------------------------------------------------
 if [[ "$PYTHON" == true ]]; then
   echo
   echo "🐍 Cleaning Python caches..."
@@ -83,6 +160,10 @@ if [[ "$PYTHON" == true ]]; then
     "__pycache__"
     ".pytest_cache"
     ".venv"
+    "htmlcov"
+  )
+  PYTHON_FILES=(
+    ".coverage"
   )
 
   ROOT_DIRS=(
@@ -90,6 +171,7 @@ if [[ "$PYTHON" == true ]]; then
     "stt-service"
     "translation-service"
     "summarization-service"
+    "advice_service" # Added new service
     "scripts"
     "."
   )
@@ -99,6 +181,9 @@ if [[ "$PYTHON" == true ]]; then
       echo "→ Searching in $root"
       for dir in "${PYTHON_DIRS[@]}"; do
         find "$root" -type d -name "$dir" -exec rm -rf {} + 2>/dev/null || true
+      done
+      for file in "${PYTHON_FILES[@]}"; do
+        find "$root" -type f -name "$file" -exec rm -f {} + 2>/dev/null || true
       done
     fi
   done
