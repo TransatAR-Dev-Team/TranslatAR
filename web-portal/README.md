@@ -74,6 +74,14 @@ This project uses Vitest for unit and component testing.
    npm run test:watch
    ```
 
+   To generage a coverage report, use:
+
+   ```bash
+   npm run test:cov
+   ```
+
+   And view the report at `web-portal/coverage/index.html`.
+
 ## Formatting and Linting
 
 We use **Prettier** for code formatting and **ESLint** for linting.

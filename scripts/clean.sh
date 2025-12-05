@@ -200,6 +200,7 @@ if [[ "$NODE" == true ]]; then
     "node_modules"
     ".next"
     "dist"
+    "coverage"
   )
 
   NODE_ROOTS=(
