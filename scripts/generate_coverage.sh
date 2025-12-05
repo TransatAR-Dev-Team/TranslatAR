@@ -3,7 +3,7 @@ set -e
 
 # Setup directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# --- FIX: Resolve ".." to a clean absolute path so logs look nice ---
+# Resolve ".." to a clean absolute path
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ARTIFACTS_DIR="$PROJECT_ROOT/coverage-report"
 
@@ -34,9 +34,6 @@ for service in "${PYTHON_SERVICES[@]}"; do
         poetry install --quiet > /dev/null 2>&1 || true
 
         # Run pytest with coverage flags
-        # --cov=. : Measure coverage of current dir
-        # --cov-report : Generate HTML and JSON (for parsing)
-        # || true : Don't exit script if tests fail (we still want the report)
         poetry run pytest --cov=. --cov-report=html:htmlcov --cov-report=json:coverage.json || true
 
         # Move artifacts to global folder
@@ -58,14 +55,16 @@ echo "📊 Running coverage for: Web Portal"
 if [ -d "$PROJECT_ROOT/web-portal" ]; then
     cd "$PROJECT_ROOT/web-portal"
 
-    # Ensure node_modules exists
-    if [ ! -d "node_modules" ]; then
+    # --- FIX: Check for 'vite' specifically, not just the folder ---
+    # This ensures we run install if node_modules exists but is empty/corrupt
+    if [ ! -d "node_modules" ] || [ ! -d "node_modules/vite" ]; then
         echo "📦 Installing Node dependencies (this may take a moment)..."
         npm install --silent --no-progress
     fi
 
-    # Run vitest with coverage
-    npx vitest run --coverage.enabled --coverage.reporter=html --coverage.reporter=json-summary || true
+    # Run vitest with coverage using the LOCAL installation
+    # We use 'npm exec' to ensure we use the project version, preventing npx prompts
+    npm exec vitest -- run --coverage.enabled --coverage.reporter=html --coverage.reporter=json-summary || true
 
     # Move artifacts
     if [ -d "coverage" ]; then
