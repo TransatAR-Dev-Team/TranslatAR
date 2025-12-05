@@ -51,6 +51,14 @@ This guide provides common instructions for setting up and managing the Python-b
     poetry run pytest -v
     ```
 
+    To generate coverage reports:
+
+    ```sh
+    poetry run pytest --cov --cov-report=html
+    ```
+
+    To view report, open `<service name>/htmlcov/index.html` in a web browser.
+
 ## Formatting and Linting
 
 We use **Black** for code formatting and **Ruff** for linting and import sorting.
@@ -94,7 +102,7 @@ This workflow applies to every Python service in this repository.
     ```
 
     Add a development-only dependency (e.g., a linter, test dependencies):
-    
+
     ```sh
     poetry add --group dev <package-name>
     ```
