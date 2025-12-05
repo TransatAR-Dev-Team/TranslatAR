@@ -12,8 +12,12 @@ rm -rf "$ARTIFACTS_DIR"
 mkdir -p "$ARTIFACTS_DIR"
 
 echo "=========================================="
-echo "  TranslatAR Global Coverage Generation"
+echo "  TranslatAR Test Coverage Generation"
 echo "=========================================="
+
+echo ""
+echo "⚠️  Note: This does not generate Unity test coverage reports."
+echo ""
 
 # --- 1. Python Services ---
 # Note: advice_service uses an underscore, others use hyphens
