@@ -11,83 +11,6 @@ show_help() {
   cat <<EOF
 TranslatAR Cleanup Utility
 
-Usage:
-  ./scripts/clean_temp_files.sh [options]
-
-Options:
-  --python     Clean Python caches (.venv, __pycache__, .ruff_cache, etc.)
-  --node       Clean Node.js caches (node_modules, .next, dist, etc.)
-  --docker     Clean Docker system data (images, containers, caches)
-  --unity      Clean Unity temporary and build files (asks for confirmation)
-  --deep       Perform a full cleanup (Python, Node, Docker, Unity)
-  --help       Show this help message
-
-Examples:
-  ./scripts/clean_temp_files.sh --python
-  ./scripts/clean_temp_files.sh --node
-  ./scripts/clean_temp_files.sh --docker --node --python
-  ./scripts/clean_temp_files.sh --deep
-EOF
-
-  exit 0
-}
-
-PYTHON=false
-NODE=false
-DOCKER=false
-UNITY=false
-
-# ----------------------------------------------------------------------
-# Parse flags
-# ----------------------------------------------------------------------
-if [[ $# -eq 0 ]]; then
-  show_help
-fi
-
-for arg in "$@"; do
-  case "$arg" in
-    --python) PYTHON=true ;;
-    --node) NODE=true ;;
-    --docker) DOCKER=true ;;
-    --unity) UNITY=true ;;
-    --deep)
-      PYTHON=true
-      NODE=true
-      DOCKER=true
-      UNITY=true
-      ;;
-    --help|-h)
-      show_help
-      exit 0
-      ;;
-    *)
-      echo "❌ Unknown option: $arg"
-      echo
-      show_help
-      exit 1
-      ;;
-  esac
-done
-
-echo "🧹 Cleaning temporary and build files..."
-
-# ----------------------------------------------------------------------
-# Python cleanup
-# ----------------------------------------------------------------------
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ----------------------------------------------------------------------
-# Clean temporary and build files for TranslatAR
-# Usage:
-#   ./scripts/clean_temp_files.sh [--python] [--node] [--docker] [--unity] [--deep]
-# ----------------------------------------------------------------------
-
-show_help() {
-  cat <<EOF
-TranslatAR Cleanup Utility
-
 Deletes temporary files.
 
 Usage:
@@ -156,7 +79,7 @@ echo "🧹 Cleaning temporary and build files..."
 
 echo "Cleaning test coverage reports..."
 
-rm -rf coverage-report
+rm -rf coverage-report */coverage.json
 
 # ----------------------------------------------------------------------
 # Python cleanup

@@ -104,7 +104,7 @@ def parse_python_coverage(json_path):
             data = json.load(f)
             totals = data.get("totals", {})
             total = totals.get("num_statements", 0)
-            covered = totals.get("num_covered", 0)
+            covered = totals.get("covered_lines", 0)
             pct = totals.get("percent_covered", 0)
             return total, covered, round(pct, 2)
     except Exception as e:
@@ -170,11 +170,13 @@ def main():
         color_hex = get_color_hex(pct)
         link = f"{service}/index.html"
 
+        pretty_name = service.replace("-", " ").replace("_", " ").title()
+
         # Build the HTML row
         rows += f"""
         <tr>
             <td>
-                <div style="font-weight: 600;">{service.replace("-", " ").title()}</div>
+                <div style="font-weight: 600;">{pretty_name}</div>
             </td>
             <td>{lang_type}</td>
             <td class="num-col">{total:,}</td>
@@ -204,10 +206,12 @@ def main():
         total_color=total_color,
     )
 
-    with open(os.path.join(root_dir, "index.html"), "w") as f:
+    # --- FIX: Ensure the path is clean/absolute before printing ---
+    output_path = os.path.join(root_dir, "index.html")
+    with open(output_path, "w") as f:
         f.write(html)
 
-    print(f"Dashboard generated at {os.path.join(root_dir, 'index.html')}")
+    print(f"Dashboard generated at {os.path.abspath(output_path)}")
     print(
         f"Total Coverage: {grand_pct}% ({grand_covered_lines}/{grand_total_lines} lines)"
     )

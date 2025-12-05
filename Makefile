@@ -23,7 +23,7 @@ ARGS = $(filter-out $@,$(MAKECMDGOALS))
 # Self-documenting commands:
 # The `##` comments will be automatically displayed by the `help` command.
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-.PHONY: help up down restart logs test test-unit test-integration test-unity
+.PHONY: help up down restart logs test test-unit test-integration test-unity coverage-report
 
 up: ## Start all services (auto-detects GPU).
 	@./scripts/docker-compose-manager.sh up --build -d
@@ -57,7 +57,7 @@ test-integration: ## Run backend integration tests.
 test-unity: ## Run Unity tests (macOS/Windows only).
 	@./scripts/run_unity_tests.sh
 
-coverage: ## Generate and open test coverage report by installing all dependencies and running tests locally
+coverage-report: ## Generate and open test coverage report by installing all dependencies and running tests locally
 	@./scripts/generate_coverage.sh
 
 validate: format lint ## Validate code. Alias for `format` + `lint`.

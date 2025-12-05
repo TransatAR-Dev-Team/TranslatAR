@@ -3,7 +3,8 @@ set -e
 
 # Setup directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR/.."
+# --- FIX: Resolve ".." to a clean absolute path so logs look nice ---
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ARTIFACTS_DIR="$PROJECT_ROOT/coverage-report"
 
 # Cleanup previous run
@@ -26,7 +27,6 @@ for service in "${PYTHON_SERVICES[@]}"; do
         cd "$PROJECT_ROOT/$service"
 
         # Ensure dependencies exist (in case make clean was run)
-        # We rely on poetry's internal checks which are fast if already installed
         poetry install --quiet > /dev/null 2>&1 || true
 
         # Run pytest with coverage flags
@@ -54,7 +54,7 @@ echo "📊 Running coverage for: Web Portal"
 if [ -d "$PROJECT_ROOT/web-portal" ]; then
     cd "$PROJECT_ROOT/web-portal"
 
-    # --- FIX: Ensure node_modules exists ---
+    # Ensure node_modules exists
     if [ ! -d "node_modules" ]; then
         echo "📦 Installing Node dependencies (this may take a moment)..."
         npm install --silent --no-progress
