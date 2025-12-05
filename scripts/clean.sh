@@ -11,6 +11,8 @@ show_help() {
   cat <<EOF
 TranslatAR Cleanup Utility
 
+Deletes temporary files.
+
 Usage:
   ./scripts/clean_temp_files.sh [options]
 
@@ -72,6 +74,14 @@ done
 echo "🧹 Cleaning temporary and build files..."
 
 # ----------------------------------------------------------------------
+# General cleanup
+# ----------------------------------------------------------------------
+
+echo "Cleaning test coverage reports..."
+
+rm -rf coverage-report */coverage.json
+
+# ----------------------------------------------------------------------
 # Python cleanup
 # ----------------------------------------------------------------------
 if [[ "$PYTHON" == true ]]; then
@@ -83,6 +93,11 @@ if [[ "$PYTHON" == true ]]; then
     "__pycache__"
     ".pytest_cache"
     ".venv"
+    "htmlcov"
+  )
+  PYTHON_FILES=(
+    ".coverage"
+    "*.lcov"
   )
 
   ROOT_DIRS=(
@@ -90,6 +105,7 @@ if [[ "$PYTHON" == true ]]; then
     "stt-service"
     "translation-service"
     "summarization-service"
+    "advice_service"
     "scripts"
     "."
   )
@@ -99,6 +115,9 @@ if [[ "$PYTHON" == true ]]; then
       echo "→ Searching in $root"
       for dir in "${PYTHON_DIRS[@]}"; do
         find "$root" -type d -name "$dir" -exec rm -rf {} + 2>/dev/null || true
+      done
+      for file in "${PYTHON_FILES[@]}"; do
+        find "$root" -type f -name "$file" -exec rm -f {} + 2>/dev/null || true
       done
     fi
   done
@@ -115,6 +134,7 @@ if [[ "$NODE" == true ]]; then
     "node_modules"
     ".next"
     "dist"
+    "coverage"
   )
 
   NODE_ROOTS=(

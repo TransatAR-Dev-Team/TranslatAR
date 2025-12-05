@@ -6,6 +6,15 @@
 __pycache__/
 .ruff_cache/
 
+# pytest files
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Coverage Reports
+coverage-report/
+coverage.json
+
 # VSCode settings
 .vscode/
 
