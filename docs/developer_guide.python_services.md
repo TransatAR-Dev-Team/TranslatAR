@@ -63,16 +63,16 @@ This guide provides common instructions for setting up and managing the Python-b
 
 We use **Black** for code formatting and **Ruff** for linting and import sorting.
 
-1.  **Navigate to the service directory** (e.g., `cd backend`).
+1. **Navigate to the service directory** (e.g., `cd backend`).
 
-2.  To format your code, run:
+2. To format your code, run:
 
     ```sh
     poetry run black .
     poetry run ruff format .
     ```
 
-3.  To lint your code and automatically fix any issues, run:
+3. To lint your code and automatically fix any issues, run:
 
     ```sh
     poetry run ruff check . --fix
@@ -119,3 +119,11 @@ This workflow applies to every Python service in this repository.
     git add pyproject.toml poetry.lock
     git commit -m "<commit message>"
     ```
+
+## Cleaning Temporary Files
+
+To remove `__pycache__/`, `htmlcov/`, and other temporary files in all Python services, use:
+
+```sh
+./scripts/clean.sh --python
+```
