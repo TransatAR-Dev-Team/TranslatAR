@@ -2,15 +2,24 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import GoogleLoginButton from "./GoogleLoginButton";
 
-// Mock the actual GoogleLogin component from the library
+// Mock that exposes both success and error triggers
 vi.mock("@react-oauth/google", () => ({
-  GoogleLogin: ({ onSuccess }: { onSuccess: () => void }) => (
-    <button onClick={onSuccess}>Sign in with Google</button>
+  GoogleLogin: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: () => void;
+  }) => (
+    <div>
+      <button onClick={onSuccess}>Mock Success</button>
+      <button onClick={onError}>Mock Error</button>
+    </div>
   ),
 }));
 
 describe("GoogleLoginButton Component", () => {
-  it("renders the button and calls onLoginSuccess when clicked", () => {
+  it("calls onLoginSuccess when success occurs", () => {
     const handleLoginSuccess = vi.fn();
     render(
       <GoogleLoginButton
@@ -19,10 +28,24 @@ describe("GoogleLoginButton Component", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: /sign in with google/i });
-    expect(button).toBeInTheDocument();
-
-    fireEvent.click(button);
+    fireEvent.click(screen.getByText("Mock Success"));
     expect(handleLoginSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onLoginError when error occurs", () => {
+    const handleLoginError = vi.fn();
+    // Mock alert so it doesn't pop up during test
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <GoogleLoginButton
+        onLoginSuccess={() => {}}
+        onLoginError={handleLoginError}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Mock Error"));
+    expect(handleLoginError).toHaveBeenCalledTimes(1);
   });
 });

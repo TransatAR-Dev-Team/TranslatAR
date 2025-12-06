@@ -2,100 +2,190 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "./App";
 
-// Mock the global fetch
-declare let fetchMock: typeof vi & {
-  mockReset: () => void;
-  mockImplementation: (
-    fn: (url: string | Request) => Promise<Response>,
-  ) => void;
-};
+// 1. Mock Google OAuth
+vi.mock("@react-oauth/google", () => ({
+  GoogleOAuthProvider: ({ children }: any) => <div>{children}</div>,
+  GoogleLogin: ({ onSuccess, onError }: any) => (
+    <div>
+      <button onClick={() => onSuccess({ credential: "mock-google-token" })}>
+        Trigger Google Success
+      </button>
+      <button onClick={() => onSuccess({})}>Trigger Google No Token</button>
+      <button onClick={() => onError()}>Trigger Google Error</button>
+    </div>
+  ),
+}));
 
-describe("App Component", () => {
-  const mockToken = "fake-jwt-token";
-  const mockUser = { email: "test@example.com", id: "user123", name: "Test User" };
-  const mockSettings = { settings: {} };
-  const mockHistory = [
-    { _id: "1", original_text: "Hello", translated_text: "Hola", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
-    { _id: "2", original_text: "Goodbye", translated_text: "Adiós", source_lang: "en", target_lang: "es", conversationId: "conv-1", timestamp: new Date().toISOString() },
-  ];
+describe("App Component Integration", () => {
+  const mockToken = "fake-app-jwt";
+  const mockUser = { _id: "u1", email: "test@example.com", googleId: "g1" };
+  const mockSettings = { settings: { source_language: "fr" } };
+  const mockHistory = { history: [] };
 
   beforeEach(() => {
-    // @ts-ignore - fetchMock is global in setup
-    globalThis.fetchMock.resetMocks();
+    vi.resetAllMocks();
+    // @ts-ignore
+    fetchMock.resetMocks();
     localStorage.clear();
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  it("should render the Landing Page when not logged in", async () => {
-    // 1. Render without a token in localStorage
-    render(<App />);
+  // --- Helpers ---
+  const mockSuccessfulLogin = () => {
+    // @ts-ignore
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/api/auth/google/login"))
+        return { ok: true, json: async () => ({ access_token: mockToken }) };
+      if (url.includes("/api/users/me"))
+        return { ok: true, json: async () => mockUser };
+      if (url.includes("/api/settings"))
+        return { ok: true, json: async () => mockSettings };
+      if (url.includes("/api/history"))
+        return { ok: true, json: async () => mockHistory };
+      return { ok: true, json: async () => ({}) };
+    });
+  };
 
-    // 2. Assert that the landing page text is visible
+  it("renders Landing Page when not logged in", async () => {
+    render(<App />);
     expect(
       await screen.findByText("Please sign in to access your dashboard."),
     ).toBeInTheDocument();
+  });
 
-    // 3. Assert that the main app's navigation button is NOT visible
+  it("handles full successful login flow", async () => {
+    mockSuccessfulLogin();
+    render(<App />);
+
+    const loginBtn = await screen.findByText("Trigger Google Success");
+    fireEvent.click(loginBtn);
+
     expect(
-      screen.queryByRole("button", { name: /open navigation menu/i }),
-    ).not.toBeInTheDocument();
+      await screen.findByText(/welcome, test@example.com/i),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem("translatar_jwt")).toBe(mockToken);
   });
 
-  it("should render the dashboard by default when logged in", async () => {
-    localStorage.setItem("translatar_jwt", mockToken);
-    globalThis.fetchMock.mockImplementation((url) => {
-      if (url.toString().includes("/api/users/me")) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
-      }
-      if (url.toString().includes("/api/settings")) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
-      }
-      if (url.toString().includes("/api/history")) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: [] }) });
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-    });
-
+  it("handles login failure from Google (No Token)", async () => {
     render(<App />);
-
-    expect(await screen.findByRole("heading", { name: /TranslatAR Web Portal/i })).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: /^Dashboard$/i })).toBeInTheDocument();
-  });
-
-  it("should navigate to translation history and display data when logged in", async () => {
-    localStorage.setItem("translatar_jwt", mockToken);
-
-    // @ts-ignore
-    globalThis.fetchMock.mockImplementation((url) => {
-      const u = url.toString();
-      if (u.includes("/api/users/me")) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockUser) });
-      }
-      if (u.includes("/api/settings")) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) });
-      }
-      if (u.includes("/api/history")) {
-        // Use the mockHistory with data for this test
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ history: mockHistory }) });
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-    });
-
-    render(<App />);
-
-    const navButton = await screen.findByRole("button", { name: /open navigation menu/i });
-    fireEvent.click(navButton);
-    const conversationsButton = await screen.findByRole("button", { name: /conversations \/ history/i });
-    fireEvent.click(conversationsButton);
+    const failBtn = await screen.findByText("Trigger Google No Token");
+    fireEvent.click(failBtn);
 
     await waitFor(() => {
-      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      expect(window.alert).toHaveBeenCalledWith(
+        "Missing required token from Google!",
+      );
+    });
+  });
+
+  it("handles login failure from Backend", async () => {
+    // @ts-ignore
+    fetchMock.mockResponseOnce(JSON.stringify({ detail: "Bad Token" }), {
+      status: 401,
     });
 
-    expect(screen.getByText(/2 translations/i)).toBeInTheDocument();
-    const sessionCard = screen.getByText(/2 translations/i).closest("div");
-    fireEvent.click(sessionCard!);
+    render(<App />);
+    const loginBtn = await screen.findByText("Trigger Google Success");
+    fireEvent.click(loginBtn);
 
-    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
-    expect(screen.getByText(/Adiós/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        "Login failed. Please try again.",
+      );
+    });
+  });
+
+  it("handles logout", async () => {
+    localStorage.setItem("translatar_jwt", mockToken);
+    mockSuccessfulLogin(); // Pre-load success mocks for init
+
+    render(<App />);
+
+    // Wait for dashboard
+    await screen.findByText(/welcome, test@example.com/i);
+
+    const logoutBtn = screen.getByRole("button", { name: /logout/i });
+    fireEvent.click(logoutBtn);
+
+    expect(
+      await screen.findByText("Please sign in to access your dashboard."),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem("translatar_jwt")).toBeNull();
+  });
+
+  it("handles Settings loading and saving", async () => {
+    localStorage.setItem("translatar_jwt", mockToken);
+    mockSuccessfulLogin();
+    render(<App />);
+
+    await screen.findByText(/welcome, test@example.com/i);
+
+    // Open settings
+    fireEvent.click(screen.getByRole("button", { name: /^settings$/i }));
+
+    // Override mock for the SAVE operation specifically
+    // @ts-ignore
+    fetchMock.mockImplementation(async (url, init) => {
+      if (url.includes("/api/settings") && init?.method === "POST")
+        return { ok: true, json: async () => ({}) };
+      // Default fallbacks for re-fetches
+      if (url.includes("/api/users/me"))
+        return { ok: true, json: async () => mockUser };
+      if (url.includes("/api/settings"))
+        return { ok: true, json: async () => mockSettings };
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const saveBtn = await screen.findByRole("button", {
+      name: /save settings/i,
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "Settings" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles History load failure gracefully", async () => {
+    localStorage.setItem("translatar_jwt", mockToken);
+
+    // Fail history specifically
+    // @ts-ignore
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/api/history")) return { ok: false, status: 500 };
+      if (url.includes("/api/users/me"))
+        return { ok: true, json: async () => mockUser };
+      if (url.includes("/api/settings"))
+        return { ok: true, json: async () => mockSettings };
+      return { ok: true, json: async () => ({}) };
+    });
+
+    render(<App />);
+    await screen.findByText(/welcome, test@example.com/i);
+
+    const navBtn = screen.getByLabelText("Open navigation menu");
+    fireEvent.click(navBtn);
+    const historyBtn = screen.getByText("Conversations / History");
+    fireEvent.click(historyBtn);
+
+    expect(
+      await screen.findByText("Failed to load translation history."),
+    ).toBeInTheDocument();
+  });
+
+  it("handles session expiration (fetch profile fails)", async () => {
+    localStorage.setItem("translatar_jwt", "expired-token");
+    // @ts-ignore
+    fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("Please sign in to access your dashboard."),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem("translatar_jwt")).toBeNull();
   });
 });

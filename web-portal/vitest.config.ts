@@ -24,6 +24,8 @@ export default defineConfig({
         "vitest.config.ts",
         "src/main.tsx", // Entry point is usually excluded from unit tests
         "src/vite-env.d.ts",
+        "src/models/**", // Exclude TypeScript interfaces
+        "public/**", // Exclude static assets
       ],
     },
   },

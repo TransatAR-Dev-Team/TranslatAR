@@ -140,3 +140,32 @@ describe("TranslationView Component", () => {
     expect(message).toHaveClass("font-bold");
   });
 });
+
+it("packages and sends audio data when a chunk is received", async () => {
+  // 1. Capture the callback
+  let capturedOnAudioChunk: ((blob: Blob) => void) | undefined;
+
+  vi.mocked(useAudioRecorder).mockImplementation(({ onAudioChunk }) => {
+    capturedOnAudioChunk = onAudioChunk;
+    return {
+      isRecording: true,
+      startRecording: mockStartRecording,
+      stopRecording: mockStopRecording,
+      stream: null,
+      error: null,
+    };
+  });
+
+  render(<TranslationView settings={mockSettings} />);
+
+  // 2. Simulate an audio chunk arriving
+  const mockBlob = new Blob(["audio data"], { type: "audio/wav" });
+  if (capturedOnAudioChunk) {
+    await capturedOnAudioChunk(mockBlob);
+  }
+
+  // 3. Verify it was sent via WebSocket
+  expect(mockSendData).toHaveBeenCalledTimes(1);
+  // The first argument to sendData should be the packaged blob
+  expect(mockSendData.mock.calls[0][0]).toBeInstanceOf(Blob);
+});
