@@ -21,3 +21,19 @@ pytest-cov = "^7.0.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "*/__init__.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass"
+]

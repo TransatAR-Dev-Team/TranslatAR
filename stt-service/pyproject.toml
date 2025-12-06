@@ -47,3 +47,19 @@ select = ["E", "W", "F", "I", "UP", "B"]
 # For backend, it should be:
 known-first-party = ["main", "websocket"]
 # For the others, it will likely just be ["main"]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "*/__init__.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass"
+]
