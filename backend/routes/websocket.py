@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -69,7 +68,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             source_lang = metadata.get("source_lang", "en")
             target_lang = metadata.get("target_lang", "es")
-            
+
             conversation_id = metadata.get("conversation_id", conversation_id)
 
             logger.info(
@@ -114,19 +113,21 @@ async def process_audio_chunk(
             stt_response = await client.post(f"{STT_SERVICE_URL}/transcribe", files=files)
             stt_response.raise_for_status()
             stt_data = stt_response.json()
-            
+
             original_text = stt_data.get("transcription", "")
             detected_language = stt_data.get("detected_language", source_lang)
             language_probability = stt_data.get("language_probability", 0.0)
 
             if not original_text or not original_text.strip():
                 logger.info("No transcription detected in chunk.")
-                await websocket.send_json({
-                    "original_text": "",
-                    "translated_text": "",
-                    "detected_language": detected_language,
-                    "language_probability": language_probability,
-                })
+                await websocket.send_json(
+                    {
+                        "original_text": "",
+                        "translated_text": "",
+                        "detected_language": detected_language,
+                        "language_probability": language_probability,
+                    }
+                )
                 return
 
             logger.info(
@@ -140,7 +141,8 @@ async def process_audio_chunk(
             effective_source_lang = detected_language if language_probability > 0.3 else source_lang
 
             logger.info(
-                "Language decision: using '%s' (detected: '%s' with %.2f confidence, provided: '%s')",
+                "Language decision: using '%s' (detected: '%s' with %.2f "
+                "confidence, provided: '%s')",
                 effective_source_lang,
                 detected_language,
                 language_probability,
@@ -182,7 +184,8 @@ async def process_audio_chunk(
                     await translations_collection.insert_one(translation_log)
                     logger.info(
                         f"Saved translation to database (userId: {user_id}, "
-                        f"detected_lang: {detected_language}, confidence: {language_probability:.2f})"
+                        f"detected_lang: {detected_language}, "
+                        f"confidence: {language_probability:.2f})"
                     )
             except Exception as e:
                 logger.warning(
@@ -209,5 +212,5 @@ async def process_audio_chunk(
         try:
             error_response = {"original_text": "", "translated_text": f"Processing error: {str(e)}"}
             await websocket.send_json(error_response)
-        except WebSocketDisconnect:
+        except WebSocketDisconnect:  # pragma: no cover
             logger.warning("Could not send error to client as they disconnected.")

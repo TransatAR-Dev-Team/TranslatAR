@@ -211,3 +211,126 @@ def test_poll_success_existing_user(client, mocker, monkeypatch, fake_users_coll
     assert data["status"] == "completed"
     assert "access_token" in data
     assert len(fake_users_collection._docs) == 1
+
+
+def test_start_device_flow_missing_client_id(client, monkeypatch):
+    """Test start flow fails 500 if client ID is missing."""
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", None)
+
+    response = client.post("/api/auth/device/start")
+
+    assert response.status_code == 500
+    assert "Google Client ID for Unity is not configured" in response.json()["detail"]
+
+
+def test_start_device_flow_generic_exception(client, mocker, monkeypatch):
+    """Test start flow handles unexpected exceptions."""
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", "fake-id")
+
+    class MockClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            pass
+
+        async def post(self, *args, **kwargs):
+            raise TypeError("Unexpected crash")
+
+    mocker.patch("httpx.AsyncClient", lambda: MockClient())
+
+    response = client.post("/api/auth/device/start")
+
+    assert response.status_code == 500
+    assert "An unexpected error occurred" in response.json()["detail"]
+
+
+def test_poll_missing_credentials(client, monkeypatch):
+    """Test poll flow fails 500 if credentials are missing."""
+    # Case 1: Missing Secret
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", "id")
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_SECRET_UNITY", None)
+
+    response = client.post("/api/auth/device/poll", json={"device_code": "code"})
+    assert response.status_code == 500
+    assert "Google client credentials for Unity are not configured" in response.json()["detail"]
+
+
+def test_poll_invalid_id_token(client, mocker, monkeypatch):
+    """Test poll flow handles invalid Google ID token."""
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", "id")
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_SECRET_UNITY", "secret")
+
+    # Mock successful HTTP response from Google
+    class MockClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            pass
+
+        async def post(self, *args, **kwargs):
+            class Resp:
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {"id_token": "bad_token"}
+
+            return Resp()
+
+    mocker.patch("httpx.AsyncClient", MockClient)
+
+    # Mock token verification failure
+    mocker.patch(
+        "google.oauth2.id_token.verify_oauth2_token",
+        side_effect=ValueError("Token signature invalid"),
+    )
+
+    response = client.post("/api/auth/device/poll", json={"device_code": "code"})
+
+    assert response.status_code == 401
+    assert "Invalid Google ID token" in response.json()["detail"]
+
+
+def test_poll_user_creation_failure(client, mocker, monkeypatch):
+    """Test poll flow handles database failure when creating user."""
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_ID_UNITY", "id")
+    monkeypatch.setattr(auth_unity, "GOOGLE_CLIENT_SECRET_UNITY", "secret")
+
+    # Mock HTTP Success
+    class MockClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            pass
+
+        async def post(self, *args, **kwargs):
+            class Resp:
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {"id_token": "valid_token"}
+
+            return Resp()
+
+    mocker.patch("httpx.AsyncClient", MockClient)
+
+    # Mock Token Success
+    mocker.patch(
+        "google.oauth2.id_token.verify_oauth2_token",
+        return_value={"sub": "123", "email": "fail@test.com"},
+    )
+
+    # Mock DB Failure (Service returns None)
+    mocker.patch(
+        "routes.auth_unity.get_or_create_user_by_google_id",
+        return_value=None,  # Simulates failure
+    )
+
+    response = client.post("/api/auth/device/poll", json={"device_code": "code"})
+
+    assert response.status_code == 500
+    assert "Could not create or retrieve user" in response.json()["detail"]

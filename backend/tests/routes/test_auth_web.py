@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -106,3 +107,39 @@ def test_google_login_invalid_token(client, mocker, monkeypatch):
 
     assert response.status_code == 401
     assert "Invalid Google token" in response.json()["detail"]
+
+
+def test_google_login_missing_client_id(client, monkeypatch):
+    """
+    Test that the endpoint returns 500 if GOOGLE_CLIENT_ID is not configured.
+    """
+    # Force the constant to be None for this test
+    monkeypatch.setattr(auth_router, "GOOGLE_CLIENT_ID", None)
+
+    response = client.post("/api/auth/google/login", json={"token": "some_token"})
+
+    assert response.status_code == 500
+    assert "Google Client ID is not configured" in response.json()["detail"]
+
+
+def test_google_login_user_creation_failure(client, monkeypatch):
+    """
+    Test that the endpoint returns 500 if the user service fails (returns None).
+    """
+    monkeypatch.setattr(auth_router, "GOOGLE_CLIENT_ID", "valid_id")
+
+    # 1. Mock Google verification to succeed
+    with patch("google.oauth2.id_token.verify_oauth2_token") as mock_verify:
+        mock_verify.return_value = {"sub": "12345", "email": "fail@test.com"}
+
+        # 2. Mock the DB service to return None (failure)
+        # We use AsyncMock because the route awaits this function
+        with patch(
+            "routes.auth.get_or_create_user_by_google_id", new_callable=AsyncMock
+        ) as mock_service:
+            mock_service.return_value = None
+
+            response = client.post("/api/auth/google/login", json={"token": "valid_token"})
+
+            assert response.status_code == 500
+            assert "Could not create or retrieve user" in response.json()["detail"]
