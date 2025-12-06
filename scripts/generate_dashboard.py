@@ -102,6 +102,16 @@ def parse_python_coverage(json_path):
     try:
         with open(json_path) as f:
             data = json.load(f)
+            
+            # Check if this is Unity format (converted from Summary.json)
+            if data.get("unity_format"):
+                totals = data.get("totals", {})
+                total = totals.get("num_statements", 0)
+                covered = totals.get("covered_lines", 0)
+                pct = totals.get("percent_covered", 0)
+                return total, covered, round(pct, 2)
+            
+            # Standard Python coverage format
             totals = data.get("totals", {})
             total = totals.get("num_statements", 0)
             covered = totals.get("covered_lines", 0)
@@ -147,12 +157,22 @@ def main():
         pct = 0
         lang_type = "Unknown"
 
-        # Detect Python report
-        if os.path.exists(os.path.join(service_path, "coverage.json")):
-            total, covered, pct = parse_python_coverage(
-                os.path.join(service_path, "coverage.json")
-            )
-            lang_type = "Python"
+        # Detect coverage report type
+        coverage_json_path = os.path.join(service_path, "coverage.json")
+        
+        if os.path.exists(coverage_json_path):
+            # Check if it's Unity format
+            try:
+                with open(coverage_json_path) as f:
+                    data = json.load(f)
+                    if data.get("unity_format"):
+                        lang_type = "C#"
+                    else:
+                        lang_type = "Python"
+            except:
+                lang_type = "Python"
+            
+            total, covered, pct = parse_python_coverage(coverage_json_path)
         # Detect JS report
         elif os.path.exists(os.path.join(service_path, "coverage-summary.json")):
             total, covered, pct = parse_js_coverage(

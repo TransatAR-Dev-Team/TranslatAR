@@ -16,8 +16,6 @@ echo "  TranslatAR Test Coverage Generation"
 echo "=========================================="
 
 echo ""
-echo "⚠️  Note: This does not generate Unity test coverage reports."
-echo ""
 
 # --- 1. Python Services ---
 # Note: advice_service uses an underscore, others use hyphens
@@ -86,7 +84,70 @@ if [ -d "$PROJECT_ROOT/web-portal" ]; then
     fi
 fi
 
-# --- 3. Generate Dashboard ---
+# --- 3. Unity ---
+echo ""
+echo "📊 Running coverage for: Unity"
+
+# Check if Unity is available (macOS/Windows only)
+OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+UNITY_AVAILABLE=false
+
+if [[ "$OS_NAME" == "darwin" ]]; then
+    if ls -1d /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity 2>/dev/null | head -n1 > /dev/null; then
+        UNITY_AVAILABLE=true
+    fi
+elif [[ "$OS_NAME" == mingw* || "$OS_NAME" == cygwin* || "$OS_NAME" == msys* ]]; then
+    UNITY_AVAILABLE=true
+elif [[ "$OS_NAME" == "linux" ]] && [ -f "/proc/version" ] && grep -q -i "microsoft" /proc/version; then
+    UNITY_AVAILABLE=true
+fi
+
+if [ "$UNITY_AVAILABLE" = true ]; then
+    cd "$PROJECT_ROOT"
+    
+    # Run Unity coverage script
+    if [ -f "$SCRIPT_DIR/run_unity_coverage.sh" ]; then
+        "$SCRIPT_DIR/run_unity_coverage.sh" || true
+        
+        # Copy Unity coverage artifacts
+        if [ -f "$PROJECT_ROOT/unity/CodeCoverage/Report/Summary.json" ]; then
+            mkdir -p "$ARTIFACTS_DIR/unity"
+            cp -r "$PROJECT_ROOT/unity/CodeCoverage/Report/"* "$ARTIFACTS_DIR/unity/" 2>/dev/null || true
+            
+            # Create a coverage.json in the format expected by dashboard
+            # Extract data from Summary.json and convert to dashboard format
+            python3 - "$PROJECT_ROOT/unity/CodeCoverage/Report/Summary.json" "$ARTIFACTS_DIR/unity/coverage.json" << 'PYTHON_CONVERT'
+import json
+import sys
+
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+
+summary = data.get("summary", {})
+output = {
+    "unity_format": True,
+    "totals": {
+        "covered_lines": summary.get("coveredlines", 0),
+        "num_statements": summary.get("coverablelines", 0),
+        "percent_covered": summary.get("linecoverage", 0)
+    }
+}
+
+with open(sys.argv[2], "w") as f:
+    json.dump(output, f, indent=2)
+PYTHON_CONVERT
+            echo "✅ Unity coverage collected"
+        else
+            echo "⚠️  Unity coverage report not generated"
+        fi
+    else
+        echo "⚠️  run_unity_coverage.sh not found, skipping Unity"
+    fi
+else
+    echo "⚠️  Unity not available on this platform, skipping..."
+fi
+
+# --- 4. Generate Dashboard ---
 echo ""
 echo "📈 Generating Dashboard..."
 # Check if python script exists before running
