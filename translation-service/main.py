@@ -63,7 +63,9 @@ async def translate(request: TranslationRequest):
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{LIBRETRANSLATE_URL}/translate", json=payload)
+            response = await client.post(
+                f"{LIBRETRANSLATE_URL}/translate", json=payload
+            )
             response.raise_for_status()
             data = response.json()
             if "translatedText" not in data:
@@ -79,6 +81,9 @@ async def translate(request: TranslationRequest):
             )
             return TranslationResponse(translated_text=translated_text)
 
+    except HTTPException:
+        raise
+
     except httpx.RequestError as e:
         logger.error("Could not connect to translation engine: %s", e, exc_info=True)
         raise HTTPException(
@@ -90,10 +95,14 @@ async def translate(request: TranslationRequest):
             e.response.status_code,
             e.response.text,
         )
-        raise HTTPException(status_code=500, detail=f"Translation engine failed: {e}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Translation engine failed: {e}"
+        ) from e
     except Exception as e:
         logger.error("An unexpected error occurred: %s", str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}") from e
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {e}"
+        ) from e
 
 
 @app.get("/health")
