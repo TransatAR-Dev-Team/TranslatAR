@@ -80,6 +80,9 @@ echo "🧹 Cleaning temporary and build files..."
 echo "Cleaning test coverage reports..."
 
 rm -rf coverage-report */coverage.json
+rm -rf unity/CodeCoverage
+
+echo "✅ Test coverage report cleanup complete."
 
 # ----------------------------------------------------------------------
 # Python cleanup
