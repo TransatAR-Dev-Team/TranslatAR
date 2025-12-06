@@ -27,7 +27,8 @@ dev = [
     "pytest-asyncio (>=1.2.0,<2.0.0)",
     "pytest-mock (>=3.15.1,<4.0.0)",
     "black (>=25.9.0,<26.0.0)",
-    "ruff (>=0.14.1,<0.15.0)"
+    "ruff (>=0.14.1,<0.15.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)"
 ]
 
 [tool.black]
@@ -46,3 +47,19 @@ select = ["E", "W", "F", "I", "UP", "B"]
 # For backend, it should be:
 known-first-party = ["main", "websocket"]
 # For the others, it will likely just be ["main"]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "*/__init__.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass"
+]

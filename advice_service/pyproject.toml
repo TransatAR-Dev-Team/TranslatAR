@@ -3,6 +3,7 @@ name = "advice-service"
 version = "0.1.0"
 description = "Generate advice microservice for TranslatAR"
 authors = ["TranslatAR Dev Team"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -14,8 +15,25 @@ pydantic = "^2.6.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
+pytest-cov = "^7.0.0"
 
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "*/__init__.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass"
+]

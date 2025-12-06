@@ -34,14 +34,15 @@ This project uses a `Makefile` to provide simple commands for common operations.
 
 Run `make` or `make help` at any time to see the list of all available commands.
 
-| Command                 | Description                                                                         |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `make up`               | Build and start all services in Docker (auto-detects GPU).                          |
-| `make down`             | Stop and remove all services.                                                       |
-| `make restart`          | Restart all services.                                                               |
-| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                  |
-| `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows). |
-| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).                      |
+| Command                 | Description                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `make up`               | Build and start all services in Docker (auto-detects GPU).                               |
+| `make down`             | Stop and remove all services.                                                            |
+| `make restart`          | Restart all services.                                                                    |
+| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                       |
+| `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows).      |
+| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).                           |
+| `make coverage-report`  | Generate and open test coverage report in browser (except Unity). Installs dependencies. |
 
 ## Quick Links
 

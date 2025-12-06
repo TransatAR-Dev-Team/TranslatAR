@@ -21,6 +21,10 @@ All project [Prerequisites](../README.md#prerequisites) met.
 
 - [`format.sh`](./format.sh): Runs project formatters (e.g. Black, Ruff formatter for Python, Prettier for frontend). Use `make format` to run across the repo.
 
+- [`generate_coverage.sh`](./generate_coverage.sh): Runs code coverage tools across all Python services and the Web Portal by installing dependencies with `poetry` and `npm` and running the tests locally, collects the reports, and generates a unified HTML dashboard which is opened in the default web browser. Use `make coverage`.
+
+- [`generate_dashboard.py`](./generate_dashboard.py): Python helper script used by `generate_coverage.sh` to parse JSON coverage summaries and generate the main HTML index page for the dashboard.
+
 - [`lint.sh`](./lint.sh): Runs linters (Ruff for Python, ESLint for web). Use `make lint` or run directly.
 
 - [`open_unity_editor.sh`](./open_unity_editor.sh): Convenience script to open the Unity editor for the `unity/` project on macOS/Windows. Run via `make unity-editor` (macOS/Windows only).

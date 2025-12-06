@@ -18,39 +18,6 @@ This directory contains the frontend web portal for the TranslatAR project. It's
 
 See more detail in `README.md` in the root of the project for instructions on building and runnning the entire project.
 
-## Google Sign-In Setup
-
-The web portal includes Google Sign-In functionality. To enable this feature:
-
-1. **Create a Google Cloud Project:**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-
-2. **Enable Google Sign-In API:**
-   - Go to "APIs & Services" > "Library"
-   - Search for "Google Sign-In API" and enable it
-
-3. **Create OAuth Credentials:**
-   - Go to "APIs & Services" > "Credentials"
-   - Click "Create Credentials" > "OAuth client ID"
-   - Select "Web application"
-   - Add authorized JavaScript origins:
-     - `http://localhost:5173` (for local development)
-     - Your production domain (for production)
-   - Copy the generated Client ID
-
-4. **Set Environment Variable:**
-   - Create a `.env` file in the `web-portal` directory
-   - Add your Google Client ID:
-     ```
-     VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
-     ```
-   - **Important:** Never commit the `.env` file to version control
-
-5. **Restart the Development Server:**
-   - Stop the current server (`Ctrl+C`)
-   - Run `npm run dev` again to load the new environment variable
-
 ## Local Testing
 
 This project uses Vitest for unit and component testing.
@@ -74,23 +41,31 @@ This project uses Vitest for unit and component testing.
    npm run test:watch
    ```
 
+   To generage a coverage report, use:
+
+   ```bash
+   npm run test:cov
+   ```
+
+   And view the report at `web-portal/coverage/index.html`.
+
 ## Formatting and Linting
 
 We use **Prettier** for code formatting and **ESLint** for linting.
 
-1.  **Navigate to the `web-portal/` directory.**
+1. **Navigate to the `web-portal/` directory.**
 
-2.  To format the entire codebase, run the `format` script:
+2. To format the entire codebase, run the `format` script:
 
-    ```bash
-    npm run format
-    ```
+   ```bash
+   npm run format
+   ```
 
-3.  To lint the code, run the `lint` script:
+3. To lint the code, run the `lint` script:
 
-    ```bash
-    npm run lint
-    ```
+   ```bash
+   npm run lint
+   ```
 
 You can also format and lint all services at once from the project root using `make format` and `make lint`.
 
@@ -141,3 +116,11 @@ The easiest and recommended way to add or update dependencies is as follows:
    > **IMPORTANT:** The `node_modules/` directory **_should never be committed._** We use `git` keep track of the dendency lists, not the dependencies themselves. This will keep our repository as small and portable as possible.
 
 This ensures that when another developer (or the Docker build process) runs `npm install`, they will get the exact same dependency tree you have.
+
+## Cleaning Temporary Files
+
+To remove `node_modules/`, `coverage`, and other temporary files in this folder, use:
+
+```sh
+./scripts/clean.sh --node
+```
