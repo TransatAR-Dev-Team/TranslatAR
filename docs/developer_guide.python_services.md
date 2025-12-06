@@ -57,7 +57,7 @@ This guide provides common instructions for setting up and managing the Python-b
     poetry run pytest --cov --cov-report=html
     ```
 
-    To view report, open `<service name>/htmlcov/index.html` in a web browser.
+    To view report, open `<service name>/htmlcov/index.html` in a web browser (e.g., `firefox htmlcov/index.html`).
 
 ## Formatting and Linting
 
