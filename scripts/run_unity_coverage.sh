@@ -88,25 +88,52 @@ echo "Unity: $UNITY_EXECUTABLE"
 echo "Project: $PROJECT_PATH_FOR_UNITY"
 echo ""
 
+# Helper function to run Unity (sync on Windows, background on Mac/Linux for cleanup support)
+run_unity_with_coverage() {
+    local TEST_PLATFORM="$1"
+    local RESULTS_FILE="$2"
+    local LOG_FILE="$3"
+    
+    if [[ "$OS_NAME" == mingw* || "$OS_NAME" == cygwin* || "$OS_NAME" == msys* ]]; then
+        # Windows: Run synchronously (background processes don't wait properly in MINGW)
+        "$UNITY_EXECUTABLE" \
+          -batchmode -nographics \
+          -projectPath "$PROJECT_PATH_FOR_UNITY" \
+          -runTests -testPlatform "$TEST_PLATFORM" \
+          -testResults "$RESULTS_FILE" \
+          -logFile "$LOG_FILE" \
+          -enableCodeCoverage \
+          -coverageResultsPath "$COVERAGE_PATH" \
+          -coverageOptions "generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+GameRuntime,+LanguageUI" \
+          > /dev/null 2>&1
+        return $?
+    else
+        # Mac/Linux: Run in background for cleanup trap support
+        "$UNITY_EXECUTABLE" \
+          -batchmode -nographics \
+          -projectPath "$PROJECT_PATH_FOR_UNITY" \
+          -runTests -testPlatform "$TEST_PLATFORM" \
+          -testResults "$RESULTS_FILE" \
+          -logFile "$LOG_FILE" \
+          -enableCodeCoverage \
+          -coverageResultsPath "$COVERAGE_PATH" \
+          -coverageOptions "generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+GameRuntime,+LanguageUI" \
+          > /dev/null 2>&1 &
+        UNITY_PID=$!
+        wait $UNITY_PID || true
+        local RC=$?
+        unset UNITY_PID
+        return $RC
+    fi
+}
+
 # --- EditMode Tests + Coverage ---
 echo "-------------------------------------"
 echo "Running EditMode tests (with coverage)..."
 echo "-------------------------------------"
 
-"$UNITY_EXECUTABLE" \
-  -batchmode -nographics \
-  -projectPath "$PROJECT_PATH_FOR_UNITY" \
-  -runTests -testPlatform editmode \
-  -testResults "$ARTIFACTS_PATH/editmode-results.xml" \
-  -logFile "$ARTIFACTS_PATH/editmode-coverage.log" \
-  -enableCodeCoverage \
-  -coverageResultsPath "$COVERAGE_PATH" \
-  -coverageOptions "generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+GameRuntime,+LanguageUI" \
-  > /dev/null 2>&1 &
-UNITY_PID=$!
-wait $UNITY_PID || true
+run_unity_with_coverage "editmode" "$ARTIFACTS_PATH/editmode-results.xml" "$ARTIFACTS_PATH/editmode-coverage.log"
 RC_EDITMODE=$?
-unset UNITY_PID
 
 if [[ $RC_EDITMODE -ne 0 ]]; then
     echo "⚠️  EditMode tests encountered issues (exit code: $RC_EDITMODE)"
@@ -118,20 +145,8 @@ echo "-------------------------------------"
 echo "Running PlayMode tests (with coverage)..."
 echo "-------------------------------------"
 
-"$UNITY_EXECUTABLE" \
-  -batchmode -nographics \
-  -projectPath "$PROJECT_PATH_FOR_UNITY" \
-  -runTests -testPlatform playmode \
-  -testResults "$ARTIFACTS_PATH/playmode-results.xml" \
-  -logFile "$ARTIFACTS_PATH/playmode-coverage.log" \
-  -enableCodeCoverage \
-  -coverageResultsPath "$COVERAGE_PATH" \
-  -coverageOptions "generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+GameRuntime,+LanguageUI" \
-  > /dev/null 2>&1 &
-UNITY_PID=$!
-wait $UNITY_PID || true
+run_unity_with_coverage "playmode" "$ARTIFACTS_PATH/playmode-results.xml" "$ARTIFACTS_PATH/playmode-coverage.log"
 RC_PLAYMODE=$?
-unset UNITY_PID
 
 if [[ $RC_PLAYMODE -ne 0 ]]; then
     echo "⚠️  PlayMode tests encountered issues (exit code: $RC_PLAYMODE)"
