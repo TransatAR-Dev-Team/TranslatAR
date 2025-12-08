@@ -34,19 +34,16 @@ This project uses a `Makefile` to provide simple commands for common operations.
 
 Run `make` or `make help` at any time to see the list of all available commands.
 
-| Command                 | Description                                                                              |
-| ----------------------- | ---------------------------------------------------------------------------------------- |
-| `make up`               | Build and start all services in Docker (auto-detects GPU).                               |
-| `make down`             | Stop and remove all services.                                                            |
-| `make restart`          | Restart all services.                                                                    |
-| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                       |
-| `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows).      |
-| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).                           |
-| `make coverage-report`  | Generate and open test coverage report in browser (except Unity). Installs dependencies. |
-
-## Quick Links
-
-Web Portal: <http://localhost:5173>
+| Command                 | Description                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `make up`               | Build and start all services in Docker (auto-detects GPU).                          |
+| `make down`             | Stop and remove all services.                                                       |
+| `make restart`          | Restart all services.                                                               |
+| `make logs <service>`   | Show logs of a specific service (e.g., `backend`).                                  |
+| `make unity-editor`     | Open the Unity project (`unity/`) in the Unity Edtitor (requires macOS or Windows). |
+| `make test`             | Run all applicable test suites (Unit, Integration, and Unity).                      |
+| `make coverage-report`  | Generate and open test coverage report in browser. Installs dependencies.           |
+| `make` or `make help`   | Show exhastive list of all available commands.                                      |
 
 ## Further Documentation
 
@@ -58,7 +55,7 @@ Web Portal: <http://localhost:5173>
   - [Summarization Service](./summarization-service/README.md)
   - [Unity Frontend](./unity/README.md)
 
-- **Scripts:** a collection of shell and Python scripts used by the project (specicially `make`).
+- **Scripts:** a collection of shell and Python scripts used by the project primarily through `make`.
   - [Scripts README](./scripts/README.md)
 
 - **Developer Guides:**
@@ -119,7 +116,7 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
 5. Go to <http://localhost:5173> (Web Portal) and <http://localhost:8000/docs> (Backend Auto Documentation) to verify the containers are running.
 
-6. If this is your first time setting up the project, download the LLM model for the summarization service. You only need to do this once.
+6. If this is your first time setting up the project, download the LLM model for the Summarization Service. You only need to do this once.
 
     ```sh
     docker exec -it ollama ollama pull phi3:mini
@@ -167,163 +164,12 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
 ## Demo
 
-### Running the demo
-
-To demonstrate the connection between the containerized backend and the Unity frontend, first ensure all [Set Up](#set-up) steps are completed.
-
-1. Press the "Play" button (`▶`) at the top center of the Unity editor window to start the scene.
-
-2. A pop up with the headset simulator should appear.
-
-   > The room you see in the pop up simulates the video passthrough feature of a real Meta Quest headset, where you would instead see your actual physical surroundings through the device's cameras.
-
-   The text on the simulator screen will prompt you: *"Press and hold (B) or Left Click to record."*.
-
-   Walk around with `W`, `A`, `S`, and `D` keys. Look around with the arrow keys.
-
-3. In the Unity Editor, click the *Login* button. Navigate to <https://google.com/device> and enter the code on screen. Authorize the login with your Google account. In a moment, the panel will welcome you with your "username".
-
-4. **Click your mouse inside the simulator window** to give it focus.
-
-5. **Press and hold the `B` button**. The text will change to *"Recording..."*. Speak into your computer's microphone.
-
-6. **Release the `B` button**. The text will change to *"Processing audio..."*.
-
-7. After a moment, the text will update with the Spanish translation of what you said.
-
-8. Go to <http://localhost:5173> to see the web portal. The new translation you just created will be at the top of the history log.
-
-9. Click the *Login* button in the upper right corner. Login with a google account. Your email will apear next to the login button. You can then click *Logout*.
-
-10. Repeat steps 4-6 to add more translations. Refresh the web portal to see the history update.
-
-11. Type/copy some text into the "Summarize Text" text box on the web portal. Select a summary length (short, medium, long) and click the "Summarize" button. A summary of the text will be generated.
-
-### Demo clean up
-
-1. Press the "Stop" button (`⏹`) in the Unity Editor.
-2. Shut down all Docker containers:
-
-    ```sh
-    make down
-    ```
+See [Running the Demo](./docs/demo.md).
 
 ## Testing
 
-Ensure all [Prerequisites](#prerequisites) are met and the project has been [Set Up](#set-up) before running tests.
-
-### Running the Full Test Suite
-
-This is the main command you should run before committing code. On macOS and Windows, this will run everything. On Linux, it will run the backend tests and print a warning that the Unity tests are being skipped.
-
-```sh
-make test
-```
-
-### Running Specific Test Suites
-
-To run only unit tests for all services, use the following command. This is useful for quickly checking for errors.
-
-```sh
-make test-unit
-```
-
-To run only the integration tests, use this command. These tests take longer to run.
-
-```sh
-make test-integration
-```
-
-To run only the Unity **Edit Mode** and **Play Mode** tests, use the script below. This requires a local installation of the correct Unity Editor version and can only be run on **macOS or Windows**.
-
-```sh
-make test-unity
-```
-
-This test suite takes the longest to run, especially if you haven't run it before.
-
-### Running Individual Service Tests Locally
-
-For rapid development, you can run tests for individual services on your local machine without Docker or scripts. Before running tests, you must navigate to the service's directory and install its dependencies.
-
-Instructions for each service can be found at the links below:
-
-- [Web Portal (`web-portal`)](./web-portal/README.md#local-testing)
-- [Python Services (`backend`, etc.)](./docs/developer_guide.python_services.md#local-testing)
-- [Unity (`unity`)](./unity/README.md#testing)
+See [Testing](./docs/testing.md).
 
 ## Code Quality
 
-To ensure code consistency and quality, this project uses `pre-commit` to run checks and automatically make changes on each file you commit. These checks include formatters and linters such as:
-
-- **Python Services**: Formatted with **Black** and linted with **Ruff**.
-- **Web Portal**: Formatted with **Prettier** and linted with **ESLint**.
-- **Security**: Secret detection to prevent committing credentials.
-- **General**: Checks for whitespace, file endings, and other common issues.
-
-The full configuration can be found in the [`.pre-commit-config.yaml`](./.pre-commit-config.yaml) file.
-
-### When a commit is rejected
-
-If your `git commit` is blocked, it means the hooks caught an issue. There are two scenarios.
-
-1. **The hooks have made automatic changes to your files.**
-
-    A formatter has fixed your code for you. Stage the changes and try to commit again.
-
-    ```sh
-    git add .
-    git commit
-    ```
-
-2. **The errors need a manual fix.**
-
-    Read the error messages carefully. It will tell you the file, line number, and what is wrong. Fix the error, stage the files, and commit again.
-
-    > **Important:** If a secret is detected, **you must remove it.** Do not add it to the baseline file unless you are 100% certain that it is a false positive.
-
-### Running Checks Manually
-
-You can run these checks at any time without creating a commit.
-
-**Using `pre-commit`:**
-
-To run on only staged files:
-
-```sh
-pre-commit run
-```
-
-To run on any modified files (staged or not)
-
-```sh
-pre-commit run --files $(git ls-files -m)
-```
-
-To run on all files:
-
-```sh
-pre-commit run --all-files
-```
-
-**Using `make`:**
-
-To format and lint all code:
-
-```sh
-make validate
-```
-
-To format all code:
-
-```sh
-make format
-```
-
-To lint all code:
-
-```sh
-make lint
-```
-
-For instructions on running  tools within a specific service, see the developer guides for [Python services](./docs/developer_guide.python_services.md#formatting-and-linting) and the [Web Portal](./web-portal/README.md#formatting-and-linting).
+See [Code Quality](./docs/code_quality.md).
