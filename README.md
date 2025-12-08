@@ -1,5 +1,13 @@
 # TranslatAR
 
+TranslatAR bridges language barriers via a secure, containerized platform that combines real-time AR translation on Meta Quest with AI-powered conversation insights and a companion web portal.
+
+## About the Project
+
+TranslatAR utilizes a Unity-based XR client for the Meta Quest with a containerized microservices backend and web portal to provide instant speech-to-text transcription, multi-language translation, and AI-powered conversation summarization and language learning advice.
+
+Secure user authentication is managed via Google OAuth 2.0 and JWTs, ensuring data privacy across both the headset and the companion web portal. The entire stack is orchestrated through Docker for a consistent, scalable development and deployment environment.
+
 ## Prerequisites
 
 ### Core Tools
@@ -30,7 +38,7 @@ While Docker can run the project, local development (running tests, formatters, 
 
 ## Common Commands
 
-This project uses a `Makefile` to provide simple commands for common operations. Below is a list of some of the most frequently used ones.
+This project uses a `Makefile` to provide simple commands for common operations. Below is a list of some of the most frequently used ones (non-exhaustive).
 
 Run `make` or `make help` at any time to see the list of all available commands.
 
@@ -60,6 +68,8 @@ Run `make` or `make help` at any time to see the list of all available commands.
 
 - **Developer Guides:**
   - [Python Services Development Guide](./docs/developer_guide.python_services.md)
+  - [Testing](./docs/testing.md).
+  - [Code Quality](./docs/code_quality.md).
   - [VS Code Dev Containers Guide](./docs/dev_container.md)
 
 - **Live API Documentation (FastAPI):** The FastAPI Python services automatically generate interactive API documentation. Once the services are running (`make up`), you can access them at:
@@ -148,19 +158,19 @@ First, ensure all [prerequisites](#prerequisites) are met and Docker is running.
 
     When the simulator is enabled, the "Laptop" button next to the transpot buttons is blue. Example:
 
-    ![Laptop button is selected/blue](./docs/images/laptop_button.png)
+    ![Image of the laptop button selected/blue](./docs/images/laptop_button.png)
 
 1.  Load environment variables. In the *Project* tab at the bottom of the editor, navigate to `Assets/Resources` in the file system. Right click within that directory and select *Create* > *TranslatAR* > *Environment Config*.
 
     Example:
 
-    ![The correct right click menu to add EnvConfig](./docs/images/right_click_menu.png)
+    ![Image of the correct right click menu to add EnvConfig](./docs/images/right_click_menu.png)
 
     Then, in the menu bar, select *TranslatAR* > *Update Environment Config from .env*.
 
     Example:
 
-    ![The correct taskbar menu item](./docs/images/taskbar.png)
+    ![Image of the correct taskbar menu item](./docs/images/taskbar.png)
 
 ## Demo
 
